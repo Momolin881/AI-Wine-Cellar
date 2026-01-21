@@ -26,6 +26,7 @@ class WineItem(Base):
     vintage = Column(Integer, nullable=True)  # 年份
     region = Column(String(255), nullable=True)  # 產區（如：波爾多、勃根地、蘇格蘭）
     country = Column(String(100), nullable=True)  # 國家
+    abv = Column(Float, nullable=True)  # 酒精濃度 ABV (Alcohol by Volume) %
 
     # 數量與空間
     quantity = Column(Integer, default=1, nullable=False)  # 數量（瓶數）
