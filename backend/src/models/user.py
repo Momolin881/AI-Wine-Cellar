@@ -30,7 +30,6 @@ class User(Base):
 
     # 關聯
     wine_cellars = relationship("WineCellar", back_populates="owner", cascade="all, delete-orphan")
-    fridge_memberships = relationship("FridgeMember", foreign_keys="FridgeMember.user_id", back_populates="user")
 
     def __repr__(self):
         return f"<User(id={self.id}, line_user_id='{self.line_user_id}', display_name='{self.display_name}')>"

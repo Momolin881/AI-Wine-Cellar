@@ -31,8 +31,6 @@ class WineCellar(Base):
     # 關聯
     owner = relationship("User", back_populates="wine_cellars")
     wine_items = relationship("WineItem", back_populates="cellar", cascade="all, delete-orphan")
-    members = relationship("CellarMember", back_populates="cellar", cascade="all, delete-orphan")
-    invites = relationship("CellarInvite", back_populates="cellar", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<WineCellar(id={self.id}, name='{self.name}', user_id={self.user_id})>"
