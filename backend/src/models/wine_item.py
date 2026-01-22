@@ -33,6 +33,11 @@ class WineItem(Base):
     space_units = Column(Float, default=1.0, nullable=False)  # 占用空間單位（瓶位數）
     container_type = Column(String(50), default="瓶", nullable=False)  # 容器類型（瓶、箱、桶）
 
+    # 開瓶狀態與剩餘量
+    bottle_status = Column(String(20), default='unopened', nullable=False)  # unopened / opened
+    remaining_amount = Column(String(20), default='full', nullable=False)  # full / 3/4 / 1/2 / 1/4 / empty
+    opened_at = Column(DateTime, nullable=True)  # 開瓶時間
+
     # 價格
     purchase_price = Column(Float, nullable=True)  # 進貨價（台幣）
     retail_price = Column(Float, nullable=True)  # 零售價（台幣）
