@@ -16,6 +16,9 @@ from src.config import settings
 from src.database import Base, engine
 from src import models  # 確保所有 models 都被導入
 from src.services import scheduler
+# 新酒窖路由
+from src.routes import wine_items, wine_cellars
+# 舊路由（向下相容）
 from src.routes import food_items, fridges, line_webhook, notifications, budget, recipes, fridge_members, fridge_export
 
 logger = logging.getLogger(__name__)
@@ -47,7 +50,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="AI Fridge Elf - 數位冰箱管理系統 API",
+    description="AI Wine Cellar - 個人數位酒窖管理系統 API",
     lifespan=lifespan,
 )
 
@@ -89,7 +92,11 @@ async def health_check():
     }
 
 
-# 註冊路由
+# 註冊新酒窖路由
+app.include_router(wine_cellars.router, prefix="/api/v1", tags=["Wine Cellars"])
+app.include_router(wine_items.router, prefix="/api/v1", tags=["Wine Items"])
+
+# 註冊舊路由（向下相容）
 app.include_router(line_webhook.router, tags=["LINE"])
 app.include_router(fridges.router, prefix="/api/v1", tags=["Fridges"])
 app.include_router(food_items.router, prefix="/api/v1", tags=["Food Items"])
