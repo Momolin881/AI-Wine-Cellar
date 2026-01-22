@@ -4,9 +4,9 @@ services:
   # PostgreSQL 資料庫
   postgres:
     image: postgres:15-alpine
-    container_name: ai-fridge-postgres
+    container_name: ai-wine-cellar-postgres
     environment:
-      POSTGRES_DB: ai_fridge_elf
+      POSTGRES_DB: ai_wine_cellar
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
@@ -25,10 +25,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ai-fridge-backend
+    container_name: ai-wine-cellar-backend
     environment:
       # 資料庫
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/ai_fridge_elf
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/ai_wine_cellar
 
       # OpenAI
       OPENAI_API_KEY: ${OPENAI_API_KEY}
@@ -67,7 +67,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: ai-fridge-frontend
+    container_name: ai-wine-cellar-frontend
     environment:
       VITE_API_URL: /api/v1
       VITE_LIFF_ID: ${LIFF_ID}
@@ -88,4 +88,4 @@ volumes:
 
 networks:
   default:
-    name: ai-fridge-network
+    name: ai-wine-cellar-network

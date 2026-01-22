@@ -1,10 +1,10 @@
-# AI Fridge Elf 部署指南
+# AI Wine Cellar 部署指南
 
 ## 📋 部署前準備
 
 ### 必要的第三方服務
 
-1. **OpenAI API** - AI 圖像辨識和食譜推薦
+1. **OpenAI API** - AI 酒標辨識和酒食搭配推薦
    - 註冊：https://platform.openai.com/
    - 取得 API Key
 
@@ -28,15 +28,15 @@
 
 ```bash
 # 確認目前在專案根目錄
-cd /path/to/ai-fridge-elf
+cd /path/to/ai-wine-cellar
 
 # 初始化 Git（如果還沒有）
 git init
 git add .
-git commit -m "feat: 完成 AI Fridge Elf 核心功能"
+git commit -m "feat: 完成 AI Wine Cellar 核心功能"
 
 # 推送到 GitHub
-git remote add origin https://github.com/你的帳號/ai-fridge-elf.git
+git remote add origin https://github.com/你的帳號/ai-wine-cellar.git
 git branch -M main
 git push -u origin main
 ```
@@ -46,7 +46,7 @@ git push -u origin main
 1. 前往 [Zeabur Dashboard](https://dash.zeabur.com/)
 2. 點擊 "New Project"
 3. 選擇 "Deploy from GitHub"
-4. 選擇 `ai-fridge-elf` repository
+4. 選擇 `ai-wine-cellar` repository
 5. Zeabur 會自動偵測 `docker-compose.yml`
 
 ### 步驟 3: 設定環境變數
@@ -81,7 +81,7 @@ JWT_SECRET=你的隨機密鑰至少32字元
 
 1. 點擊 "Deploy"
 2. 等待建置完成（約 5-10 分鐘）
-3. 取得部署網址，例如：`https://ai-fridge-elf.zeabur.app`
+3. 取得部署網址，例如：`https://ai-wine-cellar.zeabur.app`
 
 ---
 
@@ -120,7 +120,7 @@ JWT_SECRET=你的隨機密鑰至少32字元
 
 **LIFF 設定:**
 ```
-LIFF app name: AI Fridge Elf
+LIFF app name: AI Wine Cellar
 Size: Full
 Endpoint URL: https://你的zeabur網址.zeabur.app
 Scope:
@@ -159,11 +159,11 @@ curl https://你的zeabur網址.zeabur.app/health
 1. 掃描 LINE Bot QR Code 加入好友
 2. 在聊天室中點擊 Rich Menu 開啟 LIFF
 3. 測試以下功能：
-   - ✅ 冰箱設定
-   - ✅ 新增食材（拍照辨識）
-   - ✅ 查看食材列表
-   - ✅ 效期提醒
-   - ✅ 食譜推薦
+   - ✅ 酒窖設定
+   - ✅ 新增酒款（拍照辨識）
+   - ✅ 查看酒款列表
+   - ✅ 適飲期提醒
+   - ✅ 酒食搭配推薦
    - ✅ 預算統計
 
 ---
@@ -222,7 +222,7 @@ curl https://你的zeabur網址.zeabur.app/health
 或使用本地工具：
 ```bash
 # 取得資料庫連線資訊
-psql postgresql://postgres:密碼@zeabur提供的host:port/ai_fridge_elf
+psql postgresql://postgres:密碼@zeabur提供的host:port/ai_wine_cellar
 ```
 
 ---
