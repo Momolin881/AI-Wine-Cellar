@@ -1,7 +1,45 @@
 /**
- * 全域樣式
+ * AI Wine Cellar - Neumorphism 深色主題
+ * 
+ * 配色：神秘灰 (#2d2d2d) + 土豪金 (#c9a227)
+ * 風格：Neumorphism（新擬物風）
  */
 
+/* ============ CSS 變數 ============ */
+:root {
+  /* 主色系 */
+  --bg-primary: #2d2d2d;
+  --bg-secondary: #353535;
+  --bg-tertiary: #252525;
+  
+  /* 金色強調 */
+  --accent-gold: #c9a227;
+  --accent-gold-light: #e0c060;
+  --accent-gold-dark: #a68520;
+  
+  /* 文字顏色 */
+  --text-primary: #f5f5f5;
+  --text-secondary: #b0b0b0;
+  --text-muted: #707070;
+  
+  /* Neumorphism 陰影 */
+  --shadow-light: #3d3d3d;
+  --shadow-dark: #1d1d1d;
+  
+  /* 圓角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 30px;
+  
+  /* 狀態顏色 */
+  --success: #4caf50;
+  --warning: #ff9800;
+  --error: #f44336;
+  --info: #2196f3;
+}
+
+/* ============ 全域重置 ============ */
 * {
   margin: 0;
   padding: 0;
@@ -10,60 +48,488 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif, 'Noto Sans TC', 'Microsoft JhengHei';
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
 }
 
 #root {
   min-height: 100vh;
+  background: var(--bg-primary);
 }
 
-/* Ant Design 客製化 */
+/* ============ Neumorphism 元件類別 ============ */
+
+/* 凸起效果 */
+.neu-raised {
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 
+    8px 8px 16px var(--shadow-dark),
+    -8px -8px 16px var(--shadow-light);
+}
+
+/* 凹陷效果 */
+.neu-inset {
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
+}
+
+/* 按鈕凸起 */
+.neu-button {
+  background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: 
+    5px 5px 10px var(--shadow-dark),
+    -5px -5px 10px var(--shadow-light);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 12px 24px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.neu-button:hover {
+  box-shadow: 
+    3px 3px 6px var(--shadow-dark),
+    -3px -3px 6px var(--shadow-light);
+}
+
+.neu-button:active {
+  box-shadow: 
+    inset 3px 3px 6px var(--shadow-dark),
+    inset -3px -3px 6px var(--shadow-light);
+}
+
+/* 金色主按鈕 */
+.neu-button-gold {
+  background: linear-gradient(145deg, var(--accent-gold-light), var(--accent-gold-dark));
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.neu-button-gold:hover {
+  background: linear-gradient(145deg, var(--accent-gold), var(--accent-gold-dark));
+}
+
+/* 卡片 */
+.neu-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 
+    10px 10px 20px var(--shadow-dark),
+    -10px -10px 20px var(--shadow-light);
+}
+
+/* 輸入框 */
+.neu-input {
+  background: var(--bg-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  color: var(--text-primary);
+  font-size: 16px;
+  box-shadow: 
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
+  outline: none;
+  width: 100%;
+}
+
+.neu-input:focus {
+  box-shadow: 
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light),
+    0 0 0 2px var(--accent-gold);
+}
+
+.neu-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* 進度條容器 */
+.neu-progress-container {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: 4px;
+  box-shadow: 
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
+}
+
+.neu-progress-bar {
+  background: linear-gradient(90deg, var(--accent-gold-dark), var(--accent-gold), var(--accent-gold-light));
+  border-radius: var(--radius-xl);
+  height: 12px;
+  transition: width 0.3s ease;
+}
+
+/* 標籤 */
+.neu-tag {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  box-shadow: 
+    2px 2px 4px var(--shadow-dark),
+    -2px -2px 4px var(--shadow-light);
+}
+
+.neu-tag-gold {
+  background: linear-gradient(145deg, var(--accent-gold), var(--accent-gold-dark));
+  color: #1a1a1a;
+}
+
+/* 分隔線 */
+.neu-divider {
+  height: 2px;
+  background: var(--bg-primary);
+  border-radius: 2px;
+  margin: 16px 0;
+  box-shadow: 
+    inset 1px 1px 2px var(--shadow-dark),
+    inset -1px -1px 2px var(--shadow-light);
+}
+
+/* ============ Ant Design 覆寫 ============ */
+
+/* Layout 背景 */
 .ant-layout {
   min-height: 100vh;
+  background: var(--bg-primary) !important;
 }
 
-/* 卡片陰影效果 */
+.ant-layout-content {
+  background: var(--bg-primary) !important;
+}
+
+/* 卡片 */
 .ant-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.3s ease;
+  background: var(--bg-primary) !important;
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 
+    10px 10px 20px var(--shadow-dark),
+    -10px -10px 20px var(--shadow-light) !important;
 }
 
-.ant-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+.ant-card-head {
+  background: transparent !important;
+  border-bottom: 1px solid var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
 }
 
-/* 按鈕樣式優化 */
+.ant-card-head-title {
+  color: var(--text-primary) !important;
+}
+
+.ant-card-body {
+  color: var(--text-secondary) !important;
+}
+
+/* 按鈕 */
 .ant-btn {
-  border-radius: 6px;
+  background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary)) !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 
+    5px 5px 10px var(--shadow-dark),
+    -5px -5px 10px var(--shadow-light) !important;
+  font-weight: 500;
+  transition: all 0.2s ease !important;
 }
 
-/* 輸入框樣式優化 */
+.ant-btn:hover {
+  color: var(--accent-gold) !important;
+  box-shadow: 
+    3px 3px 6px var(--shadow-dark),
+    -3px -3px 6px var(--shadow-light) !important;
+}
+
+.ant-btn:active {
+  box-shadow: 
+    inset 3px 3px 6px var(--shadow-dark),
+    inset -3px -3px 6px var(--shadow-light) !important;
+}
+
+.ant-btn-primary {
+  background: linear-gradient(145deg, var(--accent-gold-light), var(--accent-gold-dark)) !important;
+  color: #1a1a1a !important;
+}
+
+.ant-btn-primary:hover {
+  background: linear-gradient(145deg, var(--accent-gold), var(--accent-gold-dark)) !important;
+  color: #1a1a1a !important;
+}
+
+/* 輸入框 */
 .ant-input,
 .ant-input-number,
 .ant-select-selector,
 .ant-picker {
-  border-radius: 6px;
+  background: var(--bg-primary) !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light) !important;
 }
 
-/* 標籤樣式 */
+.ant-input:focus,
+.ant-input-focused,
+.ant-select-focused .ant-select-selector {
+  box-shadow: 
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light),
+    0 0 0 2px var(--accent-gold) !important;
+}
+
+.ant-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.ant-input-number-input {
+  color: var(--text-primary) !important;
+}
+
+/* Select 下拉選單 */
+.ant-select-dropdown {
+  background: var(--bg-secondary) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 
+    10px 10px 20px var(--shadow-dark),
+    -10px -10px 20px var(--shadow-light) !important;
+}
+
+.ant-select-item {
+  color: var(--text-primary) !important;
+}
+
+.ant-select-item-option-active {
+  background: var(--bg-tertiary) !important;
+}
+
+.ant-select-item-option-selected {
+  background: var(--accent-gold-dark) !important;
+  color: #1a1a1a !important;
+}
+
+/* 標籤 */
 .ant-tag {
-  border-radius: 4px;
-  font-weight: 500;
+  background: var(--bg-secondary) !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: 
+    2px 2px 4px var(--shadow-dark),
+    -2px -2px 4px var(--shadow-light) !important;
 }
 
-/* 響應式設計 */
+/* Tabs 標籤頁 */
+.ant-tabs {
+  color: var(--text-primary) !important;
+}
+
+.ant-tabs-tab {
+  color: var(--text-secondary) !important;
+}
+
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--accent-gold) !important;
+}
+
+.ant-tabs-ink-bar {
+  background: var(--accent-gold) !important;
+}
+
+/* Modal 彈窗 */
+.ant-modal-content {
+  background: var(--bg-primary) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 
+    20px 20px 40px var(--shadow-dark),
+    -20px -20px 40px var(--shadow-light) !important;
+}
+
+.ant-modal-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--bg-tertiary) !important;
+}
+
+.ant-modal-title {
+  color: var(--text-primary) !important;
+}
+
+.ant-modal-body {
+  color: var(--text-secondary) !important;
+}
+
+.ant-modal-footer {
+  border-top: 1px solid var(--bg-tertiary) !important;
+}
+
+/* Message 訊息提示 */
+.ant-message-notice-content {
+  background: var(--bg-secondary) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 
+    10px 10px 20px var(--shadow-dark),
+    -10px -10px 20px var(--shadow-light) !important;
+}
+
+/* Typography 文字 */
+.ant-typography {
+  color: var(--text-primary) !important;
+}
+
+h1.ant-typography,
+h2.ant-typography,
+h3.ant-typography,
+h4.ant-typography,
+h5.ant-typography {
+  color: var(--text-primary) !important;
+}
+
+.ant-typography.ant-typography-secondary {
+  color: var(--text-secondary) !important;
+}
+
+/* Spin 載入中 */
+.ant-spin-dot-item {
+  background: var(--accent-gold) !important;
+}
+
+/* Empty 空狀態 */
+.ant-empty-description {
+  color: var(--text-muted) !important;
+}
+
+/* Form 表單 */
+.ant-form-item-label > label {
+  color: var(--text-secondary) !important;
+}
+
+/* Statistic 統計數值 */
+.ant-statistic-title {
+  color: var(--text-secondary) !important;
+}
+
+.ant-statistic-content {
+  color: var(--accent-gold) !important;
+}
+
+/* Progress 進度條 */
+.ant-progress-inner {
+  background: var(--bg-tertiary) !important;
+}
+
+.ant-progress-bg {
+  background: linear-gradient(90deg, var(--accent-gold-dark), var(--accent-gold)) !important;
+}
+
+/* ============ 自訂元件樣式 ============ */
+
+/* 酒款卡片 */
+.wine-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wine-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    12px 12px 24px var(--shadow-dark),
+    -12px -12px 24px var(--shadow-light) !important;
+}
+
+/* 統計看板 */
+.stats-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 20px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* 開瓶狀態指示器 */
+.bottle-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.bottle-status.unopened {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--success);
+}
+
+.bottle-status.opened {
+  background: rgba(255, 152, 0, 0.2);
+  color: var(--warning);
+}
+
+/* 剩餘量顯示 */
+.remaining-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remaining-bar {
+  width: 60px;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.remaining-fill {
+  height: 100%;
+  background: var(--accent-gold);
+  transition: width 0.3s ease;
+}
+
+/* ============ 響應式設計 ============ */
 @media (max-width: 768px) {
   .ant-card {
     margin-bottom: 16px;
+  }
+  
+  .neu-card {
+    padding: 16px;
+  }
+  
+  .stats-dashboard {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
