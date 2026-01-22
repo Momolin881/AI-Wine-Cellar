@@ -82,6 +82,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+# CORS preflight 處理器
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    """處理所有 OPTIONS 請求（CORS preflight）"""
+    return {"status": "ok"}
+
+
 # 健康檢查端點
 @app.get("/health")
 async def health_check():
