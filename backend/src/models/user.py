@@ -29,7 +29,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # 關聯
-    fridges = relationship("Fridge", back_populates="owner", cascade="all, delete-orphan")
+    wine_cellars = relationship("WineCellar", back_populates="owner", cascade="all, delete-orphan")
     fridge_memberships = relationship("FridgeMember", foreign_keys="FridgeMember.user_id", back_populates="user")
 
     def __repr__(self):
