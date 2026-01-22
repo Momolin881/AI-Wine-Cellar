@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     # CORS 設定
     CORS_ORIGINS: list[str] = [
         "https://liff.line.me",
-        "https://ai-fridge.zeabur.app",
+        "https://ai-wine-cellar.zeabur.app",
         "http://localhost:5173",  # 本地開發
     ]
 
