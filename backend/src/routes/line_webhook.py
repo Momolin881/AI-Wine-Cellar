@@ -46,7 +46,7 @@ def verify_signature(body: bytes, signature: str) -> bool:
     return hmac.compare_digest(expected_signature, signature)
 
 
-@router.post("/webhook/line")
+@router.post("/webhook")
 async def line_webhook(request: Request):
     """
     LINE Webhook 端點
