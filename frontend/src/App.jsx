@@ -96,24 +96,17 @@ function App() {
 
   const checkCellarSetup = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/v1/wine-cellars`, {
-        headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
-      });
-      const cellars = await res.json();
+      // 使用 API client（會自動加入 Authorization header）
+      const { default: apiClient } = await import('./services/api.js');
+      const cellars = await apiClient.get('/wine-cellars');
+
       setHasCellar(cellars.length > 0);
 
       // 如果沒有酒窖，自動建立一個
       if (cellars.length === 0) {
-        await fetch(`${API_BASE}/api/v1/wine-cellars`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo',
-          },
-          body: JSON.stringify({
-            name: '我的酒窖',
-            total_capacity: 100,
-          }),
+        await apiClient.post('/wine-cellars', {
+          name: '我的酒窖',
+          total_capacity: 100,
         });
         setHasCellar(true);
       }
