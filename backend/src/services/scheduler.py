@@ -35,12 +35,12 @@ def start_scheduler():
         return
 
     try:
-        # 註冊每日任務：檢查即將過期食材（每天早上 9:00 執行）
+        # 註冊每日任務：檢查即將到達適飲期的酒款（每天早上 9:00 執行）
         scheduler.add_job(
             check_expiring_items,
             trigger=CronTrigger(hour=9, minute=0),
             id="check_expiring_items",
-            name="檢查即將過期食材",
+            name="檢查即將到達適飲期酒款",
             replace_existing=True
         )
 
@@ -49,7 +49,7 @@ def start_scheduler():
             check_space_usage,
             trigger=CronTrigger(hour=9, minute=0),
             id="check_space_usage",
-            name="檢查冰箱空間使用率",
+            name="檢查酒窖空間使用率",
             replace_existing=True
         )
 
@@ -80,11 +80,11 @@ def stop_scheduler():
 
 def check_expiring_items():
     """
-    檢查所有使用者的即將過期食材並發送通知
+    檢查所有使用者的即將到達適飲期酒款並發送通知
 
-    遍歷所有啟用效期提醒的使用者，檢查其食材是否即將過期。
+    遍歷所有啟用適飲期提醒的使用者，檢查其酒款是否即將到達適飲期。
     """
-    logger.info("開始執行：檢查即將過期食材")
+    logger.info("開始執行：檢查即將到達適飲期酒款")
     db = SessionLocal()
 
     try:
@@ -93,7 +93,7 @@ def check_expiring_items():
             NotificationSettings.expiry_warning_enabled == True
         ).all()
 
-        logger.info(f"找到 {len(settings_list)} 位使用者啟用效期提醒")
+        logger.info(f"找到 {len(settings_list)} 位使用者啟用適飲期提醒")
 
         for settings in settings_list:
             try:
@@ -101,14 +101,14 @@ def check_expiring_items():
                 today_taiwan = datetime.now(TAIWAN_TZ).date()
                 warning_date = today_taiwan + timedelta(days=settings.expiry_warning_days)
 
-                # 查詢該使用者即將過期或已過期的食材
+                # 查詢該使用者即將到達適飲期或已超過適飲期的酒款
                 expiring_items = db.query(FoodItem).join(
                     Fridge, FoodItem.fridge_id == Fridge.id
                 ).filter(
                     Fridge.user_id == settings.user_id,
                     FoodItem.expiry_date.isnot(None),
                     FoodItem.expiry_date <= warning_date,
-                    FoodItem.status == 'active'  # 只查詢未處理的食材
+                    FoodItem.status == 'active'  # 只查詢未處理的酒款
                 ).all()
 
                 if expiring_items:
@@ -123,17 +123,17 @@ def check_expiring_items():
                         })
 
                     # 發送通知
-                    logger.info(f"使用者 {settings.user_id} 有 {len(items_data)} 項食材即將過期")
+                    logger.info(f"使用者 {settings.user_id} 有 {len(items_data)} 瓶酒款即將到達適飲期")
                     send_expiry_notification(settings.user.line_user_id, items_data)
 
             except Exception as e:
-                logger.error(f"處理使用者 {settings.user_id} 的效期提醒時發生錯誤: {e}")
+                logger.error(f"處理使用者 {settings.user_id} 的適飲期提醒時發生錯誤: {e}")
                 continue
 
-        logger.info("完成：檢查即將過期食材")
+        logger.info("完成：檢查即將到達適飲期酒款")
 
     except Exception as e:
-        logger.error(f"檢查即將過期食材時發生錯誤: {e}")
+        logger.error(f"檢查即將到達適飲期酒款時發生錯誤: {e}")
 
     finally:
         db.close()
@@ -141,11 +141,11 @@ def check_expiring_items():
 
 def check_space_usage():
     """
-    檢查所有使用者的冰箱空間使用率並發送警告
+    檢查所有使用者的酒窖空間使用率並發送警告
 
-    遍歷所有啟用空間提醒的使用者，檢查其冰箱空間使用率。
+    遍歷所有啟用空間提醒的使用者，檢查其酒窖空間使用率。
     """
-    logger.info("開始執行：檢查冰箱空間使用率")
+    logger.info("開始執行：檢查酒窖空間使用率")
     db = SessionLocal()
 
     try:
@@ -158,7 +158,7 @@ def check_space_usage():
 
         for settings in settings_list:
             try:
-                # 查詢該使用者的所有冰箱
+                # 查詢該使用者的所有酒窖
                 fridges = db.query(Fridge).filter(
                     Fridge.user_id == settings.user_id
                 ).all()
@@ -184,7 +184,7 @@ def check_space_usage():
                     # 如果超過門檻，發送警告
                     if usage_percentage >= settings.space_warning_threshold:
                         logger.info(
-                            f"冰箱 {fridge.id} 空間使用率 {usage_percentage:.1f}% "
+                            f"酒窖 {fridge.id} 空間使用率 {usage_percentage:.1f}% "
                             f"超過門檻 {settings.space_warning_threshold}%"
                         )
                         send_space_warning(settings.user.line_user_id, usage_percentage)
@@ -193,10 +193,10 @@ def check_space_usage():
                 logger.error(f"處理使用者 {settings.user_id} 的空間提醒時發生錯誤: {e}")
                 continue
 
-        logger.info("完成：檢查冰箱空間使用率")
+        logger.info("完成：檢查酒窖空間使用率")
 
     except Exception as e:
-        logger.error(f"檢查冰箱空間使用率時發生錯誤: {e}")
+        logger.error(f"檢查酒窖空間使用率時發生錯誤: {e}")
 
     finally:
         db.close()

@@ -94,7 +94,7 @@ async def handle_text_message(event_data: dict):
     處理文字訊息事件
 
     根據使用者訊息內容回覆適當的訊息。
-    未來可擴充為指令處理（如「查詢過期食材」、「新增食材」等）。
+    未來可擴充為指令處理（如「查詢適飲期酒款」、「新增酒款」等）。
 
     Args:
         event_data: LINE webhook 事件資料（dict）
@@ -107,18 +107,18 @@ async def handle_text_message(event_data: dict):
 
     # 簡易回應邏輯（未來可擴充）
     if user_message in ["你好", "Hello", "Hi", "嗨"]:
-        reply_text = "你好！歡迎使用 AI Fridge Elf。\n\n請使用 LIFF 應用管理你的冰箱食材。"
+        reply_text = "你好！歡迎使用 AI Wine Cellar。\n\n請使用 LIFF 應用管理你的酒窖酒款。"
     elif user_message in ["幫助", "help", "說明"]:
         reply_text = (
-            "AI Fridge Elf 功能說明：\n\n"
-            "1. 使用 LIFF 應用新增、編輯食材\n"
-            "2. AI 自動辨識食材圖片\n"
-            "3. 自動提醒即將過期的食材\n"
-            "4. 追蹤冰箱容量使用率\n\n"
+            "AI Wine Cellar 功能說明：\n\n"
+            "1. 使用 LIFF 應用新增、編輯酒款\n"
+            "2. AI 自動辨識酒標圖片\n"
+            "3. 自動提醒適飲期酒款\n"
+            "4. 追蹤酒窖容量使用率\n\n"
             "點選下方選單開始使用！"
         )
     else:
-        reply_text = f"你說：「{user_message}」\n\n目前此訊息功能尚未實作，請使用 LIFF 應用管理食材。"
+        reply_text = f"你說：「{user_message}」\n\n目前此訊息功能尚未實作，請使用 LIFF 應用管理酒款。"
 
     # 回覆訊息
     try:

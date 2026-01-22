@@ -1,23 +1,23 @@
-# AI Fridge Elf 數位冰箱管理系統
+# AI Wine Cellar 數位酒窖管理系統
 
-🧊 智慧冰箱管理系統 - 透過 LINE Bot + AI 幫你管理食材、避免浪費、推薦食譜！
+🍷 智慧酒窖管理系統 - 透過 LINE Bot + AI 幫你管理酒款、追蹤適飲期、推薦酒食搭配！
 
 ## 功能特色
 
-### 🎯 P1 - 食材入庫與管理（MVP）
-- 📸 **拍照辨識**：使用 GPT-4 Vision API 自動辨識食材資訊
-- 📝 **快速登錄**：自動識別名稱、數量、效期、體積、金額
-- 🗂️ **智慧分類**：支援簡單模式（冷藏/冷凍）和細分模式（自訂區域）
-- 📊 **清單管理**：LIFF 頁面查看、編輯、刪除所有食材
+### 🎯 P1 - 酒款入庫與管理（MVP）
+- 📸 **拍照辨識**：使用 GPT-4 Vision API 自動辨識酒標資訊
+- 📝 **快速登錄**：自動識別酒名、年份、產區、酒莊、價格
+- 🗂️ **智慧分類**：支援紅酒、白酒、氣泡酒、威士忌等多種酒類
+- 📊 **清單管理**：LIFF 頁面查看、編輯、刪除所有酒款
 
-### ⏰ P2 - 效期與庫存提醒
-- 🔔 **效期提醒**：即將過期食材自動 LINE 通知
+### ⏰ P2 - 適飲期與庫存提醒
+- 🔔 **適飲期提醒**：酒款即將到達最佳飲用期自動 LINE 通知
 - 📉 **庫存警報**：安全存量不足時提醒補貨
-- 📦 **空間提醒**：冰箱使用率超過 80% 時提醒整理
+- 📦 **空間提醒**：酒窖使用率超過 80% 時提醒整理
 
-### 🍳 P3 - 食譜建議
-- 🤖 **智慧推薦**：根據現有食材推薦可製作的食譜
-- 📚 **個人食譜庫**：建立自己的「常煮」和「黑白大廚 Pro」食譜
+### 🍳 P3 - 酒食搭配建議
+- 🤖 **智慧推薦**：根據現有酒款推薦適合的料理搭配
+- 📚 **個人搭配庫**：建立自己的「常用」和「專業級」搭配清單
 
 ### 💰 P4 - 採購預算控管
 - 📈 **消費分析**：支出趨勢圖表、分類統計
@@ -39,7 +39,7 @@
 ### 前端
 - **框架**: React + Vite
 - **UI 元件**: Ant Design
-- **圖表**: Chart.js
+- **主題**: Neumorphism 深色主題
 - **LIFF SDK**: @line/liff
 
 ### 部署
@@ -68,7 +68,7 @@ irm https://astral.sh/uv/install.ps1 | iex
 1. **Clone 專案**
 ```bash
 git clone <repository-url>
-cd ai-fridge-elf
+cd ai-wine-cellar
 ```
 
 2. **設定環境變數**
@@ -94,21 +94,13 @@ npm run dev
 
 5. **訪問應用**
 - API 文件: http://localhost:8000/docs
-- LIFF 前端: http://localhost:5173
-
-## 詳細文件
-
-- [快速入門指南](../specs/001-fridge-management/quickstart.md)
-- [技術研究](../specs/001-fridge-management/research.md)
-- [資料模型設計](../specs/001-fridge-management/data-model.md)
-- [API 規格](../specs/001-fridge-management/contracts/openapi.yaml)
-- [LIFF 頁面路由](../specs/001-fridge-management/contracts/liff-routes.md)
+- LIFF 前端: http://localhost:5174
 
 ## 開發者資訊
 
 ### 專案結構
 ```
-ai-fridge-elf/
+ai-wine-cellar/
 ├── backend/          # FastAPI 後端
 │   ├── src/          # 原始碼
 │   └── migrations/   # 資料庫遷移

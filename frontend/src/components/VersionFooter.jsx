@@ -23,7 +23,7 @@ function VersionFooter() {
       }}
     >
       <Text style={{ fontSize: '10px', color: '#999' }}>
-        AI Fridge Elf v{appVersion} ({gitHash})
+        AI Wine Cellar v{appVersion} ({gitHash})
       </Text>
     </div>
   );

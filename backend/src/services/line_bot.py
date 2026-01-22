@@ -98,11 +98,11 @@ def send_flex_message(user_id: str, alt_text: str, contents: dict) -> bool:
 
 def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
     """
-    發送效期提醒通知
+    發送適飲期提醒通知
 
     Args:
         user_id: LINE User ID
-        items: 即將過期的食材清單，每個 item 包含 name, expiry_date, days_remaining
+        items: 即將到達適飲期的酒款清單，每個 item 包含 name, expiry_date, days_remaining
 
     Returns:
         bool: 發送成功返回 True，失敗返回 False
@@ -115,7 +115,7 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
         >>> success = send_expiry_notification("U1234567890abcdef", items)
     """
     if not items:
-        logger.warning("沒有即將過期的食材，不發送通知")
+        logger.warning("沒有即將到達適飲期的酒款，不發送通知")
         return False
 
     # 建立 Flex Message 內容
@@ -165,14 +165,14 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
             "contents": [
                 {
                     "type": "text",
-                    "text": "⏰ 效期提醒",
+                    "text": "🍷 適飲期提醒",
                     "weight": "bold",
                     "size": "lg",
                     "color": "#1DB446"
                 },
                 {
                     "type": "text",
-                    "text": f"您有 {len(items)} 項食材需要注意",
+                    "text": f"您有 {len(items)} 瓶酒款需要注意",
                     "size": "sm",
                     "color": "#999999",
                     "margin": "md"
@@ -197,7 +197,7 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
                     "type": "button",
                     "action": {
                         "type": "uri",
-                        "label": "查看冰箱",
+                        "label": "查看酒窖",
                         "uri": f"https://liff.line.me/{settings.LIFF_ID}"
                     },
                     "style": "primary",
@@ -207,7 +207,7 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
         }
     }
 
-    return send_flex_message(user_id, f"⏰ 您有 {len(items)} 項食材即將過期", contents)
+    return send_flex_message(user_id, f"🍷 您有 {len(items)} 瓶酒款即將到達適飲期", contents)
 
 
 def send_low_stock_notification(user_id: str, items: list[dict]) -> bool:
@@ -216,7 +216,7 @@ def send_low_stock_notification(user_id: str, items: list[dict]) -> bool:
 
     Args:
         user_id: LINE User ID
-        items: 庫存不足的食材清單
+        items: 庫存不足的酒款清單
 
     Returns:
         bool: 發送成功返回 True，失敗返回 False
@@ -225,7 +225,7 @@ def send_low_stock_notification(user_id: str, items: list[dict]) -> bool:
         return False
 
     item_names = ", ".join([item["name"] for item in items[:5]])
-    text = f"📦 庫存提醒\n\n以下食材數量不足：\n{item_names}"
+    text = f"📦 庫存提醒\n\n以下酒款數量不足：\n{item_names}"
 
     if len(items) > 5:
         text += f"\n...等共 {len(items)} 項"
@@ -244,5 +244,5 @@ def send_space_warning(user_id: str, usage_percentage: float) -> bool:
     Returns:
         bool: 發送成功返回 True，失敗返回 False
     """
-    text = f"🧊 空間提醒\n\n冰箱空間使用率已達 {usage_percentage:.1f}%，建議整理冰箱或消耗部分食材。"
+    text = f"🍷 空間提醒\n\n酒窖空間使用率已達 {usage_percentage:.1f}%，建議整理酒窖或享用部分酒款。"
     return send_text_message(user_id, text)

@@ -1,14 +1,14 @@
 {
-  "name": "ai-fridge-elf-frontend",
+  "name": "ai-wine-cellar-frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "AI Fridge Elf - 數位冰箱管理系統前端 (LIFF 應用)",
+  "description": "AI Wine Cellar - 數位酒窖管理系統前端 (LIFF 應用)",
   "license": "MIT",
-  "author": "AI Fridge Elf Team",
+  "author": "AI Wine Cellar Team",
   "keywords": [
-    "fridge",
-    "food-management",
+    "wine-cellar",
+    "wine-management",
     "line-liff",
     "react",
     "vite"

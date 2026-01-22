@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str
 
     # 應用設定
-    APP_NAME: str = "AI Fridge Elf"
+    APP_NAME: str = "AI Wine Cellar"
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = False
 

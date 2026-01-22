@@ -1,7 +1,8 @@
 """
-冰箱匯出/匯入 API 路由
+酒窖匯出/匯入 API 路由
 
-提供冰箱資料的匯出和匯入功能。
+提供酒窖資料的匯出和匯入功能。
+（待遷移：目前仍使用 Fridge/FoodItem 模型，之後會改用 WineCellar/WineItem 模型）
 """
 
 import logging
@@ -55,7 +56,7 @@ class FridgeExportData(BaseModel):
 
 
 class ImportOptions(BaseModel):
-    clear_existing: bool = False  # 是否清除現有食材
+    clear_existing: bool = False  # 是否清除現有酒款
 
 
 # ============ API Endpoints ============
@@ -63,7 +64,7 @@ class ImportOptions(BaseModel):
 @router.get(
     "/{fridge_id}/export",
     response_model=FridgeExportData,
-    summary="匯出冰箱資料"
+    summary="匯出酒窖資料"
 )
 async def export_fridge(
     fridge_id: int,
@@ -71,9 +72,9 @@ async def export_fridge(
     user_id: CurrentUserId,
 ):
     """
-    匯出冰箱資料為 JSON 格式
+    匯出酒窖資料為 JSON 格式
     
-    包含：冰箱設定、分區、所有食材
+    包含：酒窖設定、分區、所有酒款
     權限：viewer, editor, owner 皆可匯出
     """
     user = db.query(User).filter(User.id == user_id).first()
@@ -83,17 +84,17 @@ async def export_fridge(
     # 檢查權限（viewer 也可以匯出）
     require_fridge_permission(db, fridge_id, user_id, "viewer")
     
-    # 取得冰箱
+    # 取得酒窖
     fridge = db.query(Fridge).filter(Fridge.id == fridge_id).first()
     if not fridge:
-        raise HTTPException(status_code=404, detail="冰箱不存在")
+        raise HTTPException(status_code=404, detail="酒窖不存在")
     
     # 取得分區
     compartments = db.query(FridgeCompartment).filter(
         FridgeCompartment.fridge_id == fridge_id
     ).all()
     
-    # 取得食材
+    # 取得酒款
     food_items = db.query(FoodItem).filter(
         FoodItem.fridge_id == fridge_id
     ).all()
@@ -134,14 +135,14 @@ async def export_fridge(
         ],
     )
     
-    logger.info(f"冰箱 {fridge_id} 匯出成功，共 {len(food_items)} 項食材")
+    logger.info(f"酒窖 {fridge_id} 匯出成功，共 {len(food_items)} 項酒款")
     
     return export_data
 
 
 @router.post(
     "/{fridge_id}/import",
-    summary="匯入冰箱資料"
+    summary="匯入酒窖資料"
 )
 async def import_fridge(
     fridge_id: int,
@@ -151,10 +152,10 @@ async def import_fridge(
     clear_existing: bool = False,
 ):
     """
-    匯入冰箱資料
+    匯入酒窖資料
     
-    - clear_existing=True: 清除現有食材後匯入
-    - clear_existing=False: 合併匯入（新增到現有食材）
+    - clear_existing=True: 清除現有酒款後匯入
+    - clear_existing=False: 合併匯入（新增到現有酒款）
     
     權限：editor, owner 可匯入
     """
@@ -165,16 +166,16 @@ async def import_fridge(
     # 檢查權限（需要 editor 以上）
     require_fridge_permission(db, fridge_id, user_id, "editor")
     
-    # 取得冰箱
+    # 取得酒窖
     fridge = db.query(Fridge).filter(Fridge.id == fridge_id).first()
     if not fridge:
-        raise HTTPException(status_code=404, detail="冰箱不存在")
+        raise HTTPException(status_code=404, detail="酒窖不存在")
     
     try:
-        # 如果要清除現有食材
+        # 如果要清除現有酒款
         if clear_existing:
             db.query(FoodItem).filter(FoodItem.fridge_id == fridge_id).delete()
-            logger.info(f"冰箱 {fridge_id} 現有食材已清除")
+            logger.info(f"酒窖 {fridge_id} 現有酒款已清除")
         
         # 取得分區對照表（名稱 -> ID）
         compartments = db.query(FridgeCompartment).filter(
@@ -182,7 +183,7 @@ async def import_fridge(
         ).all()
         compartment_map = {c.name: c.id for c in compartments}
         
-        # 匯入食材
+        # 匯入酒款
         imported_count = 0
         for item_data in import_data.food_items:
             # 解析日期
@@ -205,7 +206,7 @@ async def import_fridge(
             if item_data.compartment_name and item_data.compartment_name in compartment_map:
                 compartment_id = compartment_map[item_data.compartment_name]
             
-            # 建立食材
+            # 建立酒款
             food_item = FoodItem(
                 fridge_id=fridge_id,
                 name=item_data.name,
@@ -225,7 +226,7 @@ async def import_fridge(
         
         db.commit()
         
-        logger.info(f"冰箱 {fridge_id} 匯入成功，共 {imported_count} 項食材")
+        logger.info(f"酒窖 {fridge_id} 匯入成功，共 {imported_count} 項酒款")
         
         return {
             "message": "匯入成功",
@@ -235,7 +236,7 @@ async def import_fridge(
     
     except Exception as e:
         db.rollback()
-        logger.error(f"冰箱 {fridge_id} 匯入失敗: {e}")
+        logger.error(f"酒窖 {fridge_id} 匯入失敗: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"匯入失敗: {str(e)}"

@@ -1,7 +1,8 @@
 """
-Fridge 和 FridgeCompartment 模型
+Fridge 和 FridgeCompartment 模型（舊版 - 待遷移）
 
-支援簡單模式（冷藏/冷凍）和細分模式（自訂區域）。
+此為舊版酒窖模型，目前由 budget_service、recipe_service、fridge_members、fridge_export 使用。
+新系統請使用 WineCellar 模型。
 """
 
 from datetime import datetime
@@ -12,15 +13,15 @@ from src.database import Base
 
 
 class Fridge(Base):
-    """冰箱模型"""
+    """酒窖模型（舊版）"""
 
     __tablename__ = "fridges"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    # 冰箱資訊
-    model_name = Column(String(255), nullable=True)  # 冰箱型號（可選）
+    # 酒窖資訊
+    model_name = Column(String(255), nullable=True)  # 酒窖名稱（可選）
     total_capacity_liters = Column(Float, nullable=False)  # 總容量（公升）
 
     # 時間戳記
@@ -39,7 +40,7 @@ class Fridge(Base):
 
 
 class FridgeCompartment(Base):
-    """冰箱分區模型（細分模式使用）"""
+    """酒窖分區模型（舊版）"""
 
     __tablename__ = "fridge_compartments"
 

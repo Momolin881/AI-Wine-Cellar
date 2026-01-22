@@ -4,7 +4,7 @@
     "height": 1686
   },
   "selected": true,
-  "name": "AI Fridge Elf 主選單",
+  "name": "AI Wine Cellar 主選單",
   "chatBarText": "開啟選單",
   "areas": [
     {
@@ -16,7 +16,7 @@
       },
       "action": {
         "type": "uri",
-        "label": "查看冰箱",
+        "label": "查看酒窖",
         "uri": "https://liff.line.me/YOUR_LIFF_ID"
       }
     },
@@ -29,7 +29,7 @@
       },
       "action": {
         "type": "uri",
-        "label": "新增食材",
+        "label": "新增酒款",
         "uri": "https://liff.line.me/YOUR_LIFF_ID/add"
       }
     },
@@ -42,7 +42,7 @@
       },
       "action": {
         "type": "uri",
-        "label": "食譜建議",
+        "label": "酒食搭配",
         "uri": "https://liff.line.me/YOUR_LIFF_ID/recipes"
       }
     },

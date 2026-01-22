@@ -1,7 +1,8 @@
 """
-FoodItem Pydantic schemas
+FoodItem Pydantic schemas（舊版 - 待遷移）
 
-包含食材相關的請求和回應驗證 schemas。
+包含酒款相關的請求和回應驗證 schemas。
+新系統請使用 WineItem 相關 schemas。
 """
 
 from datetime import date, datetime
@@ -35,7 +36,7 @@ class FoodItemBase(BaseModel):
 class FoodItemCreate(FoodItemBase):
     """新增食材請求"""
 
-    fridge_id: int = Field(..., description="冰箱 ID")
+    fridge_id: int = Field(..., description="酒窖 ID")
     compartment_id: Optional[int] = Field(None, description="分區 ID（細分模式使用）")
     image_url: Optional[str] = Field(None, max_length=512, description="圖片 URL（AI 辨識使用）")
     cloudinary_public_id: Optional[str] = Field(None, max_length=255, description="Cloudinary public_id")

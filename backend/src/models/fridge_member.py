@@ -1,8 +1,8 @@
 """
-FridgeMember 模型
+FridgeMember 模型（舊版 - 待遷移）
 
-儲存冰箱成員資訊，支援冰箱共享功能。
-一個冰箱可以有多個成員，每個成員有不同的權限等級。
+儲存酒窖成員資訊，支援酒窖共享功能。
+一個酒窖可以有多個成員，每個成員有不同的權限等級。
 """
 
 from datetime import datetime, timedelta
@@ -14,7 +14,7 @@ from src.database import Base
 
 
 class FridgeMember(Base):
-    """冰箱成員模型"""
+    """酒窖成員模型"""
 
     __tablename__ = "fridge_members"
 
@@ -32,7 +32,7 @@ class FridgeMember(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    # 唯一約束：一個使用者在一個冰箱只能有一個角色
+    # 唯一約束：一個使用者在一個酒窖只能有一個角色
     __table_args__ = (
         UniqueConstraint('fridge_id', 'user_id', name='uq_fridge_member'),
     )
@@ -66,7 +66,7 @@ class FridgeMember(Base):
 
 
 class FridgeInvite(Base):
-    """冰箱邀請碼模型"""
+    """酒窖邀請碼模型"""
 
     __tablename__ = "fridge_invites"
 

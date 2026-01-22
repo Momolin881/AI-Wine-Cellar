@@ -1,13 +1,13 @@
 [project]
-name = "ai-fridge-elf-backend"
+name = "ai-wine-cellar-backend"
 version = "0.1.0"
-description = "AI Fridge Elf - 數位冰箱管理系統後端服務"
+description = "AI Wine Cellar - 數位酒窖管理系統後端服務"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
-    {name = "AI Fridge Elf Team"}
+    {name = "AI Wine Cellar Team"}
 ]
-keywords = ["fridge", "food-management", "line-bot", "ai-vision"]
+keywords = ["wine-cellar", "wine-management", "line-bot", "ai-vision"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: End Users/Desktop",
@@ -50,8 +50,8 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/yourusername/ai-fridge-elf"
-Documentation = "https://github.com/yourusername/ai-fridge-elf/tree/main/docs"
+Repository = "https://github.com/yourusername/ai-wine-cellar"
+Documentation = "https://github.com/yourusername/ai-wine-cellar/tree/main/docs"
 
 [build-system]
 requires = ["hatchling"]

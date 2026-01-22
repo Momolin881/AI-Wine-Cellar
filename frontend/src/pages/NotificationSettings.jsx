@@ -1,7 +1,7 @@
 /**
  * 通知設定頁面
  *
- * 允許使用者設定效期提醒、庫存提醒、空間提醒的參數。
+ * 允許使用者設定適飲期提醒、消費提醒的參數。
  */
 
 import { useState, useEffect } from 'react';
@@ -166,7 +166,7 @@ function NotificationSettings() {
               <Text strong>啟用效期提醒</Text>
               <br />
               <Text type="secondary" style={{ fontSize: '12px' }}>
-                在食材即將過期時通知您
+                在酒款即將到達適飲期時通知您
               </Text>
             </div>
             <Form.Item

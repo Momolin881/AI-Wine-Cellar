@@ -1,7 +1,8 @@
 """
-冰箱成員 API 路由
+酒窖成員 API 路由
 
-提供冰箱共享功能的成員管理 API。
+提供酒窖共享功能的成員管理 API。
+（待遷移：目前仍使用 Fridge 模型，之後會改用 WineCellar 模型）
 """
 
 import logging
@@ -72,7 +73,7 @@ class JoinFridgeResponse(BaseModel):
 # ============ Helper Functions ============
 
 def get_user_membership(db: Session, fridge_id: int, user_id: int) -> Optional[FridgeMember]:
-    """取得使用者在冰箱的成員資料"""
+    """取得使用者在酒窖的成員資料"""
     return db.query(FridgeMember).filter(
         FridgeMember.fridge_id == fridge_id,
         FridgeMember.user_id == user_id
@@ -85,17 +86,17 @@ def require_fridge_permission(db: Session, fridge_id: int, user_id: int, require
     
     Raises:
         HTTPException 403: 權限不足
-        HTTPException 404: 冰箱不存在或非成員
+        HTTPException 404: 酒窖不存在或非成員
     """
-    # 先檢查冰箱是否存在
+    # 先檢查酒窖是否存在
     fridge = db.query(Fridge).filter(Fridge.id == fridge_id).first()
     if not fridge:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="冰箱不存在"
+            detail="酒窖不存在"
         )
     
-    # 檢查是否為冰箱擁有者（自動有 owner 權限）
+    # 檢查是否為酒窖擁有者（自動有 owner 權限）
     if fridge.user_id == user_id:
         # 建立或取得 owner membership
         membership = get_user_membership(db, fridge_id, user_id)
@@ -115,7 +116,7 @@ def require_fridge_permission(db: Session, fridge_id: int, user_id: int, require
     if not membership:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="您不是此冰箱的成員"
+            detail="您不是此酒窖的成員"
         )
     
     if not membership.has_permission(required_role):
@@ -132,14 +133,14 @@ def require_fridge_permission(db: Session, fridge_id: int, user_id: int, require
 @router.get(
     "/{fridge_id}/members",
     response_model=List[FridgeMemberResponse],
-    summary="取得冰箱成員清單"
+    summary="取得酒窖成員清單"
 )
 async def get_fridge_members(
     fridge_id: int,
     db: DBSession,
     user_id: CurrentUserId,
 ):
-    """取得冰箱的所有成員（需為成員才能查看）"""
+    """取得酒窖的所有成員（需為成員才能查看）"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="使用者不存在")
@@ -256,7 +257,7 @@ async def remove_member(
     db.delete(member)
     db.commit()
     
-    logger.info(f"成員 {member_id} 已從冰箱 {fridge_id} 移除")
+    logger.info(f"成員 {member_id} 已從酒窖 {fridge_id} 移除")
 
 
 # ============ 邀請功能 ============
@@ -273,7 +274,7 @@ async def create_invite(
     db: DBSession,
     user_id: CurrentUserId,
 ):
-    """產生冰箱邀請碼（僅 owner 可操作）"""
+    """產生酒窖邀請碼（僅 owner 可操作）"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="使用者不存在")
@@ -298,7 +299,7 @@ async def create_invite(
     db.commit()
     db.refresh(invite)
     
-    logger.info(f"冰箱 {fridge_id} 產生邀請碼: {invite.invite_code}")
+    logger.info(f"酒窖 {fridge_id} 產生邀請碼: {invite.invite_code}")
     
     return FridgeInviteResponse(
         id=invite.id,
@@ -321,7 +322,7 @@ async def get_invites(
     db: DBSession,
     user_id: CurrentUserId,
 ):
-    """取得冰箱的所有邀請碼（僅 owner 可查看）"""
+    """取得酒窖的所有邀請碼（僅 owner 可查看）"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="使用者不存在")
@@ -350,14 +351,14 @@ async def get_invites(
 @router.post(
     "/join/{invite_code}",
     response_model=JoinFridgeResponse,
-    summary="透過邀請碼加入冰箱"
+    summary="透過邀請碼加入酒窖"
 )
 async def join_fridge(
     invite_code: str,
     db: DBSession,
     user_id: CurrentUserId,
 ):
-    """透過邀請碼加入冰箱"""
+    """透過邀請碼加入酒窖"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="使用者不存在")
@@ -376,9 +377,9 @@ async def join_fridge(
     # 檢查是否已經是成員
     existing = get_user_membership(db, invite.fridge_id, user_id)
     if existing:
-        raise HTTPException(status_code=400, detail="您已經是此冰箱的成員")
+        raise HTTPException(status_code=400, detail="您已經是此酒窖的成員")
     
-    # 加入冰箱
+    # 加入酒窖
     member = FridgeMember(
         fridge_id=invite.fridge_id,
         user_id=user_id,
@@ -393,10 +394,10 @@ async def join_fridge(
     
     db.commit()
     
-    logger.info(f"使用者 {user_id} 透過邀請碼 {invite_code} 加入冰箱 {invite.fridge_id}")
+    logger.info(f"使用者 {user_id} 透過邀請碼 {invite_code} 加入酒窖 {invite.fridge_id}")
     
     return JoinFridgeResponse(
-        message="成功加入冰箱",
+        message="成功加入酒窖",
         fridge_id=invite.fridge_id,
         role=invite.default_role,
     )

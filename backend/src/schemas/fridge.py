@@ -1,7 +1,8 @@
 """
-Fridge 和 FridgeCompartment Pydantic schemas
+Fridge 和 FridgeCompartment Pydantic schemas（舊版 - 待遷移）
 
-包含冰箱和分區相關的請求和回應驗證 schemas。
+包含酒窖和分區相關的請求和回應驗證 schemas。
+新系統請使用 WineCellar 相關 schemas。
 """
 
 from datetime import datetime
@@ -66,27 +67,27 @@ class FridgeCompartmentResponse(FridgeCompartmentBase):
 
 
 class FridgeBase(BaseModel):
-    """冰箱基礎欄位"""
+    """酒窖基礎欄位（舊版）"""
 
-    model_name: Optional[str] = Field(None, max_length=255, description="冰箱型號（可選）")
+    model_name: Optional[str] = Field(None, max_length=255, description="酒窖名稱（可選）")
     total_capacity_liters: float = Field(..., gt=0, description="總容量（公升）")
 
 
 class FridgeCreate(FridgeBase):
-    """新增冰箱請求"""
+    """新增酒窖請求（舊版）"""
 
     pass
 
 
 class FridgeUpdate(BaseModel):
-    """更新冰箱請求（所有欄位可選）"""
+    """更新酒窖請求（舊版，所有欄位可選）"""
 
     model_name: Optional[str] = Field(None, max_length=255)
     total_capacity_liters: Optional[float] = Field(None, gt=0)
 
 
 class FridgeResponse(FridgeBase):
-    """冰箱回應"""
+    """酒窖回應（舊版）"""
 
     id: int
     user_id: int
@@ -98,7 +99,7 @@ class FridgeResponse(FridgeBase):
 
 
 class FridgeDetailResponse(FridgeResponse):
-    """冰箱詳細資訊回應（含分區）"""
+    """酒窖詳細資訊回應（舊版，含分區）"""
 
     compartments: list[FridgeCompartmentResponse] = []
 
