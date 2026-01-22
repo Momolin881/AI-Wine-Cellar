@@ -1,16 +1,50 @@
 /**
- * App 主元件
+ * App 主元件 - AI Wine Cellar
  *
  * 應用程式的根元件，負責路由設定和 LIFF 初始化。
+ * Neumorphism 深色主題
  */
 
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider, Spin, message } from 'antd';
+import { ConfigProvider, Spin } from 'antd';
 import zhTW from 'antd/locale/zh_TW';
 import { initializeLiff } from './liff';
-import { Home, FridgeSetup, AddFoodItem, EditFoodItem, FridgeSettings, NotificationSettings, BudgetManagement, RecipeRecommendations, RecipeDetail, UserRecipes } from './pages';
-import { getFridges } from './services/api';
+import {
+  WineHome,
+  AddWineItem,
+  EditWineItem,
+  CellarSettings,
+  NotificationSettings,
+} from './pages';
+
+// 深色主題配置
+const darkTheme = {
+  token: {
+    colorPrimary: '#c9a227',
+    colorBgContainer: '#2d2d2d',
+    colorBgElevated: '#353535',
+    colorText: '#f5f5f5',
+    colorTextSecondary: '#b0b0b0',
+    colorBorder: '#404040',
+    borderRadius: 12,
+  },
+  components: {
+    Card: {
+      colorBgContainer: '#2d2d2d',
+    },
+    Button: {
+      colorPrimary: '#c9a227',
+      algorithm: true,
+    },
+    Input: {
+      colorBgContainer: '#2d2d2d',
+    },
+    Select: {
+      colorBgContainer: '#2d2d2d',
+    },
+  },
+};
 
 // 載入元件
 const LoadingPage = () => (
@@ -20,18 +54,23 @@ const LoadingPage = () => (
     alignItems: 'center',
     height: '100vh',
     flexDirection: 'column',
-    gap: '20px'
+    gap: '20px',
+    background: '#2d2d2d',
+    color: '#f5f5f5',
   }}>
     <Spin size="large" />
-    <p>初始化 LIFF...</p>
+    <p>🍷 載入酒窖中...</p>
   </div>
 );
+
+// API base URL
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function App() {
   const [liffReady, setLiffReady] = useState(false);
   const [liffError, setLiffError] = useState(null);
-  const [hasFridge, setHasFridge] = useState(true);
-  const [checkingFridge, setCheckingFridge] = useState(true);
+  const [hasCellar, setHasCellar] = useState(true);
+  const [checkingCellar, setCheckingCellar] = useState(true);
 
   useEffect(() => {
     // 初始化 LIFF SDK
@@ -41,32 +80,48 @@ function App() {
 
         if (isReady) {
           setLiffReady(true);
-          // 檢查是否已設定冰箱
-          checkFridgeSetup();
+          // 檢查是否已設定酒窖
+          checkCellarSetup();
         } else {
-          // 登入中，等待重新導向
           console.log('Redirecting to LINE login...');
         }
       } catch (error) {
         console.error('LIFF init error:', error);
         setLiffError(error.message || 'LIFF 初始化失敗');
-        message.error('LIFF 初始化失敗，請稍後再試');
       }
     };
 
     init();
   }, []);
 
-  const checkFridgeSetup = async () => {
+  const checkCellarSetup = async () => {
     try {
-      const fridges = await getFridges();
-      setHasFridge(fridges.length > 0);
+      const res = await fetch(`${API_BASE}/api/v1/wine-cellars`, {
+        headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
+      });
+      const cellars = await res.json();
+      setHasCellar(cellars.length > 0);
+
+      // 如果沒有酒窖，自動建立一個
+      if (cellars.length === 0) {
+        await fetch(`${API_BASE}/api/v1/wine-cellars`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo',
+          },
+          body: JSON.stringify({
+            name: '我的酒窖',
+            total_capacity: 100,
+          }),
+        });
+        setHasCellar(true);
+      }
     } catch (error) {
-      console.error('檢查冰箱設定失敗:', error);
-      // 如果 API 失敗，假設未設定
-      setHasFridge(false);
+      console.error('檢查酒窖設定失敗:', error);
+      setHasCellar(true); // 出錯時假設有酒窖，讓用戶可以操作
     } finally {
-      setCheckingFridge(false);
+      setCheckingCellar(false);
     }
   };
 
@@ -81,57 +136,53 @@ function App() {
         flexDirection: 'column',
         gap: '10px',
         padding: '20px',
-        textAlign: 'center'
+        textAlign: 'center',
+        background: '#2d2d2d',
+        color: '#f5f5f5',
       }}>
         <h2>😔 發生錯誤</h2>
         <p>{liffError}</p>
-        <button onClick={() => window.location.reload()}>重新載入</button>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            padding: '10px 20px',
+            background: '#c9a227',
+            border: 'none',
+            borderRadius: '8px',
+            color: '#1a1a1a',
+            cursor: 'pointer',
+          }}
+        >
+          重新載入
+        </button>
       </div>
     );
   }
 
-  // 初始化中或檢查冰箱設定中
-  if (!liffReady || checkingFridge) {
+  // 初始化中或檢查酒窖設定中
+  if (!liffReady || checkingCellar) {
     return <LoadingPage />;
   }
 
   // LIFF 已就緒，顯示應用
   return (
-    <ConfigProvider locale={zhTW}>
+    <ConfigProvider locale={zhTW} theme={darkTheme}>
       <Router>
         <Routes>
-          {/* 首頁 */}
-          <Route
-            path="/"
-            element={hasFridge ? <Home /> : <Navigate to="/setup" replace />}
-          />
+          {/* 首頁 - 酒款清單 */}
+          <Route path="/" element={<WineHome />} />
 
-          {/* 冰箱設定 */}
-          <Route path="/setup" element={<FridgeSetup />} />
+          {/* 新增酒款 */}
+          <Route path="/add" element={<AddWineItem />} />
 
-          {/* 新增食材 */}
-          <Route path="/add" element={<AddFoodItem />} />
+          {/* 編輯酒款 */}
+          <Route path="/edit/:id" element={<EditWineItem />} />
 
-          {/* 編輯食材 */}
-          <Route path="/edit/:id" element={<EditFoodItem />} />
+          {/* 酒窖設定 */}
+          <Route path="/settings" element={<CellarSettings />} />
 
-          {/* 冰箱設定頁面 */}
-          <Route path="/settings" element={<FridgeSettings />} />
-
-          {/* 通知設定頁面 */}
+          {/* 通知設定 */}
           <Route path="/settings/notifications" element={<NotificationSettings />} />
-
-          {/* 預算控管頁面 */}
-          <Route path="/budget" element={<BudgetManagement />} />
-
-          {/* 食譜推薦 */}
-          <Route path="/recipes/recommendations" element={<RecipeRecommendations />} />
-
-          {/* 食譜詳情 */}
-          <Route path="/recipes/:id" element={<RecipeDetail />} />
-
-          {/* 使用者食譜庫 */}
-          <Route path="/recipes" element={<UserRecipes />} />
 
           {/* 404 重新導向到首頁 */}
           <Route path="*" element={<Navigate to="/" replace />} />
