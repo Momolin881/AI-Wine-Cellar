@@ -1,0 +1,196 @@
+/**
+ * 拍照入庫按鈕樣式
+ * 
+ * 金色主題的華麗動畫按鈕
+ * 基於 Uiverse.io by MuhammadHasann
+ */
+
+.photo-upload-button {
+  --gold-primary: #c9a227;
+  --gold-light: #e0c068;
+  --gold-dark: #8b7118;
+  --black-700: hsla(0, 0%, 12%, 1);
+  --border_radius: 9999px;
+  --transtion: 0.3s ease-in-out;
+
+  cursor: pointer;
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  transform-origin: center;
+
+  padding: 1rem 2rem;
+  background-color: transparent;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+
+  border: none;
+  border-radius: var(--border_radius);
+  transform: scale(calc(1 + (var(--active, 0) * 0.1)));
+
+  transition: transform var(--transtion);
+}
+
+.photo-upload-button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 100%;
+  height: 100%;
+  background-color: var(--black-700);
+
+  border-radius: var(--border_radius);
+  box-shadow: inset 0 0.5px hsl(0, 0%, 100%), inset 0 -1px 2px 0 hsl(0, 0%, 0%),
+    0px 4px 10px -4px hsla(0, 0%, 0%, calc(1 - var(--active, 0))),
+    0 0 0 calc(var(--active, 0) * 0.375rem) hsla(43, 74%, 46%, 0.75);
+
+  transition: all var(--transtion);
+  z-index: 0;
+}
+
+.photo-upload-button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 100%;
+  height: 100%;
+  background-color: hsla(43, 74%, 46%, 0.75);
+  background-image: radial-gradient(
+      at 51% 89%,
+      hsla(43, 60%, 65%, 1) 0px,
+      transparent 50%
+    ),
+    radial-gradient(at 100% 100%, hsla(43, 50%, 55%, 1) 0px, transparent 50%),
+    radial-gradient(at 22% 91%, hsla(43, 50%, 55%, 1) 0px, transparent 50%);
+  background-position: top;
+
+  opacity: var(--active, 0);
+  border-radius: var(--border_radius);
+  transition: opacity var(--transtion);
+  z-index: 2;
+}
+
+.photo-upload-button:is(:hover, :focus-visible) {
+  --active: 1;
+}
+
+.photo-upload-button:active {
+  transform: scale(1);
+}
+
+.photo-upload-button .dots_border {
+  --size_border: calc(100% + 2px);
+
+  overflow: hidden;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: var(--size_border);
+  height: var(--size_border);
+  background-color: transparent;
+
+  border-radius: var(--border_radius);
+  z-index: -10;
+}
+
+.photo-upload-button .dots_border::before {
+  content: "";
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: left;
+
+  width: 100%;
+  height: 2rem;
+  background-color: var(--gold-primary);
+
+  mask: linear-gradient(transparent 0%, white 120%);
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.photo-upload-button .sparkle {
+  position: relative;
+  z-index: 10;
+
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.photo-upload-button .sparkle .path {
+  fill: currentColor;
+  stroke: currentColor;
+
+  transform-origin: center;
+
+  color: hsl(0, 0%, 100%);
+}
+
+.photo-upload-button:is(:hover, :focus) .sparkle .path {
+  animation: path 1.5s linear 0.5s infinite;
+}
+
+.photo-upload-button .sparkle .path:nth-child(1) {
+  --scale_path_1: 1.2;
+}
+.photo-upload-button .sparkle .path:nth-child(2) {
+  --scale_path_2: 1.2;
+}
+.photo-upload-button .sparkle .path:nth-child(3) {
+  --scale_path_3: 1.2;
+}
+
+@keyframes path {
+  0%,
+  34%,
+  71%,
+  100% {
+    transform: scale(1);
+  }
+  17% {
+    transform: scale(var(--scale_path_1, 1));
+  }
+  49% {
+    transform: scale(var(--scale_path_2, 1));
+  }
+  83% {
+    transform: scale(var(--scale_path_3, 1));
+  }
+}
+
+.photo-upload-button .text_button {
+  position: relative;
+  z-index: 10;
+
+  background-image: linear-gradient(
+    90deg,
+    hsla(0, 0%, 100%, 1) 0%,
+    hsla(0, 0%, 100%, var(--active, 0.8)) 120%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+
+  font-size: 1rem;
+  font-weight: 600;
+  color: transparent;
+}
