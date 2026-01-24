@@ -21,6 +21,7 @@ import {
     Typography,
     Upload,
     Spin,
+    Radio,
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -29,16 +30,17 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
+import apiClient from '../services/api';
+
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-// API base URL
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// API base URL - apiClient handles base URL, but we might need it? No, apiClient uses baseURL from .env
+// We can remove manual fetch logic
 
 const wineTypes = ['紅酒', '白酒', '粉紅酒', '氣泡酒', '香檳', '威士忌', '白蘭地', '伏特加', '清酒', '啤酒', '其他'];
-const containerTypes = ['瓶', '箱', '桶'];
 
 function AddWineItem() {
     const navigate = useNavigate();
@@ -56,24 +58,32 @@ function AddWineItem() {
 
     const loadCellars = async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/v1/wine-cellars`, {
-                headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
-            });
-            const data = await res.json();
+            const data = await apiClient.get('/wine-cellars');
             setCellars(data);
             if (data.length > 0) {
-                setSelectedCellar(data[0].id);
-                form.setFieldsValue({ cellar_id: data[0].id });
+                // 自動選擇第一個酒窖（預設行為：一用戶一酒窖）
+                const defaultCellarId = data[0].id;
+                setSelectedCellar(defaultCellarId);
+                form.setFieldsValue({ cellar_id: defaultCellarId });
             }
         } catch (error) {
             console.error('載入酒窖失敗:', error);
+            // 如果沒有酒窖，可能需要建立一個預設的（這裡暫時略過，假設已有）
         }
     };
 
     // AI 酒標辨識
     const handleImageUpload = async (file) => {
-        if (!selectedCellar) {
-            message.warning('請先選擇酒窖');
+        // 如果還沒載入酒窖，先暫存 file 或顯示 Loading (這裡簡化：假設 loadCellars 很快)
+        if (!selectedCellar && cellars.length === 0) {
+            message.warning('正在載入酒窖資訊...');
+            return false;
+        }
+
+        const targetCellarId = selectedCellar || (cellars.length > 0 ? cellars[0].id : null);
+
+        if (!targetCellarId) {
+            message.error('無法找到預設酒窖');
             return false;
         }
 
@@ -84,15 +94,9 @@ function AddWineItem() {
             formData.append('image', file);
             formData.append('cellar_id', selectedCellar);
 
-            const res = await fetch(`${API_BASE}/api/v1/wine-items/recognize`, {
-                method: 'POST',
-                headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
-                body: formData,
+            const data = await apiClient.post('/wine-items/recognize', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
-
-            if (!res.ok) throw new Error('辨識失敗');
-
-            const data = await res.json();
 
             // 填入表單
             form.setFieldsValue({
@@ -123,8 +127,10 @@ function AddWineItem() {
 
     // 提交表單
     const handleSubmit = async (values) => {
-        if (!selectedCellar) {
-            message.warning('請先選擇酒窖');
+        const targetCellarId = selectedCellar || (cellars.length > 0 ? cellars[0].id : null);
+
+        if (!targetCellarId) {
+            message.error('無法找到預設酒窖');
             return;
         }
 
@@ -133,7 +139,7 @@ function AddWineItem() {
 
             const payload = {
                 ...values,
-                cellar_id: selectedCellar,
+                cellar_id: targetCellarId,
                 image_url: imageUrl,
                 cloudinary_public_id: cloudinaryPublicId,
                 purchase_date: values.purchase_date?.format('YYYY-MM-DD'),
@@ -142,16 +148,7 @@ function AddWineItem() {
                 recognized_by_ai: recognizing ? 1 : 0,
             };
 
-            const res = await fetch(`${API_BASE}/api/v1/wine-items`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) throw new Error('新增失敗');
+            await apiClient.post('/wine-items', payload);
 
             message.success('新增成功！');
             navigate('/');
@@ -224,23 +221,14 @@ function AddWineItem() {
                         space_units: 1,
                         container_type: '瓶',
                         bottle_status: 'unopened',
+                        preservation_type: 'immediate',
                         remaining_amount: 'full',
                         purchase_date: dayjs(),
                     }}
                 >
-                    {/* 酒窖選擇 */}
-                    <Form.Item label="酒窖" name="cellar_id">
-                        <Select
-                            value={selectedCellar}
-                            onChange={setSelectedCellar}
-                            placeholder="選擇酒窖"
-                        >
-                            {cellars.map((cellar) => (
-                                <Option key={cellar.id} value={cellar.id}>
-                                    {cellar.name}
-                                </Option>
-                            ))}
-                        </Select>
+                    {/* 酒窖選擇 (隱藏，自動帶入) */}
+                    <Form.Item name="cellar_id" hidden>
+                        <Input />
                     </Form.Item>
 
                     {/* 基本資訊 */}
@@ -301,6 +289,14 @@ function AddWineItem() {
                             <InputNumber min={1} style={{ width: '100%' }} />
                         </Form.Item>
                     </Space>
+
+                    {/* 保存類型 */}
+                    <Form.Item label="保存類型 (影響開瓶後建議飲用期)" name="preservation_type" rules={[{ required: true }]}>
+                        <Radio.Group buttonStyle="solid">
+                            <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
+                            <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
+                        </Radio.Group>
+                    </Form.Item>
 
                     {/* 價格 */}
                     <Space style={{ width: '100%' }} size="middle">

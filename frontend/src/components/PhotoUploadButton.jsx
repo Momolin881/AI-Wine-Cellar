@@ -4,7 +4,7 @@
  * 金色主題的華麗動畫按鈕，用於首頁主要 CTA
  */
 
-import './PhotoUploadButton.css';
+import '../styles/PhotoUploadButton.css';
 
 function PhotoUploadButton({ onClick }) {
     return (

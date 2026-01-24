@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ConfigProvider, Spin } from 'antd';
+import { ConfigProvider, Spin, App as AntApp } from 'antd';
 import zhTW from 'antd/locale/zh_TW';
 import { initializeLiff } from './liff';
 import {
@@ -160,27 +160,29 @@ function App() {
   // LIFF 已就緒，顯示應用
   return (
     <ConfigProvider locale={zhTW} theme={darkTheme}>
-      <Router>
-        <Routes>
-          {/* 首頁 - 酒款清單 */}
-          <Route path="/" element={<WineHome />} />
+      <AntApp>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Routes>
+            {/* 首頁 - 酒款清單 */}
+            <Route path="/" element={<WineHome />} />
 
-          {/* 新增酒款 */}
-          <Route path="/add" element={<AddWineItem />} />
+            {/* 新增酒款 */}
+            <Route path="/add" element={<AddWineItem />} />
 
-          {/* 編輯酒款 */}
-          <Route path="/edit/:id" element={<EditWineItem />} />
+            {/* 編輯酒款 */}
+            <Route path="/edit/:id" element={<EditWineItem />} />
 
-          {/* 酒窖設定 */}
-          <Route path="/settings" element={<CellarSettings />} />
+            {/* 酒窖設定 */}
+            <Route path="/settings" element={<CellarSettings />} />
 
-          {/* 通知設定 */}
-          <Route path="/settings/notifications" element={<NotificationSettings />} />
+            {/* 通知設定 */}
+            <Route path="/settings/notifications" element={<NotificationSettings />} />
 
-          {/* 404 重新導向到首頁 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+            {/* 404 重新導向到首頁 */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </AntApp>
     </ConfigProvider>
   );
 }

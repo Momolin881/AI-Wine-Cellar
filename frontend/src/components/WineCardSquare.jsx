@@ -5,7 +5,7 @@
  * 用於首頁的酒款展示，一排兩張
  */
 
-import './WineCardSquare.css';
+import '../styles/WineCardSquare.css';
 
 function WineCardSquare({ item, onClick }) {
     const { name, wine_type, abv, bottle_status, image_url } = item;

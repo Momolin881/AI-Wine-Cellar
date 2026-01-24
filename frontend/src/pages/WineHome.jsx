@@ -27,6 +27,7 @@ import {
     WineCardSquare,
     FloatAddButton,
     VersionFooter,
+    WineDetailModal,
 } from '../components';
 import '../styles/WineCardSquare.css';
 
@@ -44,6 +45,8 @@ function WineHome() {
     const [filteredItems, setFilteredItems] = useState([]);
     const [searchText, setSearchText] = useState('');
     const [wineTypeFilter, setWineTypeFilter] = useState('all');
+    const [selectedWine, setSelectedWine] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
 
     // 統計資料
     const [stats, setStats] = useState({
@@ -83,9 +86,24 @@ function WineHome() {
             }
 
             const itemsRes = await fetch(url, {
-                headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`
+                },
             });
+
+            if (!itemsRes.ok) {
+                throw new Error(`HTTP error! status: ${itemsRes.status}`);
+            }
+
             const itemsData = await itemsRes.json();
+
+            if (!Array.isArray(itemsData)) {
+                console.error('API Error: Response is not an array', itemsData);
+                setWineItems([]);
+                setFilteredItems([]);
+                return;
+            }
+
             setWineItems(itemsData);
             setFilteredItems(itemsData);
 
@@ -106,7 +124,18 @@ function WineHome() {
     };
 
     const handleCardClick = (item) => {
-        navigate(`/edit/${item.id}`);
+        setSelectedWine(item);
+        setModalVisible(true);
+    };
+
+    const handleModalUpdate = (updatedWine) => {
+        // 更新列表中的該酒款資料
+        const newItems = wineItems.map(item =>
+            item.id === updatedWine.id ? updatedWine : item
+        );
+        setWineItems(newItems);
+        // 如果還在搜尋狀態，也要更新 filteredItems (雖然 useEffect 會處理，但為了即時性)
+        // setFilteredItems(newItems... logic handled by effect);
     };
 
     return (
@@ -255,6 +284,14 @@ function WineHome() {
 
                 {/* 浮動加號按鈕 */}
                 <FloatAddButton onClick={() => navigate('/add')} />
+
+                {/* Wine Detail Modal */}
+                <WineDetailModal
+                    visible={modalVisible}
+                    wine={selectedWine}
+                    onClose={() => setModalVisible(false)}
+                    onUpdate={handleModalUpdate}
+                />
             </Content>
         </Layout>
     );

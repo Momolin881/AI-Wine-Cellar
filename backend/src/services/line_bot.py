@@ -126,13 +126,13 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
         # 根據天數決定顯示文字和顏色
         if days < 0:
             days_text = f"已過期 {abs(days)} 天"
-            color = "#ff0000"  # 紅色
+            color = "#ff4d4f"  # 紅色
         elif days == 0:
-            days_text = "今天到期"
-            color = "#ff0000"  # 紅色
+            days_text = "建議今天飲用"
+            color = "#ff4d4f"  # 紅色
         else:
-            days_text = f"{days} 天後到期"
-            color = "#ff9900"  # 橙色
+            days_text = f"剩餘 {days} 天"
+            color = "#faad14"  # 金黃色
 
         item_contents.append({
             "type": "box",
@@ -142,8 +142,9 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
                     "type": "text",
                     "text": item["name"],
                     "size": "sm",
-                    "color": "#555555",
-                    "flex": 2
+                    "color": "#e0e0e0", # 深色模式文字
+                    "flex": 2,
+                    "wrap": True
                 },
                 {
                     "type": "text",
@@ -159,27 +160,37 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
 
     contents = {
         "type": "bubble",
+        "styles": {
+            "body": {
+                "backgroundColor": "#2d2d2d" # 深色背景
+            },
+            "footer": {
+                "backgroundColor": "#2d2d2d"
+            }
+        },
         "body": {
             "type": "box",
             "layout": "vertical",
             "contents": [
                 {
                     "type": "text",
-                    "text": "🍷 適飲期提醒",
+                    "text": "🍷 本週適飲提醒",
                     "weight": "bold",
-                    "size": "lg",
-                    "color": "#1DB446"
+                    "size": "xl",
+                    "color": "#c9a227" # 金色標題
                 },
                 {
                     "type": "text",
-                    "text": f"您有 {len(items)} 瓶酒款需要注意",
+                    "text": f"週末到了！您有 {len(items)} 瓶已開瓶的酒款建議盡快飲用。",
                     "size": "sm",
-                    "color": "#999999",
-                    "margin": "md"
+                    "color": "#b0b0b0",
+                    "margin": "md",
+                    "wrap": True
                 },
                 {
                     "type": "separator",
-                    "margin": "lg"
+                    "margin": "lg",
+                    "color": "#444444"
                 },
                 {
                     "type": "box",
@@ -197,17 +208,17 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
                     "type": "button",
                     "action": {
                         "type": "uri",
-                        "label": "查看酒窖",
+                        "label": "打開酒窖",
                         "uri": f"https://liff.line.me/{settings.LIFF_ID}"
                     },
                     "style": "primary",
-                    "color": "#1DB446"
+                    "color": "#c9a227" # 金色按鈕
                 }
             ]
         }
     }
 
-    return send_flex_message(user_id, f"🍷 您有 {len(items)} 瓶酒款即將到達適飲期", contents)
+    return send_flex_message(user_id, f"🍷 週末小酌提醒：有 {len(items)} 瓶酒建議飲用", contents)
 
 
 def send_low_stock_notification(user_id: str, items: list[dict]) -> bool:

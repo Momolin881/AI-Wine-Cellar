@@ -8,6 +8,7 @@ export { default as ImageUploader } from './ImageUploader';
 export { default as VersionFooter } from './VersionFooter';
 
 // 新元件
+export { default as WineDetailModal } from './WineDetailModal';
 export { default as PhotoUploadButton } from './PhotoUploadButton';
 export { default as WineCardSquare } from './WineCardSquare';
 export { default as FloatAddButton } from './FloatAddButton';

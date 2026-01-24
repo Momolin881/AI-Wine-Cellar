@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException, status
 from src.models.notification_settings import NotificationSettings
 from src.schemas.notification import NotificationSettingsResponse, NotificationSettingsUpdate
 from src.routes.dependencies import DBSession, CurrentUserId
-from src.services.scheduler import check_expiring_items
+from src.services.scheduler import check_drinking_period
 
 logger = logging.getLogger(__name__)
 
@@ -163,14 +163,14 @@ async def test_expiry_check(
     user_id: CurrentUserId
 ):
     """
-    手動觸發效期提醒檢查（測試用）
+    手動觸發適飲期提醒檢查（測試用）
 
-    這會立即執行效期檢查並發送 LINE 推播通知。
+    這會立即執行適飲期檢查並發送 LINE 推播通知。
     """
     try:
-        logger.info(f"使用者 {user_id} 手動觸發效期提醒檢查")
-        check_expiring_items()
-        return {"message": "效期提醒檢查已執行，請查看 LINE 訊息"}
+        logger.info(f"使用者 {user_id} 手動觸發適飲期提醒檢查")
+        check_drinking_period()
+        return {"message": "適飲期提醒檢查已執行，請查看 LINE 訊息"}
     except Exception as e:
         logger.error(f"手動觸發效期提醒檢查失敗: {e}")
         raise HTTPException(

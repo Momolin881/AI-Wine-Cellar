@@ -43,7 +43,10 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = [
         "https://liff.line.me",
         "https://ai-wine-cellar.zeabur.app",
-        "http://localhost:5173",  # 本地開發
+        "http://localhost:5173",
+        "http://localhost:5174",  # 本地開發
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
     ]
 
     # 排程設定

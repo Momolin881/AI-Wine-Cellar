@@ -35,6 +35,7 @@ class WineItem(Base):
 
     # 開瓶狀態與剩餘量
     bottle_status = Column(String(20), default='unopened', nullable=False)  # unopened / opened
+    preservation_type = Column(String(50), default='immediate', nullable=False)  # immediate (即飲) / aging (陳年)
     remaining_amount = Column(String(20), default='full', nullable=False)  # full / 3/4 / 1/2 / 1/4 / empty
     opened_at = Column(DateTime, nullable=True)  # 開瓶時間
 

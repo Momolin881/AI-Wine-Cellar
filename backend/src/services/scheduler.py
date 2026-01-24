@@ -35,12 +35,12 @@ def start_scheduler():
         return
 
     try:
-        # 註冊每日任務：檢查即將到達適飲期的酒款（每天早上 9:00 執行）
+        # 註冊每週任務：檢查適飲期提醒（每週五 18:00 執行）
         scheduler.add_job(
-            check_expiring_items,
-            trigger=CronTrigger(hour=9, minute=0),
-            id="check_expiring_items",
-            name="檢查即將到達適飲期酒款",
+            check_drinking_period,
+            trigger=CronTrigger(day_of_week='fri', hour=18, minute=0),
+            id="check_drinking_period",
+            name="每週五適飲期提醒",
             replace_existing=True
         )
 
@@ -54,7 +54,7 @@ def start_scheduler():
         )
 
         scheduler.start()
-        logger.info("排程器已啟動，已註冊 2 個定時任務")
+        logger.info("排程器已啟動，已註冊定時任務")
 
     except Exception as e:
         logger.error(f"啟動排程器失敗: {e}")
@@ -78,17 +78,18 @@ def stop_scheduler():
         raise
 
 
-def check_expiring_items():
+def check_drinking_period():
     """
-    檢查所有使用者的即將到達適飲期酒款並發送通知
-
-    遍歷所有啟用適飲期提醒的使用者，檢查其酒款是否即將到達適飲期。
+    檢查所有使用者的適飲期提醒並發送通知
+    
+    對象：已開瓶 (opened) 且接近最佳飲用期結束 (optimal_drinking_end) 的酒款
+    時間：每週五 18:00
     """
-    logger.info("開始執行：檢查即將到達適飲期酒款")
+    logger.info("開始執行：每週五適飲期提醒")
     db = SessionLocal()
 
     try:
-        # 查詢所有啟用效期提醒的通知設定
+        # 查詢所有啟用適飲期提醒的通知設定
         settings_list = db.query(NotificationSettings).filter(
             NotificationSettings.expiry_warning_enabled == True
         ).all()
@@ -97,43 +98,54 @@ def check_expiring_items():
 
         for settings in settings_list:
             try:
-                # 使用台灣時間計算提醒日期
-                today_taiwan = datetime.now(TAIWAN_TZ).date()
-                warning_date = today_taiwan + timedelta(days=settings.expiry_warning_days)
-
-                # 查詢該使用者即將到達適飲期或已超過適飲期的酒款
-                expiring_items = db.query(FoodItem).join(
-                    Fridge, FoodItem.fridge_id == Fridge.id
+                today = datetime.now(TAIWAN_TZ).date()
+                
+                # 查詢該使用者的所有酒款
+                # 條件 1: 已開瓶 (bottle_status == 'opened')
+                # 條件 2: active 狀態
+                # 條件 3: 有設定 optimal_drinking_end
+                
+                from src.models.wine_item import WineItem
+                from src.models.wine_cellar import WineCellar
+                
+                items = db.query(WineItem).join(
+                    WineCellar, WineItem.cellar_id == WineCellar.id
                 ).filter(
-                    Fridge.user_id == settings.user_id,
-                    FoodItem.expiry_date.isnot(None),
-                    FoodItem.expiry_date <= warning_date,
-                    FoodItem.status == 'active'  # 只查詢未處理的酒款
+                    WineCellar.user_id == settings.user_id,
+                    WineItem.status == 'active',
+                    WineItem.bottle_status == 'opened',
+                    WineItem.optimal_drinking_end.isnot(None)
                 ).all()
 
-                if expiring_items:
-                    # 準備通知資料
-                    items_data = []
-                    for item in expiring_items:
-                        days_remaining = (item.expiry_date - today_taiwan).days
-                        items_data.append({
+                # 篩選邏輯：
+                # 1. 已經過期 (optimal_drinking_end < today)
+                # 2. 即將過期 (within 7 days)
+                
+                notify_items = []
+                for item in items:
+                    days_remaining = (item.optimal_drinking_end - today).days
+                    
+                    if days_remaining <= 7: # 剩餘 7 天內或已過期
+                        notify_items.append({
                             "name": item.name,
-                            "expiry_date": item.expiry_date.isoformat(),
-                            "days_remaining": days_remaining
+                            "expiry_date": item.optimal_drinking_end.isoformat(),
+                            "days_remaining": days_remaining,
+                            "type": item.preservation_type
                         })
 
+                if notify_items:
                     # 發送通知
-                    logger.info(f"使用者 {settings.user_id} 有 {len(items_data)} 瓶酒款即將到達適飲期")
-                    send_expiry_notification(settings.user.line_user_id, items_data)
+                    logger.info(f"使用者 {settings.user_id} 有 {len(notify_items)} 瓶酒款需要注意")
+                    send_expiry_notification(settings.user.line_user_id, notify_items)
 
             except Exception as e:
-                logger.error(f"處理使用者 {settings.user_id} 的適飲期提醒時發生錯誤: {e}")
+                logger.error(f"處理使用者 {settings.user_id} 的提醒時發生錯誤: {e}")
                 continue
 
-        logger.info("完成：檢查即將到達適飲期酒款")
+        logger.info("完成：每週五適飲期提醒")
 
     except Exception as e:
-        logger.error(f"檢查即將到達適飲期酒款時發生錯誤: {e}")
+        logger.error(f"檢查適飲期時發生錯誤: {e}")
 
     finally:
         db.close()

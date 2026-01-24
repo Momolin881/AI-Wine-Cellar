@@ -38,6 +38,8 @@ class WineItemCreate(BaseModel):
     space_units: float = 1.0
     container_type: str = "瓶"
     bottle_status: str = "unopened"
+    bottle_status: str = "unopened"
+    preservation_type: str = "immediate"  # immediate / aging
     remaining_amount: str = "full"
     purchase_price: Optional[float] = None
     retail_price: Optional[float] = None
@@ -66,6 +68,8 @@ class WineItemUpdate(BaseModel):
     space_units: Optional[float] = None
     container_type: Optional[str] = None
     bottle_status: Optional[str] = None
+
+    preservation_type: Optional[str] = None
     remaining_amount: Optional[str] = None
     purchase_price: Optional[float] = None
     retail_price: Optional[float] = None
@@ -90,6 +94,8 @@ class WineItemResponse(BaseModel):
     space_units: float
     container_type: str
     bottle_status: str
+
+    preservation_type: str
     remaining_amount: str
     purchase_price: Optional[float]
     retail_price: Optional[float]
@@ -148,6 +154,8 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
         space_units=item.space_units,
         container_type=item.container_type,
         bottle_status=item.bottle_status,
+
+        preservation_type=item.preservation_type,
         remaining_amount=item.remaining_amount,
         purchase_price=item.purchase_price,
         retail_price=item.retail_price,
@@ -326,6 +334,21 @@ async def open_wine_bottle(id: int, db: DBSession, user_id: CurrentUserId):
 
     wine_item.bottle_status = 'opened'
     wine_item.opened_at = datetime.utcnow()
+
+    # 自動計算最佳飲用期限 (Drink By)
+    today = date.today()
+    from datetime import timedelta
+    
+    if wine_item.preservation_type == 'aging':
+        # 陳年型：開瓶後可存放較久（預設 2 年，僅供參考，實際上陳年酒開瓶後氧化更快，這裡假設是指「適飲期」內的陳年酒）
+        # 修正：需求文件提到「陳年型」是指長效期酒款 (如威士忌) 還是指開瓶後需盡快喝完的老酒？
+        # 根據 User Story: "陳年型：開瓶後 1-3 年內飲用 (預設 2 年)" -> 這聽起來像烈酒
+        # 如果是紅酒，開瓶後通常只能放幾天。
+        # 假設這裡的「陳年型」是指像威士忌這類開瓶後可以放很久的酒。
+        wine_item.optimal_drinking_end = today + timedelta(days=730)
+    else:
+        # 即飲型：開瓶後盡快飲用（預設 3 天）
+        wine_item.optimal_drinking_end = today + timedelta(days=3)
 
     db.commit()
     db.refresh(wine_item)

@@ -1,0 +1,50 @@
+/* WineDetailModal.css */
+.wine-detail-modal .ant-modal-content {
+    background: #2d2d2d;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wine-detail-modal .ant-slider-track {
+    background-color: #c9a227 !important;
+}
+
+.wine-detail-modal .ant-slider-handle {
+    border-color: #c9a227 !important;
+    background-color: #c9a227 !important;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px;
+    box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
+}
+
+.wine-detail-modal .ant-slider-handle:hover,
+.wine-detail-modal .ant-slider-handle:active,
+.wine-detail-modal .ant-slider-handle:focus {
+    box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.4);
+}
+
+.wine-detail-modal .ant-slider-rail {
+    background-color: #444 !important;
+}
+
+/* Animations */
+@keyframes pulse-gold {
+    0% {
+        box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(201, 162, 39, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(201, 162, 39, 0);
+    }
+}
+
+.ant-btn-primary.wine-open-btn {
+    animation: pulse-gold 2s infinite;
+}

@@ -1,7 +1,7 @@
 /**
  * 通知設定頁面
  *
- * 允許使用者設定適飲期提醒、消費提醒的參數。
+ * 允許使用者設定適飲期提醒的參數。
  */
 
 import { useState, useEffect } from 'react';
@@ -11,8 +11,6 @@ import {
   Form,
   Switch,
   Slider,
-  InputNumber,
-  TimePicker,
   Button,
   message,
   Spin,
@@ -20,13 +18,12 @@ import {
   Space
 } from 'antd';
 import {
+  ArrowLeftOutlined,
+  SendOutlined,
   BellOutlined,
   ClockCircleOutlined,
-  DollarOutlined,
-  ArrowLeftOutlined,
-  SendOutlined
+  SkinOutlined as ClinksGlassOutlined
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import { getNotificationSettings, updateNotificationSettings, testExpiryNotification } from '../services/api';
 
 const { Title, Text, Paragraph } = Typography;
@@ -47,13 +44,9 @@ function NotificationSettings() {
       setLoading(true);
       const settings = await getNotificationSettings();
 
-      // 轉換資料格式以符合表單（現在後端已支援 budget_warning）
       form.setFieldsValue({
         expiry_warning_enabled: settings.expiry_warning_enabled,
         expiry_warning_days: settings.expiry_warning_days,
-        budget_warning_enabled: settings.budget_warning_enabled ?? false,
-        budget_warning_amount: settings.budget_warning_amount ?? 5000,
-        notification_time: settings.notification_time ? dayjs(settings.notification_time, 'HH:mm') : dayjs('09:00', 'HH:mm')
       });
 
     } catch (error) {
@@ -68,13 +61,9 @@ function NotificationSettings() {
     try {
       setSubmitting(true);
 
-      // 轉換資料格式（現在後端已支援所有欄位）
       const settings = {
         expiry_warning_enabled: values.expiry_warning_enabled,
         expiry_warning_days: values.expiry_warning_days,
-        budget_warning_enabled: values.budget_warning_enabled,
-        budget_warning_amount: values.budget_warning_amount,
-        notification_time: values.notification_time.format('HH:mm')
       };
 
       await updateNotificationSettings(settings);
@@ -145,18 +134,15 @@ function NotificationSettings() {
         onFinish={handleSubmit}
         initialValues={{
           expiry_warning_enabled: true,
-          expiry_warning_days: 3,
-          budget_warning_enabled: false,
-          budget_warning_amount: 5000,
-          notification_time: dayjs('09:00', 'HH:mm')
+          expiry_warning_days: 7,
         }}
       >
         {/* 效期提醒設定 */}
         <Card
           title={
             <Space>
-              <ClockCircleOutlined style={{ color: '#ff9900' }} />
-              <span>效期提醒</span>
+              <ClinksGlassOutlined style={{ color: '#c9a227' }} />
+              <span>適飲期提醒</span>
             </Space>
           }
           style={{ marginBottom: '16px' }}
@@ -211,86 +197,20 @@ function NotificationSettings() {
               ) : null
             }
           </Form.Item>
-        </Card>
 
-        {/* 月消費金額提醒 */}
-        <Card
-          title={
-            <Space>
-              <DollarOutlined style={{ color: '#52c41a' }} />
-              <span>月消費金額提醒</span>
+          {/* 說明文字區塊 */}
+          <div style={{ marginTop: '16px', padding: '12px', background: '#2d2d2d', borderRadius: '8px', border: '1px solid #444' }}>
+            <Space align="start">
+              <ClockCircleOutlined style={{ color: '#c9a227', marginTop: '4px' }} />
+              <div>
+                <Text strong style={{ color: '#c9a227' }}>每週五 18:00 發送提醒</Text>
+                <br />
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  系統會自動檢查並整理您的「待飲用清單」，讓您週末不錯過任何美酒。
+                </Text>
+              </div>
             </Space>
-          }
-          style={{ marginBottom: '16px' }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div>
-              <Text strong>啟用消費提醒</Text>
-              <br />
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                當月消費超過設定金額時通知您
-              </Text>
-            </div>
-            <Form.Item
-              name="budget_warning_enabled"
-              valuePropName="checked"
-              style={{ marginBottom: 0 }}
-            >
-              <Switch />
-            </Form.Item>
           </div>
-
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) =>
-              prevValues.budget_warning_enabled !== currentValues.budget_warning_enabled
-            }
-          >
-            {({ getFieldValue }) =>
-              getFieldValue('budget_warning_enabled') ? (
-                <Form.Item
-                  name="budget_warning_amount"
-                  label="月消費上限"
-                  help="當月消費超過此金額時發送提醒"
-                >
-                  <InputNumber
-                    min={0}
-                    max={100000}
-                    step={500}
-                    style={{ width: '100%' }}
-                    addonBefore="NT$"
-                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-                  />
-                </Form.Item>
-              ) : null
-            }
-          </Form.Item>
-        </Card>
-
-        {/* 通知時間設定 */}
-        <Card
-          title={
-            <Space>
-              <ClockCircleOutlined style={{ color: '#52c41a' }} />
-              <span>通知時間</span>
-            </Space>
-          }
-          style={{ marginBottom: '24px' }}
-        >
-          <Form.Item
-            name="notification_time"
-            label="每日通知時間"
-            help="系統將在此時間檢查並發送通知"
-          >
-            <TimePicker
-              format="HH:mm"
-              style={{ width: '100%' }}
-              placeholder="選擇時間"
-              showNow={false}
-              minuteStep={15}
-            />
-          </Form.Item>
         </Card>
 
         {/* 測試通知按鈕 */}

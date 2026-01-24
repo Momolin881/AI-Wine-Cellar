@@ -15,6 +15,7 @@ import {
     InputNumber,
     Select,
     Button,
+    Radio,
     DatePicker,
     message,
     Space,
@@ -309,6 +310,15 @@ function EditWineItem() {
                         </Form.Item>
                     </Space>
 
+
+
+                    <Form.Item label="保存類型 (影響開瓶後建議飲用期)" name="preservation_type" rules={[{ required: true }]}>
+                        <Radio.Group buttonStyle="solid">
+                            <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
+                            <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
+                        </Radio.Group>
+                    </Form.Item>
+
                     <Space style={{ width: '100%' }} size="middle">
                         <Form.Item label="進貨價 (NT$)" name="purchase_price" style={{ flex: 1 }}>
                             <InputNumber min={0} style={{ width: '100%' }} />
@@ -341,7 +351,7 @@ function EditWineItem() {
                     </Button>
                 </Form>
             </Content>
-        </Layout>
+        </Layout >
     );
 }
 
