@@ -43,7 +43,7 @@ function WineItemCard({ item, onEdit, onDelete }) {
         <Card
             className="wine-card"
             style={{ marginBottom: 12 }}
-            bodyStyle={{ padding: 16 }}
+            styles={{ body: { padding: 16 } }}
         >
             <div style={{ display: 'flex', gap: 12 }}>
                 {/* 圖片或 Emoji */}

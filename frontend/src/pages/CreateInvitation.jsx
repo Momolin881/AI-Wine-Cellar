@@ -227,7 +227,7 @@ const CreateInvitation = () => {
                             showTime={{ format: 'HH:mm', minuteStep: 15 }}
                             format="YYYY-MM-DD HH:mm"
                             style={{ width: '100%', background: '#2d2d2d', border: '1px solid #444', color: '#fff' }}
-                            popupStyle={{ background: '#2d2d2d' }}
+                            styles={{ popup: { background: '#2d2d2d' } }}
                             placeholder="選擇聚會時間"
                         />
                     </Form.Item>
@@ -356,7 +356,7 @@ const CreateInvitation = () => {
                             確認並發送 (LINE)
                         </Button>,
                     ]}
-                    bodyStyle={{ padding: 0 }}
+                    styles={{ body: { padding: 0 } }}
                 >
                     {previewData && (
                         <div style={{ padding: 20, background: '#f0f0f0' }}>

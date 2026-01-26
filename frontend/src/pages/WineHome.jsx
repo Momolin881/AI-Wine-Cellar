@@ -195,7 +195,7 @@ function WineHome() {
                         border: 'none',
                         borderRadius: 12,
                     }}
-                    bodyStyle={{ padding: '16px' }}
+                    styles={{ body: { padding: '16px' } }}
                 >
                     <Row gutter={8}>
                         <Col span={6}>

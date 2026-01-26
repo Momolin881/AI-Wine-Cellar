@@ -171,7 +171,7 @@ function NotificationSettings() {
           }
           style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
           headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
-          bodyStyle={{ background: '#2d2d2d' }}
+          styles={{ body: { background: '#2d2d2d' } }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
@@ -212,7 +212,7 @@ function NotificationSettings() {
           }
           style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
           headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
-          bodyStyle={{ background: '#2d2d2d' }}
+          styles={{ body: { background: '#2d2d2d' } }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div>
@@ -293,7 +293,7 @@ function NotificationSettings() {
           }
           style={{ marginBottom: '24px', background: '#2d2d2d', border: 'none' }}
           headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
-          bodyStyle={{ background: '#2d2d2d' }}
+          styles={{ body: { background: '#2d2d2d' } }}
         >
           <Paragraph style={{ marginBottom: '16px', color: '#888' }}>
             點擊下方按鈕立即發送一則測試通知到您的 LINE，確認通知功能正常運作。

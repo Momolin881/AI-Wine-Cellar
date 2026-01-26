@@ -148,7 +148,7 @@ const InvitationDetail = () => {
 
             <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto', width: '100%' }}>
                 {/* Info Card */}
-                <Card style={{ background: '#2d2d2d', border: 'none', borderRadius: 12, marginBottom: 24 }} bodyStyle={{ padding: 20 }}>
+                <Card style={{ background: '#2d2d2d', border: 'none', borderRadius: 12, marginBottom: 24 }} styles={{ body: { padding: 20 } }}>
                     <Space direction="vertical" size="large" style={{ width: '100%' }}>
                         <div style={{ display: 'flex', gap: 12 }}>
                             <CalendarOutlined style={{ fontSize: 20, color: '#c9a227', marginTop: 4 }} />
@@ -184,7 +184,7 @@ const InvitationDetail = () => {
                 {/* Wine List */}
                 <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                     {wines.length > 0 ? wines.map(wine => (
-                        <Card key={wine.id} style={{ background: '#2d2d2d', border: 'none', borderRadius: 12 }} bodyStyle={{ padding: 12 }}>
+                        <Card key={wine.id} style={{ background: '#2d2d2d', border: 'none', borderRadius: 12 }} styles={{ body: { padding: 12 } }}>
                             <Row gutter={16} align="middle">
                                 <Col flex="80px">
                                     <div style={{ width: 80, height: 80, background: '#111', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
