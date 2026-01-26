@@ -7,11 +7,14 @@
 
 import liff from '@line/liff';
 
-const LIFF_ID = import.meta.env.VITE_LIFF_ID;
+
+// Use hardcoded ID as fallback to ensure it works in production
+const LIFF_ID = import.meta.env.VITE_LIFF_ID || '2008946239-5U8c7ry2';
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true';
 
 /**
  * 初始化 LIFF SDK
+
  * @returns {Promise<boolean>} 初始化成功返回 true，失敗返回 false
  */
 export const initializeLiff = async () => {
