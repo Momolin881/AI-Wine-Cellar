@@ -35,8 +35,13 @@ class NotificationSettings(Base):
     budget_warning_enabled = Column(Boolean, default=False, nullable=False)
     budget_warning_amount = Column(Integer, default=5000, nullable=False)  # 月消費上限（預設 5000）
 
+    # 開瓶後提醒設定
+    opened_reminder_enabled = Column(Boolean, default=True, nullable=False)
+
     # 通知時間設定
     notification_time = Column(Time, default=time(9, 0), nullable=False)  # 預設早上 9:00
+    monthly_check_day = Column(Integer, default=1, nullable=False)  # 每月檢查日期（1-31）
+    weekly_notification_day = Column(Integer, default=4, nullable=False)  # 每週通知日（0=週日, 4=週五）
 
     # 時間戳記
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

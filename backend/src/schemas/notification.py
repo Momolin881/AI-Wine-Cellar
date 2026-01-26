@@ -30,8 +30,13 @@ class NotificationSettingsResponse(BaseModel):
     budget_warning_enabled: bool = Field(default=False, description="是否啟用預算提醒")
     budget_warning_amount: int = Field(default=5000, ge=0, description="月消費上限")
 
+    # 開瓶後提醒設定
+    opened_reminder_enabled: bool = Field(default=True, description="是否啟用開瓶後提醒")
+
     # 通知時間設定
     notification_time: str = Field(default="09:00", description="通知時間（HH:MM 格式）")
+    monthly_check_day: int = Field(default=1, ge=1, le=31, description="每月檢查日期（1-31）")
+    weekly_notification_day: int = Field(default=4, ge=0, le=6, description="每週通知日（0=週日, 4=週五）")
 
     @field_validator("notification_time", mode="before")
     @classmethod
@@ -87,8 +92,13 @@ class NotificationSettingsUpdate(BaseModel):
     budget_warning_enabled: bool | None = Field(None, description="是否啟用預算提醒")
     budget_warning_amount: int | None = Field(None, ge=0, description="月消費上限")
 
+    # 開瓶後提醒設定
+    opened_reminder_enabled: bool | None = Field(None, description="是否啟用開瓶後提醒")
+
     # 通知時間設定
     notification_time: str | None = Field(None, description="通知時間（HH:MM 格式）")
+    monthly_check_day: int | None = Field(None, ge=1, le=31, description="每月檢查日期（1-31）")
+    weekly_notification_day: int | None = Field(None, ge=0, le=6, description="每週通知日（0=週日, 4=週五）")
 
     @field_validator("notification_time")
     @classmethod
