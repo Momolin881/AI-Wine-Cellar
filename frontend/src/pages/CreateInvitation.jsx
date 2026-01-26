@@ -38,10 +38,12 @@ const CreateInvitation = () => {
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewData, setPreviewData] = useState(null);
 
-    // Initial values
+    // Initial values: Default to tomorrow, rounded to next hour? Or just tomorrow same time.
+    // User asked for "Today + 1", let's do tomorrow at the start of next hour
+    const tomorrow = dayjs().add(1, 'day').startOf('hour');
     const initialValues = {
         title: '',
-        event_time: dayjs(),
+        event_time: tomorrow,
         location: '',
         description: '',
     };
@@ -194,10 +196,11 @@ const CreateInvitation = () => {
                         rules={[{ required: true, message: '請選擇時間' }]}
                     >
                         <DatePicker
-                            showTime
+                            showTime={{ format: 'HH:mm', minuteStep: 15 }}
                             format="YYYY-MM-DD HH:mm"
                             style={{ width: '100%', background: '#2d2d2d', border: '1px solid #444', color: '#fff' }}
                             popupStyle={{ background: '#2d2d2d' }}
+                            placeholder="選擇聚會時間"
                         />
                     </Form.Item>
 
