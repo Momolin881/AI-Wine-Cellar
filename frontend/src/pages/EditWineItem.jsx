@@ -23,13 +23,18 @@ import {
     Spin,
     Divider,
     Modal,
+    Calendar,
+    List,
+    Tag,
 } from 'antd';
 import {
     ArrowLeftOutlined,
     SaveOutlined,
     DeleteOutlined,
+    CalendarOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { getFoodItems, getBudgetSettings } from '../services/api';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -57,22 +62,40 @@ function EditWineItem() {
     const [saving, setSaving] = useState(false);
     const [item, setItem] = useState(null);
 
+    // 消費月曆相關
+    const [calendarVisible, setCalendarVisible] = useState(false);
+    const [wineItems, setWineItems] = useState([]);
+    const [budgetSettings, setBudgetSettings] = useState(null);
+    const [calendarMonth, setCalendarMonth] = useState(dayjs());
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [dailyItems, setDailyItems] = useState([]);
+
     useEffect(() => {
         loadItem();
+        loadWineItemsAndBudget();
     }, [id]);
 
     const loadItem = async () => {
         try {
             setLoading(true);
             const res = await fetch(`${API_BASE}/api/v1/wine-items/${id}`, {
-                headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
+                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
+                },
             });
+
+            if (!res.ok) {
+                throw new Error('載入失敗');
+            }
+
             const data = await res.json();
             setItem(data);
 
             // 填入表單
             form.setFieldsValue({
                 ...data,
+                price: data.purchase_price,
                 purchase_date: data.purchase_date ? dayjs(data.purchase_date) : null,
                 optimal_drinking_start: data.optimal_drinking_start ? dayjs(data.optimal_drinking_start) : null,
                 optimal_drinking_end: data.optimal_drinking_end ? dayjs(data.optimal_drinking_end) : null,
@@ -85,12 +108,94 @@ function EditWineItem() {
         }
     };
 
+    // 載入酒款資料和預算設定（用於月曆顯示）
+    const loadWineItemsAndBudget = async () => {
+        try {
+            const [itemsData, budgetData] = await Promise.all([
+                getFoodItems({ status: 'all' }),
+                getBudgetSettings(),
+            ]);
+            setWineItems(itemsData.filter((item) => item.purchase_price && item.purchase_price > 0));
+            setBudgetSettings(budgetData);
+        } catch (error) {
+            console.error('載入消費資料失敗:', error);
+        }
+    };
+
+    // 計算每日消費總額
+    const getDailySpending = () => {
+        const dailyMap = {};
+        wineItems.forEach((item) => {
+            if (item.purchase_date && item.purchase_price) {
+                const dateKey = dayjs(item.purchase_date).format('YYYY-MM-DD');
+                if (!dailyMap[dateKey]) {
+                    dailyMap[dateKey] = 0;
+                }
+                dailyMap[dateKey] += item.purchase_price;
+            }
+        });
+        return dailyMap;
+    };
+
+    // 計算指定月份的消費總額
+    const getMonthlyTotal = (month) => {
+        const monthKey = month.format('YYYY-MM');
+        return wineItems
+            .filter((item) => dayjs(item.purchase_date).format('YYYY-MM') === monthKey)
+            .reduce((sum, item) => sum + (item.purchase_price || 0), 0);
+    };
+
+    // 日曆單元格渲染
+    const dateCellRender = (value) => {
+        const dateKey = value.format('YYYY-MM-DD');
+        const dailySpending = getDailySpending();
+        const spending = dailySpending[dateKey];
+        if (spending) {
+            return (
+                <div style={{
+                    background: '#c9a227',
+                    color: '#000',
+                    borderRadius: 4,
+                    padding: '2px 4px',
+                    fontSize: 10,
+                    textAlign: 'center',
+                }}>
+                    ${spending.toLocaleString()}
+                </div>
+            );
+        }
+        return null;
+    };
+
+    // 日期選擇處理
+    const handleDateSelect = (date) => {
+        setSelectedDate(date);
+        const dateKey = date.format('YYYY-MM-DD');
+        const items = wineItems.filter(
+            (item) => dayjs(item.purchase_date).format('YYYY-MM-DD') === dateKey
+        );
+        setDailyItems(items);
+    };
+
+    // 月份切換處理
+    const handlePanelChange = (date) => {
+        setCalendarMonth(date);
+        setSelectedDate(null);
+        setDailyItems([]);
+    };
+
+    // 計算選中日期的總消費
+    const selectedDateTotal = dailyItems.reduce((sum, item) => sum + (item.purchase_price || 0), 0);
+
     // 開瓶
     const handleOpenBottle = async () => {
         try {
             const res = await fetch(`${API_BASE}/api/v1/wine-items/${id}/open`, {
                 method: 'POST',
-                headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
+                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
+                },
             });
             const data = await res.json();
             setItem(data);
@@ -106,7 +211,10 @@ function EditWineItem() {
         try {
             const res = await fetch(`${API_BASE}/api/v1/wine-items/${id}/update-remaining?remaining=${remaining}`, {
                 method: 'POST',
-                headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
+                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
+                },
             });
             const data = await res.json();
             setItem(data);
@@ -128,7 +236,10 @@ function EditWineItem() {
                 try {
                     const res = await fetch(`${API_BASE}/api/v1/wine-items/${id}/change-status?new_status=${newStatus}`, {
                         method: 'POST',
-                        headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
+                            'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
+                        },
                     });
                     const data = await res.json();
                     setItem(data);
@@ -148,15 +259,18 @@ function EditWineItem() {
 
             const payload = {
                 ...values,
+                purchase_price: values.price,
                 purchase_date: values.purchase_date?.format('YYYY-MM-DD'),
                 optimal_drinking_start: values.optimal_drinking_start?.format('YYYY-MM-DD'),
                 optimal_drinking_end: values.optimal_drinking_end?.format('YYYY-MM-DD'),
             };
+            delete payload.price;
 
             await fetch(`${API_BASE}/api/v1/wine-items/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
                     'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo',
                 },
                 body: JSON.stringify(payload),
@@ -182,7 +296,10 @@ function EditWineItem() {
             onOk: async () => {
                 await fetch(`${API_BASE}/api/v1/wine-items/${id}`, {
                     method: 'DELETE',
-                    headers: { 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo' },
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
+                        'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
+                    },
                 });
                 message.success('已刪除');
                 navigate('/');
@@ -199,7 +316,7 @@ function EditWineItem() {
 
     if (loading) {
         return (
-            <Layout style={{ minHeight: '100vh' }}>
+            <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
                 <Content style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Spin size="large" tip="載入中..." />
                 </Content>
@@ -208,19 +325,24 @@ function EditWineItem() {
     }
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
+        <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
             <Content style={{ padding: '16px', maxWidth: 480, margin: '0 auto' }}>
                 {/* 標題 */}
                 <div style={{ marginBottom: 16 }}>
-                    <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>
+                    <Button
+                        type="text"
+                        icon={<ArrowLeftOutlined />}
+                        onClick={() => navigate('/')}
+                        style={{ color: '#888' }}
+                    >
                         返回
                     </Button>
-                    <Title level={3} style={{ marginTop: 8 }}>編輯酒款</Title>
+                    <Title level={3} style={{ marginTop: 8, color: '#f5f5f5' }}>編輯酒款</Title>
                 </div>
 
                 {/* 圖片 */}
                 {item?.image_url && (
-                    <Card className="neu-card" style={{ marginBottom: 16, textAlign: 'center' }}>
+                    <Card style={{ marginBottom: 16, textAlign: 'center', background: '#2d2d2d', border: 'none' }}>
                         <img
                             src={item.image_url}
                             alt={item.name}
@@ -231,16 +353,16 @@ function EditWineItem() {
 
                 {/* 開瓶狀態操作 */}
                 {item?.status === 'active' && (
-                    <Card className="neu-card" style={{ marginBottom: 16 }}>
-                        <Title level={5}>🍷 開瓶狀態</Title>
+                    <Card style={{ marginBottom: 16, background: '#2d2d2d', border: 'none' }}>
+                        <Title level={5} style={{ color: '#f5f5f5' }}>🍷 開瓶狀態</Title>
 
                         {item.bottle_status === 'unopened' ? (
-                            <Button type="primary" onClick={handleOpenBottle} block>
+                            <Button type="primary" onClick={handleOpenBottle} block style={{ background: '#c9a227', borderColor: '#c9a227' }}>
                                 開瓶
                             </Button>
                         ) : (
                             <div>
-                                <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+                                <Text style={{ display: 'block', marginBottom: 8, color: '#888' }}>
                                     剩餘量：{remainingLabels[item.remaining_amount]}
                                 </Text>
                                 <Space wrap>
@@ -249,6 +371,7 @@ function EditWineItem() {
                                             key={opt}
                                             type={item.remaining_amount === opt ? 'primary' : 'default'}
                                             onClick={() => handleUpdateRemaining(opt)}
+                                            style={item.remaining_amount === opt ? { background: '#c9a227', borderColor: '#c9a227' } : {}}
                                         >
                                             {remainingLabels[opt]}
                                         </Button>
@@ -261,8 +384,8 @@ function EditWineItem() {
 
                 {/* 狀態變更 */}
                 {item?.status === 'active' && (
-                    <Card className="neu-card" style={{ marginBottom: 16 }}>
-                        <Title level={5}>📤 變更狀態</Title>
+                    <Card style={{ marginBottom: 16, background: '#2d2d2d', border: 'none' }}>
+                        <Title level={5} style={{ color: '#f5f5f5' }}>📤 變更狀態</Title>
                         <Space wrap>
                             <Button onClick={() => handleChangeStatus('sold')}>標記為售出</Button>
                             <Button onClick={() => handleChangeStatus('gifted')}>標記為送禮</Button>
@@ -273,76 +396,96 @@ function EditWineItem() {
 
                 {/* 表單 */}
                 <Form form={form} layout="vertical" onFinish={handleSubmit}>
-                    <Form.Item label="酒名" name="name" rules={[{ required: true }]}>
+                    <Form.Item label={<span style={{ color: '#888' }}>酒名</span>} name="name" rules={[{ required: true }]}>
                         <Input />
                     </Form.Item>
 
-                    <Form.Item label="酒類" name="wine_type" rules={[{ required: true }]}>
+                    <Form.Item label={<span style={{ color: '#888' }}>酒類</span>} name="wine_type" rules={[{ required: true }]}>
                         <Select>
                             {wineTypes.map((t) => <Option key={t} value={t}>{t}</Option>)}
                         </Select>
                     </Form.Item>
 
                     <Space style={{ width: '100%' }} size="middle">
-                        <Form.Item label="品牌/酒莊" name="brand" style={{ flex: 1 }}>
+                        <Form.Item label={<span style={{ color: '#888' }}>品牌/酒莊</span>} name="brand" style={{ flex: 1 }}>
                             <Input />
                         </Form.Item>
-                        <Form.Item label="年份" name="vintage" style={{ width: 100 }}>
+                        <Form.Item label={<span style={{ color: '#888' }}>年份</span>} name="vintage" style={{ width: 100 }}>
                             <InputNumber style={{ width: '100%' }} />
                         </Form.Item>
                     </Space>
 
                     <Space style={{ width: '100%' }} size="middle">
-                        <Form.Item label="產區" name="region" style={{ flex: 1 }}>
+                        <Form.Item label={<span style={{ color: '#888' }}>產區</span>} name="region" style={{ flex: 1 }}>
                             <Input />
                         </Form.Item>
-                        <Form.Item label="國家" name="country" style={{ flex: 1 }}>
+                        <Form.Item label={<span style={{ color: '#888' }}>國家</span>} name="country" style={{ flex: 1 }}>
                             <Input />
                         </Form.Item>
                     </Space>
 
                     <Space style={{ width: '100%' }} size="middle">
-                        <Form.Item label="酒精濃度 (%)" name="abv" style={{ flex: 1 }}>
+                        <Form.Item label={<span style={{ color: '#888' }}>酒精濃度 (%)</span>} name="abv" style={{ flex: 1 }}>
                             <InputNumber step={0.1} style={{ width: '100%' }} />
                         </Form.Item>
-                        <Form.Item label="數量" name="quantity" style={{ flex: 1 }}>
+                        <Form.Item label={<span style={{ color: '#888' }}>數量</span>} name="quantity" style={{ flex: 1 }}>
                             <InputNumber min={1} style={{ width: '100%' }} />
                         </Form.Item>
                     </Space>
 
-
-
-                    <Form.Item label="保存類型 (影響開瓶後建議飲用期)" name="preservation_type" rules={[{ required: true }]}>
+                    <Form.Item label={<span style={{ color: '#888' }}>保存類型 (影響開瓶後建議飲用期)</span>} name="preservation_type" rules={[{ required: true }]}>
                         <Radio.Group buttonStyle="solid">
                             <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
                             <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
                         </Radio.Group>
                     </Form.Item>
 
-                    <Space style={{ width: '100%' }} size="middle">
-                        <Form.Item label="進貨價 (NT$)" name="purchase_price" style={{ flex: 1 }}>
-                            <InputNumber min={0} style={{ width: '100%' }} />
-                        </Form.Item>
-                        <Form.Item label="零售價 (NT$)" name="retail_price" style={{ flex: 1 }}>
-                            <InputNumber min={0} style={{ width: '100%' }} />
-                        </Form.Item>
-                    </Space>
-
-                    <Form.Item label="存放位置" name="storage_location">
-                        <Input />
+                    {/* 價格 + 日曆按鈕 */}
+                    <Form.Item label={<span style={{ color: '#888' }}>價格（台幣）</span>} style={{ marginBottom: 0 }}>
+                        <Space.Compact style={{ width: '100%' }}>
+                            <Form.Item name="price" noStyle>
+                                <InputNumber
+                                    min={0}
+                                    style={{ width: 'calc(100% - 40px)' }}
+                                    formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                                    parser={(value) => value.replace(/,/g, '')}
+                                />
+                            </Form.Item>
+                            <Button
+                                icon={<CalendarOutlined />}
+                                onClick={() => setCalendarVisible(true)}
+                                title="查看本月消費"
+                                style={{ width: 40 }}
+                            />
+                        </Space.Compact>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            點擊日曆查看本月消費紀錄
+                        </Text>
                     </Form.Item>
 
-                    <Form.Item label="備註" name="notes">
-                        <TextArea rows={3} />
+                    {/* 購買日期 */}
+                    <Form.Item label={<span style={{ color: '#888' }}>購買日期</span>} name="purchase_date" style={{ marginTop: 16 }}>
+                        <DatePicker style={{ width: '100%' }} />
                     </Form.Item>
 
-                    <Form.Item label="品酒筆記" name="tasting_notes">
-                        <TextArea rows={3} placeholder="香氣、口感、餘韻..." />
+                    <Form.Item label={<span style={{ color: '#888' }}>存放位置</span>} name="storage_location">
+                        <Input placeholder="例：A架第2層" />
                     </Form.Item>
 
-                    <Divider />
+                    <Form.Item label={<span style={{ color: '#888' }}>備註</span>} name="notes">
+                        <TextArea rows={3} placeholder="品酒筆記、特殊說明..." />
+                    </Form.Item>
 
-                    <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving} block>
+                    <Divider style={{ borderColor: '#404040' }} />
+
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        icon={<SaveOutlined />}
+                        loading={saving}
+                        block
+                        style={{ background: 'linear-gradient(45deg, #c9a227, #eebf38)', border: 'none', color: '#000', fontWeight: 'bold' }}
+                    >
                         儲存變更
                     </Button>
 
@@ -350,8 +493,87 @@ function EditWineItem() {
                         刪除此酒款
                     </Button>
                 </Form>
+
+                {/* 消費月曆 Modal */}
+                <Modal
+                    title="本月消費紀錄"
+                    open={calendarVisible}
+                    onCancel={() => {
+                        setCalendarVisible(false);
+                        setSelectedDate(null);
+                        setDailyItems([]);
+                    }}
+                    footer={null}
+                    width={600}
+                >
+                    {/* 月份消費總計 */}
+                    <Card
+                        size="small"
+                        style={{ marginBottom: 16, background: '#2d2d2d', border: '1px solid #404040' }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <Text strong style={{ fontSize: 16, color: '#f5f5f5' }}>
+                                    {calendarMonth.format('YYYY 年 M 月')} 總消費
+                                </Text>
+                                <Text strong style={{ fontSize: 20, color: '#c9a227', marginLeft: 12 }}>
+                                    NT$ {getMonthlyTotal(calendarMonth).toLocaleString()}
+                                </Text>
+                            </div>
+                            {budgetSettings?.monthly_budget && (
+                                <div>
+                                    <Text style={{ color: '#888' }}>預算上限：</Text>
+                                    <Text strong style={{ color: '#f5f5f5' }}>NT$ {budgetSettings.monthly_budget.toLocaleString()}</Text>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+
+                    <Calendar
+                        fullscreen={false}
+                        cellRender={dateCellRender}
+                        onSelect={handleDateSelect}
+                        onPanelChange={handlePanelChange}
+                    />
+
+                    {/* 當日消費明細 */}
+                    {selectedDate && (
+                        <Card
+                            size="small"
+                            title={<span style={{ color: '#f5f5f5' }}>{selectedDate.format('YYYY/MM/DD')} 消費明細</span>}
+                            style={{ marginTop: 16, background: '#2d2d2d', border: '1px solid #404040' }}
+                        >
+                            {dailyItems.length === 0 ? (
+                                <Text style={{ color: '#888' }}>當日無消費紀錄</Text>
+                            ) : (
+                                <>
+                                    <div style={{ marginBottom: 12 }}>
+                                        <Text strong style={{ fontSize: 16, color: '#c9a227' }}>
+                                            支出：NT$ {selectedDateTotal.toLocaleString()}
+                                        </Text>
+                                    </div>
+                                    <List
+                                        size="small"
+                                        dataSource={dailyItems}
+                                        renderItem={(listItem) => (
+                                            <List.Item style={{ borderBottom: '1px solid #404040' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                                    <Space>
+                                                        <Text style={{ color: '#f5f5f5' }}>{listItem.name}</Text>
+                                                        {listItem.wine_type && <Tag color="gold">{listItem.wine_type}</Tag>}
+                                                    </Space>
+                                                    <Text strong style={{ color: '#c9a227' }}>NT$ {listItem.purchase_price?.toLocaleString()}</Text>
+                                                </div>
+                                            </List.Item>
+                                        )}
+                                    />
+                                </>
+                            )}
+                        </Card>
+                    )}
+                </Modal>
             </Content>
-        </Layout >
+        </Layout>
     );
 }
 
