@@ -44,9 +44,14 @@ class Settings(BaseSettings):
         "https://liff.line.me",
         "https://ai-wine-cellar.zeabur.app",
         "http://localhost:5173",
-        "http://localhost:5174",  # 本地開發
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176",
+        "http://localhost:5177",
+        "http://localhost:5178",  # 本地開發備用端口
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
+        "http://127.0.0.1:5177",
     ]
 
     # 排程設定
