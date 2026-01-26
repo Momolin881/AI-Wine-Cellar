@@ -15,7 +15,7 @@ import {
   AddWineItem,
   EditWineItem,
   CellarSettings,
-  CellarSettings,
+
   NotificationSettings,
   CreateInvitation,
   InvitationDetail,
