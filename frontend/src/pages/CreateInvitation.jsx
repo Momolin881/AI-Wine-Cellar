@@ -35,6 +35,8 @@ const CreateInvitation = () => {
     const [selectedWines, setSelectedWines] = useState([]);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewData, setPreviewData] = useState(null);
 
     // Initial values
     const initialValues = {
@@ -78,23 +80,32 @@ const CreateInvitation = () => {
         });
     };
 
-    const handleFinish = async (values) => {
-        // Validation: Warn if no wines selected? (Optional)
-        // if (selectedWines.length === 0 && !confirm("您沒有選擇任何酒款，確定要繼續嗎？")) {
-        //      return;
-        // }
+    const handlePreview = async () => {
+        try {
+            const values = await form.validateFields();
+            setPreviewData({
+                ...values,
+                wineCount: selectedWines.length,
+                theme_image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+            });
+            setPreviewVisible(true);
+        } catch (error) {
+            console.log('Validation Failed:', error);
+        }
+    };
 
+    const handleRealShare = async () => {
         setSubmitting(true);
         try {
             // 1. Call Backend API to create invitation
             const payload = {
-                title: values.title,
-                event_time: values.event_time.toISOString(), // Antd DatePicker returns dayjs object
-                location: values.location,
-                description: values.description,
+                title: previewData.title,
+                event_time: previewData.event_time.toISOString(), // Antd DatePicker returns dayjs object
+                location: previewData.location,
+                description: previewData.description,
                 wine_ids: selectedWines,
                 // TODO: Allow user to upload theme image or select from presets
-                theme_image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+                theme_image_url: previewData.theme_image_url
             };
 
             const data = await createInvitation(payload);
@@ -113,6 +124,9 @@ const CreateInvitation = () => {
             if (isApiAvailable) {
                 try {
                     console.log("Attempting to open shareTargetPicker");
+                    // Close modal before opening picker to avoid UI clutter
+                    setPreviewVisible(false);
+
                     const res = await liff.shareTargetPicker([flexMessage]);
                     if (res) {
                         message.success("邀請已成功發送！");
@@ -120,7 +134,7 @@ const CreateInvitation = () => {
                     } else {
                         // User cancelled picking
                         message.info("您取消了發送邀請。");
-                        setTimeout(() => navigate('/'), 2000);
+                        // Re-open modal or stay on form? Stay on form is safer.
                     }
                 } catch (pickerError) {
                     console.error("shareTargetPicker error:", pickerError);
@@ -136,7 +150,7 @@ const CreateInvitation = () => {
                 if (isInClient) {
                     alert("您的 LINE 版本似乎不支援或未開啟 'shareTargetPicker' 權限。\n請檢查 LINE Developers Console 的設定。");
                 }
-
+                setPreviewVisible(false);
                 message.success("建立成功 (手動模式)！請複製連結分享");
                 // navigate(`/invitation/${data.id}`);
             }
@@ -160,7 +174,7 @@ const CreateInvitation = () => {
                     form={form}
                     layout="vertical"
                     initialValues={initialValues}
-                    onFinish={handleFinish}
+                    // onFinish={handleFinish} // Removed onFinish from Form
                     style={{ color: '#fff' }}
                 >
                     <Form.Item
@@ -256,18 +270,63 @@ const CreateInvitation = () => {
 
                     <Button
                         type="primary"
-                        htmlType="submit"
-                        loading={submitting}
+                        onClick={handlePreview} // Changed from htmlType="submit" to onClick
                         block
                         size="large"
                         style={{ marginTop: 40, height: 50, borderRadius: 25, background: '#c9a227', borderColor: '#c9a227', color: '#000', fontWeight: 'bold' }}
                     >
-                        建立邀請並發送
+                        預覽邀請卡
                     </Button>
                 </Form>
+
+                {/* Preview Modal */}
+                <Modal
+                    title="邀請卡預覽"
+                    open={previewVisible}
+                    onCancel={() => setPreviewVisible(false)}
+                    footer={[
+                        <Button key="back" onClick={() => setPreviewVisible(false)}>
+                            修改
+                        </Button>,
+                        <Button key="submit" type="primary" loading={submitting} onClick={handleRealShare} style={{ background: '#06c755', borderColor: '#06c755' }}>
+                            確認並發送 (LINE)
+                        </Button>,
+                    ]}
+                    bodyStyle={{ padding: 0 }}
+                >
+                    {previewData && (
+                        <div style={{ padding: 20, background: '#f0f0f0' }}>
+                            {/* Simulate Flex Message Bubble */}
+                            <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                                <div style={{ width: '100%', paddingTop: '65%', position: 'relative' }}>
+                                    <img
+                                        src={previewData.theme_image_url}
+                                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                                        alt="Header"
+                                    />
+                                </div>
+                                <div style={{ padding: '16px' }}>
+                                    <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8 }}>{previewData.title}</Text>
+                                    <Space direction="vertical" size={2} style={{ color: '#666', fontSize: 13 }}>
+                                        <div>📅 {previewData.event_time.format('YYYY-MM-DD HH:mm')}</div>
+                                        <div>📍 {previewData.location || "地點待定"}</div>
+                                        <div>🍷 已選 {previewData.wineCount} 款佳釀</div>
+                                    </Space>
+                                    <div style={{ marginTop: 16 }}>
+                                        <Button block type="text" style={{ color: '#42659a' }}>查看詳情</Button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{ textAlign: 'center', marginTop: 10, color: '#999', fontSize: 12 }}>
+                                * 圖片僅供參考，實際發送樣式以 LINE 為準
+                            </div>
+                        </div>
+                    )}
+                </Modal>
             </Content>
         </Layout>
     );
 };
 
 export default CreateInvitation;
+```
