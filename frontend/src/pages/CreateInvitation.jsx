@@ -22,13 +22,11 @@ import {
     UserOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { getFoodItems, createInvitation, getInvitationFlex } from '../services/api';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-
-// API Base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const CreateInvitation = () => {
     const navigate = useNavigate();
@@ -51,29 +49,18 @@ const CreateInvitation = () => {
         const fetchWines = async () => {
             try {
                 setLoading(true);
-                // Call actual API
-                const response = await fetch(`${API_BASE_URL}/api/v1/wine-items?status=active`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || ''}`
-                    }
-                });
+                // Use api client which handles Auth and Base URL
+                const data = await getFoodItems({ status: 'active' });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setAvailableWines(Array.isArray(data) ? data : []);
+                if (Array.isArray(data)) {
+                    setAvailableWines(data);
                 } else {
-                    // Fallback mock data if API fails or auth issues
-                    console.warn("API fetch failed, using mock data");
-                    const mockWines = [
-                        { id: 1, name: 'Chateau Margaux 2015', image_url: 'https://via.placeholder.com/150' },
-                        { id: 2, name: 'Opus One 2018', image_url: 'https://via.placeholder.com/150' },
-                        { id: 3, name: 'Penfolds Grange 2016', image_url: 'https://via.placeholder.com/150' },
-                    ];
-                    setAvailableWines(mockWines);
+                    setAvailableWines([]);
                 }
             } catch (err) {
                 console.error("Failed to fetch wines", err);
-                message.error("無法載入酒款資料");
+                message.error("無法載入您的酒窖資料，請確認您已登入");
+                // Do not fallback to mock data to avoid confusion
             } finally {
                 setLoading(false);
             }
@@ -92,9 +79,10 @@ const CreateInvitation = () => {
     };
 
     const handleFinish = async (values) => {
-        if (selectedWines.length === 0 && !confirm("您沒有選擇任何酒款，確定要繼續嗎？")) {
-            return;
-        }
+        // Validation: Warn if no wines selected? (Optional)
+        // if (selectedWines.length === 0 && !confirm("您沒有選擇任何酒款，確定要繼續嗎？")) {
+        //      return;
+        // }
 
         setSubmitting(true);
         try {
@@ -105,27 +93,15 @@ const CreateInvitation = () => {
                 location: values.location,
                 description: values.description,
                 wine_ids: selectedWines,
+                // TODO: Allow user to upload theme image or select from presets
                 theme_image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
             };
 
-            const response = await fetch(`${API_BASE_URL}/api/v1/invitations`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || ''}`
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                throw new Error('無法建立邀請');
-            }
-
-            const data = await response.json();
+            const data = await createInvitation(payload);
+            const invitationId = data.id;
 
             // 2. Fetch generated Flex Message
-            const flexRes = await fetch(`${API_BASE_URL}/api/v1/invitations/${data.id}/flex`);
-            const flexMessage = await flexRes.json();
+            const flexMessage = await getInvitationFlex(invitationId);
 
             // 3. Use LIFF shareTargetPicker to send message
             if (liff.isApiAvailable('shareTargetPicker')) {
@@ -145,7 +121,7 @@ const CreateInvitation = () => {
 
         } catch (err) {
             console.error(err);
-            message.error(err.message || "發生錯誤");
+            message.error(err.message || "建立失敗，請稍後再試");
         } finally {
             setSubmitting(false);
         }
@@ -217,7 +193,7 @@ const CreateInvitation = () => {
 
                     {loading ? <Spin /> : (
                         <Row gutter={[16, 16]}>
-                            {availableWines.map(wine => (
+                            {availableWines.length > 0 ? availableWines.map(wine => (
                                 <Col span={12} key={wine.id}>
                                     <div
                                         onClick={() => handleWineToggle(wine.id)}
@@ -246,11 +222,10 @@ const CreateInvitation = () => {
                                         )}
                                     </div>
                                 </Col>
-                            ))}
-                            {availableWines.length === 0 && (
+                            )) : (
                                 <Col span={24}>
                                     <div style={{ padding: 20, textAlign: 'center', color: '#666', background: '#2d2d2d', borderRadius: 8 }}>
-                                        沒有可用的酒款 (請先在「我的酒窖」新增)
+                                        您的酒窖目前沒有在庫酒款
                                     </div>
                                 </Col>
                             )}

@@ -13,7 +13,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.post("/", response_model=InvitationResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=InvitationResponse, status_code=status.HTTP_201_CREATED)
 def create_invitation(invitation: InvitationCreate, db: Session = Depends(get_db)):
     """建立新的邀請函"""
     db_invitation = Invitation(**invitation.model_dump())
@@ -37,13 +37,12 @@ def get_invitation_flex(invitation_id: int, db: Session = Depends(get_db)):
     if not db_invitation:
         raise HTTPException(status_code=404, detail="Invitation not found")
     
-    # TODO: 這裡應該呼叫 Service 產生真正的 Flex Message
-    # 暫時回傳一個簡單的範例
-    flex_message = {
+    # 產生 Flex Message Bubble
+    bubble = {
         "type": "bubble",
         "hero": {
             "type": "image",
-            "url": db_invitation.theme_image_url or "https://example.com/wine_party.jpg",
+            "url": db_invitation.theme_image_url or "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
             "size": "full",
             "aspectRatio": "20:13",
             "aspectMode": "cover"
@@ -102,12 +101,19 @@ def get_invitation_flex(invitation_id: int, db: Session = Depends(get_db)):
                     "action": {
                         "type": "uri",
                         "label": "查看詳情",
-                        "uri": f"https://liff.line.me/YOUR_LIFF_ID/invitation/{invitation_id}"
+                        "uri": f"https://liff.line.me/2008946239-5U8c7ry2/invitation/{invitation_id}"
                     }
                 }
             ],
             "flex": 0
         }
+    }
+    
+    # 包裝成完整的 Flex Message 格式 (供 shareTargetPicker 使用)
+    flex_message = {
+        "type": "flex",
+        "altText": f"邀請您參加：{db_invitation.title}",
+        "contents": bubble
     }
     
     return flex_message

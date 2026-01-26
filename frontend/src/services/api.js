@@ -416,4 +416,33 @@ export const importFridge = (fridgeId, data, clearExisting = false) => {
   return apiClient.post(`/fridges/${fridgeId}/import?clear_existing=${clearExisting}`, data);
 };
 
+// ---------- 邀請函相關 ----------
+
+/**
+ * 建立邀請函
+ * @param {Object} data - 邀請函資料
+ * @returns {Promise<Object>} 建立的邀請函
+ */
+export const createInvitation = (data) => {
+  return apiClient.post('/invitations', data);
+};
+
+/**
+ * 取得邀請函 Flex Message
+ * @param {number} id - 邀請函 ID
+ * @returns {Promise<Object>} Flex Message JSON
+ */
+export const getInvitationFlex = (id) => {
+  return apiClient.get(`/invitations/${id}/flex`);
+};
+
+/**
+ * 取得邀請函詳情
+ * @param {number} id - 邀請函 ID
+ * @returns {Promise<Object>} 邀請函詳情
+ */
+export const getInvitation = (id) => {
+  return apiClient.get(`/invitations/${id}`);
+};
+
 export default apiClient;
