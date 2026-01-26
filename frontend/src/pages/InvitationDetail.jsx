@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import liff from '@line/liff'; // Import LIFF
 import {
     Layout,
     Typography,
@@ -12,18 +13,19 @@ import {
     Space,
     Row,
     Col,
-    Avatar
+    message,
+    Modal
 } from 'antd';
 import {
     CalendarOutlined,
     EnvironmentOutlined,
-    ClockCircleOutlined,
-    CheckCircleFilled
+    CheckCircleFilled,
+    GoogleOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Content } = Layout;
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 // API Base URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -31,14 +33,18 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const InvitationDetail = () => {
     const { id } = useParams();
     const [invitation, setInvitation] = useState(null);
+    const [wines, setWines] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [wines, setWines] = useState([]); // In case API returns wines list
+    const [sending, setSending] = useState(false);
 
     useEffect(() => {
         const fetchInvitation = async () => {
             try {
                 // Fetch invitation details
+                // Use api client equivalent logic (fetch for now as we didn't export getInvitation from api.js but createInvitation, wait I did export getInvitation in previous turn)
+                // Let's use fetch directly to be safe or import. 
+                // To keep it simple and self-contained I will use fetch, but using the same endpoint logic.
                 const response = await fetch(`${API_BASE_URL}/api/v1/invitations/${id}`);
                 if (!response.ok) {
                     throw new Error('找不到此邀請函');
@@ -46,15 +52,7 @@ const InvitationDetail = () => {
                 const data = await response.json();
                 setInvitation(data);
 
-                // If API returns wine_details or similar, use it. 
-                // Currently our schema doesn't return joined wines directly unless we updated it.
-                // For MVP, we might need a separate call or update the backend to Include wines.
-                // Assuming backend DOES NOT return wines yet (based on my route implementation). 
-                // I should assume empty wines for now or implement fetching.
-                // Let's implement fetching wines simply by ID if ids are present
                 if (data.wine_ids && data.wine_ids.length > 0) {
-                    // TODO: This is inefficient (N+1), but OK for MVP with few wines. 
-                    // Ideally backend returns details.
                     const winePromises = data.wine_ids.map(async (wid) => {
                         try {
                             const wRes = await fetch(`${API_BASE_URL}/api/v1/wine-items/${wid}`);
@@ -77,6 +75,50 @@ const InvitationDetail = () => {
             fetchInvitation();
         }
     }, [id]);
+
+    const handleRSVP = async () => {
+        if (!liff.isInClient()) {
+            message.warning("請在 LINE App 中開啟以使用此功能");
+            return;
+        }
+
+        setSending(true);
+        try {
+            await liff.sendMessages([
+                {
+                    type: 'text',
+                    text: `我要參加「${invitation.title}」 +1 🍷`
+                }
+            ]);
+
+            Modal.success({
+                title: '報名成功！',
+                content: '已在聊天室發送 +1 訊息。要順便加入行事曆嗎？',
+                okText: '好的，加入行事曆',
+                closable: true,
+                onOk: handleAddToCalendar
+            });
+
+        } catch (err) {
+            console.error('RSVP Error:', err);
+            message.error("無法發送訊息，請檢查 LINE 權限或是手動回覆");
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleAddToCalendar = () => {
+        if (!invitation) return;
+
+        // Construct Google Calendar Link
+        const startTime = dayjs(invitation.event_time).format('YYYYMMDDTHHmmss');
+        const endTime = dayjs(invitation.event_time).add(3, 'hour').format('YYYYMMDDTHHmmss'); // Assume 3 hours duration
+        const details = `酒單：\n${wines.map(w => `- ${w.name}`).join('\n')}\n\n備註：${invitation.description || ''}`;
+
+        const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(invitation.title)}&dates=${startTime}/${endTime}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(invitation.location || '')}`;
+
+        window.open(calendarUrl, '_blank');
+    };
 
     if (loading) {
         return (
@@ -132,7 +174,6 @@ const InvitationDetail = () => {
                                 <Text strong style={{ color: '#fff', fontSize: 16, display: 'block' }}>
                                     {invitation.location || "地點待定"}
                                 </Text>
-                                {/* <Text style={{ color: '#888' }}>點擊查看地圖</Text> */}
                             </div>
                         </div>
 
@@ -178,16 +219,34 @@ const InvitationDetail = () => {
                     )}
                 </Space>
 
-                <Button
-                    type="primary"
-                    block
-                    size="large"
-                    icon={<CheckCircleFilled />}
-                    style={{ marginTop: 40, height: 54, borderRadius: 27, background: '#c9a227', borderColor: '#c9a227', color: '#000', fontWeight: 'bold', fontSize: 18 }}
-                    onClick={() => message.success("已收到您的回覆！期待見到您！")}
-                >
-                    我會參加
-                </Button>
+                {/* Actions */}
+                <Row gutter={16} style={{ marginTop: 40 }}>
+                    <Col span={12}>
+                        <Button
+                            block
+                            size="large"
+                            icon={<GoogleOutlined />}
+                            style={{ height: 50, borderRadius: 25, background: '#333', borderColor: '#444', color: '#ccc' }}
+                            onClick={handleAddToCalendar}
+                        >
+                            加入行事曆
+                        </Button>
+                    </Col>
+                    <Col span={12}>
+                        <Button
+                            type="primary"
+                            block
+                            size="large"
+                            loading={sending}
+                            icon={<CheckCircleFilled />}
+                            style={{ height: 50, borderRadius: 25, background: '#c9a227', borderColor: '#c9a227', color: '#000', fontWeight: 'bold' }}
+                            onClick={handleRSVP}
+                        >
+                            我會參加
+                        </Button>
+                    </Col>
+                </Row>
+
             </Content>
         </Layout>
     );
