@@ -5,7 +5,8 @@
 """
 
 import logging
-from datetime import datetime
+import traceback
+from datetime import datetime, date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
@@ -37,7 +38,6 @@ class WineItemCreate(BaseModel):
     quantity: int = 1
     space_units: float = 1.0
     container_type: str = "瓶"
-    bottle_status: str = "unopened"
     bottle_status: str = "unopened"
     preservation_type: str = "immediate"  # immediate / aging
     remaining_amount: str = "full"
@@ -238,25 +238,61 @@ async def get_wine_item(id: int, db: DBSession, user_id: CurrentUserId):
 @router.post("/wine-items", response_model=WineItemResponse, status_code=status.HTTP_201_CREATED)
 async def create_wine_item(data: WineItemCreate, db: DBSession, user_id: CurrentUserId):
     """新增酒款"""
-    # 驗證酒窖所有權
-    cellar = db.query(WineCellar).filter(
-        WineCellar.id == data.cellar_id, WineCellar.user_id == user_id
-    ).first()
+    try:
+        # 驗證酒窖所有權
+        cellar = db.query(WineCellar).filter(
+            WineCellar.id == data.cellar_id, WineCellar.user_id == user_id
+        ).first()
 
-    if not cellar:
+        if not cellar:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="酒窖不存在或無權限存取"
+            )
+
+        # 處理資料
+        item_data = data.model_dump()
+        logger.info(f"建立酒款資料: {item_data}")
+
+        # 處理日期欄位：將字串轉換為 date 物件
+        date_fields = ['purchase_date', 'optimal_drinking_start', 'optimal_drinking_end']
+        for field in date_fields:
+            value = item_data.get(field)
+            if value:
+                # 如果是字串，轉換為 date 物件
+                if isinstance(value, str):
+                    try:
+                        item_data[field] = datetime.strptime(value, '%Y-%m-%d').date()
+                    except ValueError:
+                        logger.error(f"日期格式錯誤 ({field}): {value}")
+                        item_data[field] = None
+            else:
+                # 空值處理：purchase_date 移除以使用預設值，其他設為 None
+                if field == 'purchase_date':
+                    item_data.pop(field, None)
+                else:
+                    item_data[field] = None
+
+        # 建立酒款
+        wine_item = WineItem(**item_data)
+        db.add(wine_item)
+        db.commit()
+        db.refresh(wine_item)
+
+        logger.info(f"使用者 {user_id} 新增酒款: {wine_item.name} (ID: {wine_item.id})")
+        return _build_wine_item_response(wine_item)
+        
+    except HTTPException:
+        # 重新拋出 HTTPException
+        raise
+    except Exception as e:
+        db.rollback()
+        error_msg = f"建立酒款失敗: {e}"
+        logger.error(error_msg)
+        logger.error(traceback.format_exc())
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="酒窖不存在或無權限存取"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_msg
         )
-
-    # 建立酒款
-    wine_item = WineItem(**data.model_dump())
-    db.add(wine_item)
-    db.commit()
-    db.refresh(wine_item)
-
-    logger.info(f"使用者 {user_id} 新增酒款: {wine_item.name} (ID: {wine_item.id})")
-
-    return _build_wine_item_response(wine_item)
 
 
 @router.put("/wine-items/{id}", response_model=WineItemResponse)
