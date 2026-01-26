@@ -1,9 +1,23 @@
 /**
- * 拍照入庫按鈕樣式
- * 
+ * 華麗動畫按鈕樣式
+ *
  * 金色主題的華麗動畫按鈕
  * 基於 Uiverse.io by MuhammadHasann
  */
+
+/* 按鈕容器 - 用於並排顯示 */
+.cta-buttons-container {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.cta-buttons-container .photo-upload-button {
+  flex: 1;
+  max-width: none;
+  margin: 0;
+  padding: 0.875rem 0.5rem;
+}
 
 .photo-upload-button {
   --gold-primary: #c9a227;
@@ -193,4 +207,12 @@
   font-size: 1rem;
   font-weight: 600;
   color: transparent;
+}
+
+/* 乾杯圖示樣式 */
+.photo-upload-button .cheers-icon {
+  position: relative;
+  z-index: 10;
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 2px rgba(201, 162, 39, 0.5));
 }

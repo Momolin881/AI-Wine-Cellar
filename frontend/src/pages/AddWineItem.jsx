@@ -31,12 +31,14 @@ import {
 import {
     ArrowLeftOutlined,
     CameraOutlined,
+    UploadOutlined,
     SaveOutlined,
     CalendarOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 import apiClient, { getFoodItems, getBudgetSettings } from '../services/api';
+import '../styles/BlobCard.css';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -276,40 +278,80 @@ function AddWineItem() {
                     <Title level={3}>🍷 新增酒款</Title>
                 </div>
 
-                {/* AI 辨識區塊 */}
-                <Card className="neu-card" style={{ marginBottom: 16, textAlign: 'center' }}>
-                    <Upload
-                        accept="image/*"
-                        showUploadList={false}
-                        beforeUpload={handleImageUpload}
-                        capture="environment"
-                    >
+                {/* AI 辨識區塊 - Blob Card 效果 */}
+                <div className="blob-card" style={{ marginBottom: 16 }}>
+                    <div className="blob-card__blob"></div>
+                    <div className="blob-card__blob blob-card__blob--secondary"></div>
+                    <div className="blob-card__bg"></div>
+                    <div className="blob-card__content">
                         {recognizing ? (
-                            <div style={{ padding: 40 }}>
+                            <div className="blob-card__loading">
                                 <Spin size="large" tip="AI 辨識中..." />
                             </div>
                         ) : imageUrl ? (
-                            <img
-                                src={imageUrl}
-                                alt="酒標"
-                                style={{
-                                    width: '100%',
-                                    maxHeight: 200,
-                                    objectFit: 'contain',
-                                    borderRadius: 12,
-                                    marginBottom: 8,
-                                }}
-                            />
-                        ) : (
-                            <div style={{ padding: 40 }}>
-                                <CameraOutlined style={{ fontSize: 48, color: 'var(--accent-gold)' }} />
-                                <div style={{ marginTop: 8 }}>
-                                    <Text type="secondary">拍攝酒標，AI 自動辨識</Text>
+                            <>
+                                <img
+                                    src={imageUrl}
+                                    alt="酒標"
+                                    className="blob-card__image"
+                                />
+                                <div className="blob-card__buttons">
+                                    <Upload
+                                        accept="image/*"
+                                        showUploadList={false}
+                                        beforeUpload={handleImageUpload}
+                                        capture="environment"
+                                    >
+                                        <Button icon={<CameraOutlined />}>重新拍照</Button>
+                                    </Upload>
+                                    <Upload
+                                        accept="image/*"
+                                        showUploadList={false}
+                                        beforeUpload={handleImageUpload}
+                                    >
+                                        <Button icon={<UploadOutlined />}>重新上傳</Button>
+                                    </Upload>
                                 </div>
-                            </div>
+                            </>
+                        ) : (
+                            <>
+                                <Text style={{ display: 'block', marginBottom: 16, color: '#aaa' }}>
+                                    AI 自動辨識酒標
+                                </Text>
+                                <div className="blob-card__buttons">
+                                    <Upload
+                                        accept="image/*"
+                                        showUploadList={false}
+                                        beforeUpload={handleImageUpload}
+                                        capture="environment"
+                                    >
+                                        <Button
+                                            type="primary"
+                                            icon={<CameraOutlined />}
+                                            size="large"
+                                            style={{ minWidth: 130 }}
+                                        >
+                                            拍照酒標
+                                        </Button>
+                                    </Upload>
+                                    <Upload
+                                        accept="image/*"
+                                        showUploadList={false}
+                                        beforeUpload={handleImageUpload}
+                                    >
+                                        <Button
+                                            icon={<UploadOutlined />}
+                                            size="large"
+                                            style={{ minWidth: 130 }}
+                                        >
+                                            上傳酒照
+                                        </Button>
+                                    </Upload>
+                                </div>
+                            </>
                         )}
-                    </Upload>
-                </Card>
+                    </div>
+                </div>
 
                 {/* 表單 */}
                 <Form

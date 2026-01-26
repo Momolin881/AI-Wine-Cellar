@@ -72,8 +72,6 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 function App() {
   const [liffReady, setLiffReady] = useState(false);
   const [liffError, setLiffError] = useState(null);
-  const [hasCellar, setHasCellar] = useState(true);
-  const [checkingCellar, setCheckingCellar] = useState(true);
 
   useEffect(() => {
     // 初始化 LIFF SDK
@@ -83,8 +81,6 @@ function App() {
 
         if (isReady) {
           setLiffReady(true);
-          // 檢查是否已設定酒窖
-          checkCellarSetup();
         } else {
           console.log('Redirecting to LINE login...');
         }
@@ -96,30 +92,6 @@ function App() {
 
     init();
   }, []);
-
-  const checkCellarSetup = async () => {
-    try {
-      // 使用 API client（會自動加入 Authorization header）
-      const { default: apiClient } = await import('./services/api.js');
-      const cellars = await apiClient.get('/wine-cellars');
-
-      setHasCellar(cellars.length > 0);
-
-      // 如果沒有酒窖，自動建立一個
-      if (cellars.length === 0) {
-        await apiClient.post('/wine-cellars', {
-          name: '我的酒窖',
-          total_capacity: 100,
-        });
-        setHasCellar(true);
-      }
-    } catch (error) {
-      console.error('檢查酒窖設定失敗:', error);
-      setHasCellar(true); // 出錯時假設有酒窖，讓用戶可以操作
-    } finally {
-      setCheckingCellar(false);
-    }
-  };
 
   // 顯示錯誤訊息
   if (liffError) {
@@ -155,8 +127,8 @@ function App() {
     );
   }
 
-  // 初始化中或檢查酒窖設定中
-  if (!liffReady || checkingCellar) {
+  // 初始化中
+  if (!liffReady) {
     return <LoadingPage />;
   }
 

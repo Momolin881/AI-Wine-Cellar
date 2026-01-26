@@ -27,81 +27,7 @@ import {
     UploadOutlined // Import Icon
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getFoodItems, createInvitation, getInvitationFlex, uploadInvitationImage } from '../services/api'; // Import upload API
-
-// ... (Previous imports)
-
-const CreateInvitation = () => {
-    const navigate = useNavigate();
-    const [form] = Form.useForm();
-    const [availableWines, setAvailableWines] = useState([]);
-    const [selectedWines, setSelectedWines] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
-    const [previewVisible, setPreviewVisible] = useState(false);
-    const [previewData, setPreviewData] = useState(null);
-    const [customImageUrl, setCustomImageUrl] = useState(null); // State for custom image
-    const [uploadingImage, setUploadingImage] = useState(false);
-
-    // ... (Previous code)
-
-    const handlePreview = async () => {
-        try {
-            const values = await form.validateFields();
-            setPreviewData({
-                ...values,
-                wineCount: selectedWines.length,
-                // Use custom URL if uploaded, otherwise default
-                theme_image_url: customImageUrl || 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
-            });
-            setPreviewVisible(true);
-        } catch (error) {
-            console.log('Validation Failed:', error);
-        }
-    };
-
-    // Image upload handler
-    const handleImageUpload = async (file) => {
-        setUploadingImage(true);
-        try {
-            const result = await uploadInvitationImage(file);
-            setCustomImageUrl(result.url);
-            message.success("圖片上傳成功！");
-        } catch (error) {
-            console.error(error);
-            message.error("圖片上傳失敗，請稍後再試");
-        } finally {
-            setUploadingImage(false);
-        }
-        return false; // Prevent auto upload by antd
-    };
-
-    // ... (handleRealShare remains largely same, but ensure it uses correct theme_image_url)
-
-    return (
-        <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
-            <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto' }}>
-                {/* ... (Previous Form Items) */}
-
-                <Form
-                    form={form}
-                    layout="vertical"
-                    initialValues={initialValues}
-                    style={{ color: '#fff' }}
-                >
-                    {/* ... (Existing Fields: Title, Time, Location, Description) */}
-                    {/* I am omitting them here for brevity in replace block, assuming I replace the whole content below wine grid? */}
-                    {/* Better to just insert the Upload button before the Preview Button */}
-
-                    {/* ... (Wine Grid Code) */}
-                </Form>
-            </Content>
-        </Layout>
-    );
-};
-// Wait, I should not replace the whole file content blindly. 
-// I will target the Wine Grid area and insert the Upload button below it.
-
+import { getFoodItems, createInvitation, getInvitationFlex, uploadInvitationImage } from '../services/api';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -116,6 +42,8 @@ const CreateInvitation = () => {
     const [submitting, setSubmitting] = useState(false);
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewData, setPreviewData] = useState(null);
+    const [customImageUrl, setCustomImageUrl] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     // Initial values: Default to tomorrow, rounded to next hour? Or just tomorrow same time.
     // User asked for "Today + 1", let's do tomorrow at the start of next hour
@@ -161,13 +89,29 @@ const CreateInvitation = () => {
         });
     };
 
+    // Image upload handler
+    const handleImageUpload = async (file) => {
+        setUploadingImage(true);
+        try {
+            const result = await uploadInvitationImage(file);
+            setCustomImageUrl(result.url);
+            message.success("圖片上傳成功！");
+        } catch (error) {
+            console.error(error);
+            message.error("圖片上傳失敗，請稍後再試");
+        } finally {
+            setUploadingImage(false);
+        }
+        return false; // Prevent auto upload by antd
+    };
+
     const handlePreview = async () => {
         try {
             const values = await form.validateFields();
             setPreviewData({
                 ...values,
                 wineCount: selectedWines.length,
-                theme_image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+                theme_image_url: customImageUrl || 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
             });
             setPreviewVisible(true);
         } catch (error) {
@@ -444,4 +388,3 @@ const CreateInvitation = () => {
 };
 
 export default CreateInvitation;
-```

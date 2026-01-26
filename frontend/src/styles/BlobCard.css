@@ -1,0 +1,128 @@
+/**
+ * Blob Card 動畫效果
+ *
+ * 深色主題版本，帶有流動光暈動畫
+ * 基於 Uiverse.io by dylanharriscameron
+ */
+
+.blob-card {
+  position: relative;
+  width: 100%;
+  border-radius: 14px;
+  z-index: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    8px 8px 20px #151515,
+    -8px -8px 20px #353535;
+}
+
+.blob-card__bg {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  z-index: 2;
+  background: rgba(45, 45, 45, 0.95);
+  backdrop-filter: blur(24px);
+  border-radius: 10px;
+  overflow: hidden;
+  outline: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.blob-card__content {
+  position: relative;
+  z-index: 3;
+  padding: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.blob-card__blob {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #c9a227 0%, #8b7118 100%);
+  opacity: 0.8;
+  filter: blur(20px);
+  animation: blob-bounce 5s infinite ease;
+}
+
+/* 第二個 blob 增加層次感 */
+.blob-card__blob--secondary {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #e0c068 0%, #c9a227 100%);
+  opacity: 0.6;
+  filter: blur(15px);
+  animation: blob-bounce-reverse 7s infinite ease;
+}
+
+@keyframes blob-bounce {
+  0% {
+    transform: translate(-100%, -100%) translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate(-100%, -100%) translate3d(100%, 0, 0);
+  }
+  50% {
+    transform: translate(-100%, -100%) translate3d(100%, 100%, 0);
+  }
+  75% {
+    transform: translate(-100%, -100%) translate3d(0, 100%, 0);
+  }
+  100% {
+    transform: translate(-100%, -100%) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes blob-bounce-reverse {
+  0% {
+    transform: translate(-100%, -100%) translate3d(100%, 100%, 0);
+  }
+  25% {
+    transform: translate(-100%, -100%) translate3d(0, 100%, 0);
+  }
+  50% {
+    transform: translate(-100%, -100%) translate3d(0, 0, 0);
+  }
+  75% {
+    transform: translate(-100%, -100%) translate3d(100%, 0, 0);
+  }
+  100% {
+    transform: translate(-100%, -100%) translate3d(100%, 100%, 0);
+  }
+}
+
+/* 上傳後的圖片樣式 */
+.blob-card__image {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+/* 按鈕區域 */
+.blob-card__buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* AI 辨識中的 Spin */
+.blob-card__loading {
+  padding: 40px;
+}

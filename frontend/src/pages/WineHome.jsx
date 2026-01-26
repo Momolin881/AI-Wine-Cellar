@@ -171,9 +171,14 @@ function WineHome() {
                     <Text style={{ color: '#888' }}>個人數位酒窖管理</Text>
                 </div>
 
-                {/* 拍照入庫按鈕 - 主要 CTA */}
-                <div style={{ marginBottom: 20 }}>
+                {/* 主要 CTA 按鈕 - 並排顯示 */}
+                <div className="cta-buttons-container" style={{ marginBottom: 20 }}>
                     <PhotoUploadButton onClick={() => navigate('/add')} />
+                    <PhotoUploadButton
+                        onClick={() => navigate('/invitation/create')}
+                        text="馬上揪喝"
+                        icon="cheers"
+                    />
                 </div>
 
                 {/* 統計看板 */}
@@ -312,23 +317,6 @@ function WineHome() {
                         }}
                     >
                         通知設定
-                    </Tag>
-                    <Tag
-                        icon={<span role="img" aria-label="cheers">🥂</span>}
-                        onClick={() => navigate('/invitation/create')}
-                        style={{
-                            cursor: 'pointer',
-                            padding: '8px 16px',
-                            borderRadius: 20,
-                            background: '#2d2d2d',
-                            border: 'none',
-                            color: '#c9a227',
-                            borderColor: '#c9a227',
-                            borderWidth: '1px',
-                            borderStyle: 'solid'
-                        }}
-                    >
-                        發起聚會
                     </Tag>
                 </div>
 
