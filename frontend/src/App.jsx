@@ -15,7 +15,10 @@ import {
   AddWineItem,
   EditWineItem,
   CellarSettings,
+  CellarSettings,
   NotificationSettings,
+  CreateInvitation,
+  InvitationDetail,
 } from './pages';
 
 // 深色主題配置
@@ -177,6 +180,10 @@ function App() {
 
             {/* 通知設定 */}
             <Route path="/settings/notifications" element={<NotificationSettings />} />
+
+            {/* 聚會邀請 */}
+            <Route path="/invitation/create" element={<CreateInvitation />} />
+            <Route path="/invitation/:id" element={<InvitationDetail />} />
 
             {/* 404 重新導向到首頁 */}
             <Route path="*" element={<Navigate to="/" replace />} />

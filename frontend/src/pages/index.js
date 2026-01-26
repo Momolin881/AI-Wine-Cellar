@@ -15,3 +15,8 @@ export { default as BudgetManagement } from './BudgetManagement';
 export { default as RecipeRecommendations } from './RecipeRecommendations';
 export { default as RecipeDetail } from './RecipeDetail';
 export { default as UserRecipes } from './UserRecipes';
+
+// 聚會邀請
+export { default as CreateInvitation } from './CreateInvitation';
+export { default as InvitationDetail } from './InvitationDetail';
+

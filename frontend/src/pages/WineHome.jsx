@@ -313,6 +313,23 @@ function WineHome() {
                     >
                         通知設定
                     </Tag>
+                    <Tag
+                        icon={<span role="img" aria-label="cheers">🥂</span>}
+                        onClick={() => navigate('/invitation/create')}
+                        style={{
+                            cursor: 'pointer',
+                            padding: '8px 16px',
+                            borderRadius: 20,
+                            background: '#2d2d2d',
+                            border: 'none',
+                            color: '#c9a227',
+                            borderColor: '#c9a227',
+                            borderWidth: '1px',
+                            borderStyle: 'solid'
+                        }}
+                    >
+                        發起聚會
+                    </Tag>
                 </div>
 
                 {/* 版本資訊 */}
