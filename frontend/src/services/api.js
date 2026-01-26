@@ -454,12 +454,8 @@ export const uploadInvitationImage = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await apiClient.post('/invitations/upload-image', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
+  // apiClient 的 response interceptor 已經回傳 response.data
+  return await apiClient.post('/invitations/upload-image', formData);
 };
 
 export default apiClient;

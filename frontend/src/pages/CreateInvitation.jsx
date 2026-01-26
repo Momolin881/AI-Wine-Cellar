@@ -108,9 +108,14 @@ const CreateInvitation = () => {
     const handlePreview = async () => {
         try {
             const values = await form.validateFields();
+            // 取得選中酒款的名稱
+            const selectedWineNames = availableWines
+                .filter(wine => selectedWines.includes(wine.id))
+                .map(wine => wine.name);
             setPreviewData({
                 ...values,
                 wineCount: selectedWines.length,
+                wineNames: selectedWineNames,
                 theme_image_url: customImageUrl || 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
             });
             setPreviewVisible(true);
@@ -365,11 +370,13 @@ const CreateInvitation = () => {
                                     />
                                 </div>
                                 <div style={{ padding: '16px' }}>
-                                    <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8 }}>{previewData.title}</Text>
+                                    <div style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, color: '#1a1a1a' }}>{previewData.title}</div>
                                     <Space direction="vertical" size={2} style={{ color: '#666', fontSize: 13 }}>
                                         <div>📅 {previewData.event_time.format('YYYY-MM-DD HH:mm')}</div>
                                         <div>📍 {previewData.location || "地點待定"}</div>
-                                        <div>🍷 已選 {previewData.wineCount} 款佳釀</div>
+                                        {previewData.wineNames && previewData.wineNames.length > 0 && (
+                                            <div>🍷 {previewData.wineNames.join('、')}</div>
+                                        )}
                                     </Space>
                                     <div style={{ marginTop: 16 }}>
                                         <Button block type="text" style={{ color: '#42659a' }}>查看詳情</Button>

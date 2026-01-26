@@ -6,7 +6,7 @@
  * Neumorphism 深色主題
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Layout,
@@ -60,6 +60,12 @@ function WineHome() {
 
     const wineTypes = ['紅酒', '白酒', '氣泡酒', '香檳', '威士忌', '白蘭地', '清酒', '啤酒', '其他'];
 
+    // 計算哪些酒類在酒窖中有庫存
+    const availableWineTypes = useMemo(() => {
+        const types = new Set(wineItems.map(item => item.wine_type));
+        return types;
+    }, [wineItems]);
+
     useEffect(() => {
         loadData();
     }, [wineTypeFilter]);
@@ -109,12 +115,12 @@ function WineHome() {
             setWineItems(itemsData);
             setFilteredItems(itemsData);
 
-            // 計算統計
+            // 計算統計（以瓶數計算）
             setStats({
-                totalWines: itemsData.length,
+                totalWines: itemsData.reduce((sum, i) => sum + (i.quantity || 1), 0),
                 totalValue: itemsData.reduce((sum, i) => sum + (i.total_value || 0), 0),
-                unopened: itemsData.filter(i => i.bottle_status === 'unopened').length,
-                opened: itemsData.filter(i => i.bottle_status === 'opened').length,
+                unopened: itemsData.filter(i => i.bottle_status === 'unopened').reduce((sum, i) => sum + (i.quantity || 1), 0),
+                opened: itemsData.filter(i => i.bottle_status === 'opened').reduce((sum, i) => sum + (i.quantity || 1), 0),
             });
 
         } catch (error) {
@@ -136,12 +142,12 @@ function WineHome() {
             const newItems = wineItems.filter(item => item.id !== updatedWine.id);
             setWineItems(newItems);
             setModalVisible(false);
-            // 更新統計
+            // 更新統計（以瓶數計算）
             setStats({
-                totalWines: newItems.length,
+                totalWines: newItems.reduce((sum, i) => sum + (i.quantity || 1), 0),
                 totalValue: newItems.reduce((sum, i) => sum + (i.total_value || 0), 0),
-                unopened: newItems.filter(i => i.bottle_status === 'unopened').length,
-                opened: newItems.filter(i => i.bottle_status === 'opened').length,
+                unopened: newItems.filter(i => i.bottle_status === 'unopened').reduce((sum, i) => sum + (i.quantity || 1), 0),
+                opened: newItems.filter(i => i.bottle_status === 'opened').reduce((sum, i) => sum + (i.quantity || 1), 0),
             });
             return;
         }
@@ -151,12 +157,12 @@ function WineHome() {
             item.id === updatedWine.id ? updatedWine : item
         );
         setWineItems(newItems);
-        // 更新統計
+        // 更新統計（以瓶數計算）
         setStats({
-            totalWines: newItems.length,
+            totalWines: newItems.reduce((sum, i) => sum + (i.quantity || 1), 0),
             totalValue: newItems.reduce((sum, i) => sum + (i.total_value || 0), 0),
-            unopened: newItems.filter(i => i.bottle_status === 'unopened').length,
-            opened: newItems.filter(i => i.bottle_status === 'opened').length,
+            unopened: newItems.filter(i => i.bottle_status === 'unopened').reduce((sum, i) => sum + (i.quantity || 1), 0),
+            opened: newItems.filter(i => i.bottle_status === 'opened').reduce((sum, i) => sum + (i.quantity || 1), 0),
         });
     };
 
@@ -196,7 +202,7 @@ function WineHome() {
                             <Statistic
                                 title={<span style={{ color: '#888', fontSize: 12 }}>總酒數</span>}
                                 value={stats.totalWines}
-                                suffix="款"
+                                suffix="瓶"
                                 valueStyle={{ color: '#f5f5f5', fontSize: 20 }}
                             />
                         </Col>
@@ -244,20 +250,31 @@ function WineHome() {
                     <Tag
                         color={wineTypeFilter === 'all' ? 'gold' : 'default'}
                         onClick={() => setWineTypeFilter('all')}
-                        style={{ cursor: 'pointer', borderRadius: 16 }}
+                        style={{
+                            cursor: 'pointer',
+                            borderRadius: 16,
+                            boxShadow: wineItems.length > 0 ? '0 0 8px 2px rgba(139, 0, 0, 0.6)' : 'none',
+                        }}
                     >
                         全部
                     </Tag>
-                    {wineTypes.map(type => (
-                        <Tag
-                            key={type}
-                            color={wineTypeFilter === type ? 'gold' : 'default'}
-                            onClick={() => setWineTypeFilter(type)}
-                            style={{ cursor: 'pointer', borderRadius: 16 }}
-                        >
-                            {type}
-                        </Tag>
-                    ))}
+                    {wineTypes.map(type => {
+                        const hasWines = availableWineTypes.has(type);
+                        return (
+                            <Tag
+                                key={type}
+                                color={wineTypeFilter === type ? 'gold' : 'default'}
+                                onClick={() => setWineTypeFilter(type)}
+                                style={{
+                                    cursor: 'pointer',
+                                    borderRadius: 16,
+                                    boxShadow: hasWines ? '0 0 8px 2px rgba(139, 0, 0, 0.6)' : 'none',
+                                }}
+                            >
+                                {type}
+                            </Tag>
+                        );
+                    })}
                 </div>
 
                 {/* 酒款正方形卡片網格 */}
