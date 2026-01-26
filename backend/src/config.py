@@ -40,19 +40,20 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # CORS 設定
-    CORS_ORIGINS: list[str] = [
-        "https://liff.line.me",
-        "https://ai-wine-cellar.zeabur.app",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-        "http://localhost:5177",
-        "http://localhost:5178",  # 本地開發備用端口
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:5177",
-    ]
+    CORS_ORIGINS: list[str] = ["*"] # 暫時允許所有來源以解決 CORS 問題
+    # CORS_ORIGINS: list[str] = [
+    #     "https://liff.line.me",
+    #     "https://ai-wine-cellar.zeabur.app",
+    #     "http://localhost:5173",
+    #     "http://localhost:5174",
+    #     "http://localhost:5175",
+    #     "http://localhost:5176",
+    #     "http://localhost:5177",
+    #     "http://localhost:5178",  # 本地開發備用端口
+    #     "http://127.0.0.1:5173",
+    #     "http://127.0.0.1:5174",
+    #     "http://127.0.0.1:5177",
+    # ]
 
     # 排程設定
     EXPIRY_WARNING_DAYS: int = 3  # 效期提醒天數（預設提前 3 天）
