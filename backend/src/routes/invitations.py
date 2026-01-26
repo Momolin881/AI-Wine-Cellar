@@ -1,92 +1,113 @@
-
-from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
-from datetime import datetime
-import uuid
+from typing import List
 
 from src.database import get_db
 from src.models.invitation import Invitation
-from src.models.wine_item import WineItem
-from src.services.flex_message import create_invitation_flex_message
+from src.schemas.invitation import InvitationCreate, InvitationResponse, InvitationUpdate
+# from src.services.invitation_service import generate_invitation_flex_message
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/invitations",
+    tags=["Invitations"],
+    responses={404: {"description": "Not found"}},
+)
 
-# Pydantic Models
-class InvitationCreate(BaseModel):
-    title: str
-    description: Optional[str] = None
-    event_time: datetime
-    location: Optional[str] = None
-    wine_ids: List[int] # WineTable uses Integer ID by default? Let's check WineItem model.
-    theme_image_url: Optional[str] = None
-
-class InvitationResponse(BaseModel):
-    id: uuid.UUID
-    title: str
-    event_time: datetime
-    location: Optional[str]
-    flex_message: dict # 回傳給前端用的 Flex Message JSON
-
-    class Config:
-        from_attributes = True
-
-@router.post("/invitations", response_model=InvitationResponse)
-async def create_invitation(
-    invitation_in: InvitationCreate,
-    db: Session = Depends(get_db)
-):
-    """
-    建立新的品飲聚會邀請
-    """
-    # 1. 驗證酒款是否存在
-    # WineItem use Integer ID? Let's verify. Assuming yes for now.
-    wines = db.query(WineItem).filter(WineItem.id.in_(invitation_in.wine_ids)).all()
-    if len(wines) != len(invitation_in.wine_ids):
-        raise HTTPException(status_code=400, detail="部分酒款 ID 無效")
-
-    # 2. 建立邀請函記錄
-    db_invitation = Invitation(
-        title=invitation_in.title,
-        description=invitation_in.description,
-        event_time=invitation_in.event_time,
-        location=invitation_in.location,
-        theme_image_url=invitation_in.theme_image_url,
-        wine_ids=invitation_in.wine_ids
-        # host_id=current_user.id # 暫時省略
-    )
+@router.post("/", response_model=InvitationResponse, status_code=status.HTTP_201_CREATED)
+def create_invitation(invitation: InvitationCreate, db: Session = Depends(get_db)):
+    """建立新的邀請函"""
+    db_invitation = Invitation(**invitation.model_dump())
     db.add(db_invitation)
     db.commit()
     db.refresh(db_invitation)
+    return db_invitation
 
-    # 3. 產生 Flex Message
-    flex_message = create_invitation_flex_message(db_invitation, wines)
+@router.get("/{invitation_id}", response_model=InvitationResponse)
+def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
+    """取得邀請函詳情"""
+    db_invitation = db.query(Invitation).filter(Invitation.id == invitation_id).first()
+    if not db_invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    return db_invitation
 
-    return InvitationResponse(
-        id=db_invitation.id,
-        title=db_invitation.title,
-        event_time=db_invitation.event_time,
-        location=db_invitation.location,
-        flex_message=flex_message
-    )
-
-@router.get("/invitations/{invitation_id}")
-async def get_invitation(
-    invitation_id: uuid.UUID,
-    db: Session = Depends(get_db)
-):
-    """
-    取得邀請函詳情
-    """
-    invitation = db.query(Invitation).filter(Invitation.id == invitation_id).first()
-    if not invitation:
-        raise HTTPException(status_code=404, detail="邀請函不存在")
+@router.get("/{invitation_id}/flex")
+def get_invitation_flex(invitation_id: int, db: Session = Depends(get_db)):
+    """取得邀請函的 Flex Message JSON (供前端 LIFF 發送)"""
+    db_invitation = db.query(Invitation).filter(Invitation.id == invitation_id).first()
+    if not db_invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
     
-    # 查詢酒款詳情
-    wines = db.query(WineItem).filter(WineItem.id.in_(invitation.wine_ids)).all()
-    
-    return {
-        "invitation": invitation,
-        "wines": wines
+    # TODO: 這裡應該呼叫 Service 產生真正的 Flex Message
+    # 暫時回傳一個簡單的範例
+    flex_message = {
+        "type": "bubble",
+        "hero": {
+            "type": "image",
+            "url": db_invitation.theme_image_url or "https://example.com/wine_party.jpg",
+            "size": "full",
+            "aspectRatio": "20:13",
+            "aspectMode": "cover"
+        },
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": db_invitation.title,
+                    "weight": "bold",
+                    "size": "xl"
+                },
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "margin": "lg",
+                    "spacing": "sm",
+                    "contents": [
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "時間",
+                                    "color": "#aaaaaa",
+                                    "size": "sm",
+                                    "flex": 1
+                                },
+                                {
+                                    "type": "text",
+                                    "text": db_invitation.event_time.strftime("%Y-%m-%d %H:%M"),
+                                    "wrap": True,
+                                    "color": "#666666",
+                                    "size": "sm",
+                                    "flex": 5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "footer": {
+            "type": "box",
+            "layout": "vertical",
+            "spacing": "sm",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "link",
+                    "height": "sm",
+                    "action": {
+                        "type": "uri",
+                        "label": "查看詳情",
+                        "uri": f"https://liff.line.me/YOUR_LIFF_ID/invitation/{invitation_id}"
+                    }
+                }
+            ],
+            "flex": 0
+        }
     }
+    
+    return flex_message

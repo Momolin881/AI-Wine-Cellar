@@ -2,48 +2,69 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-    Box,
+    Layout,
     Typography,
     Card,
-    CardMedia,
-    CardContent,
-    Grid,
     Button,
-    Chip,
+    Tag,
+    Spin,
     Divider,
-    Avatar,
-    Stack,
-    CircularProgress
-} from '@mui/material';
+    Space,
+    Row,
+    Col,
+    Avatar
+} from 'antd';
 import {
-    CalendarMonth,
-    LocationOn,
-    WineBar,
-    AccessTime
-} from '@mui/icons-material';
-import { format } from 'date-fns';
-import { zhTW } from 'date-fns/locale';
+    CalendarOutlined,
+    EnvironmentOutlined,
+    ClockCircleOutlined,
+    CheckCircleFilled
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
+
+const { Content } = Layout;
+const { Title, Text, Paragraph } = Typography;
 
 // API Base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const InvitationDetail = () => {
     const { id } = useParams();
     const [invitation, setInvitation] = useState(null);
-    const [wines, setWines] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [wines, setWines] = useState([]); // In case API returns wines list
 
     useEffect(() => {
         const fetchInvitation = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/invitations/${id}`);
+                // Fetch invitation details
+                const response = await fetch(`${API_BASE_URL}/api/v1/invitations/${id}`);
                 if (!response.ok) {
                     throw new Error('找不到此邀請函');
                 }
                 const data = await response.json();
-                setInvitation(data.invitation);
-                setWines(data.wines);
+                setInvitation(data);
+
+                // If API returns wine_details or similar, use it. 
+                // Currently our schema doesn't return joined wines directly unless we updated it.
+                // For MVP, we might need a separate call or update the backend to Include wines.
+                // Assuming backend DOES NOT return wines yet (based on my route implementation). 
+                // I should assume empty wines for now or implement fetching.
+                // Let's implement fetching wines simply by ID if ids are present
+                if (data.wine_ids && data.wine_ids.length > 0) {
+                    // TODO: This is inefficient (N+1), but OK for MVP with few wines. 
+                    // Ideally backend returns details.
+                    const winePromises = data.wine_ids.map(async (wid) => {
+                        try {
+                            const wRes = await fetch(`${API_BASE_URL}/api/v1/wine-items/${wid}`);
+                            return wRes.ok ? await wRes.json() : null;
+                        } catch (e) { return null; }
+                    });
+                    const fetchedWines = (await Promise.all(winePromises)).filter(w => w !== null);
+                    setWines(fetchedWines);
+                }
+
             } catch (err) {
                 console.error(err);
                 setError(err.message);
@@ -59,133 +80,116 @@ const InvitationDetail = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: '#121212', color: '#c9a227' }}>
-                <CircularProgress color="inherit" />
-            </Box>
+            <div style={{ minHeight: '100vh', background: '#1a1a1a', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Spin size="large" tip="Loading..." />
+            </div>
         );
     }
 
     if (error || !invitation) {
         return (
-            <Box sx={{ p: 4, textAlign: 'center', bgcolor: '#121212', minHeight: '100vh', color: '#fff' }}>
-                <Typography variant="h6" color="error">
-                    {error || '邀請函失效或已被刪除'}
-                </Typography>
-            </Box>
+            <div style={{ minHeight: '100vh', background: '#1a1a1a', padding: 40, textAlign: 'center', color: '#fff' }}>
+                <Title level={4} style={{ color: '#ff4d4f' }}>{error || '無法讀取邀請函'}</Title>
+            </div>
         );
     }
 
     return (
-        <Box sx={{ pb: 10, bgcolor: '#121212', minHeight: '100vh', color: '#fff' }}>
-            {/* Hero Image */}
-            <Box sx={{ position: 'relative', height: '250px' }}>
+        <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+            {/* Hero Section */}
+            <div style={{ position: 'relative', height: 240 }}>
                 <img
-                    src={invitation.theme_image_url || 'https://via.placeholder.com/800x400'}
+                    src={invitation.theme_image_url || "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"}
                     alt="Cover"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.7)' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.6)' }}
                 />
-                <Box sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    width: '100%',
-                    p: 3,
-                    background: 'linear-gradient(to top, #121212, transparent)'
-                }}>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#c9a227', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '24px', background: 'linear-gradient(to top, #1a1a1a, transparent)' }}>
+                    <Title level={2} style={{ color: '#c9a227', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                         {invitation.title}
-                    </Typography>
-                </Box>
-            </Box>
+                    </Title>
+                </div>
+            </div>
 
-            <Box sx={{ p: 3 }}>
-                {/* Event Details */}
-                <Stack spacing={2} sx={{ mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <CalendarMonth sx={{ color: '#c9a227' }} />
-                        <Box>
-                            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                                {format(new Date(invitation.event_time), 'yyyy年MM月dd日 (EEEE)', { locale: zhTW })}
-                            </Typography>
-                            <Typography variant="body2" color="gray">
-                                {format(new Date(invitation.event_time), 'HH:mm')}
-                            </Typography>
-                        </Box>
-                    </Box>
+            <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto', width: '100%' }}>
+                {/* Info Card */}
+                <Card style={{ background: '#2d2d2d', border: 'none', borderRadius: 12, marginBottom: 24 }} bodyStyle={{ padding: 20 }}>
+                    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            <CalendarOutlined style={{ fontSize: 20, color: '#c9a227', marginTop: 4 }} />
+                            <div>
+                                <Text strong style={{ color: '#fff', fontSize: 16, display: 'block' }}>
+                                    {dayjs(invitation.event_time).format('YYYY年MM月DD日 (dddd)')}
+                                </Text>
+                                <Text style={{ color: '#888' }}>
+                                    {dayjs(invitation.event_time).format('HH:mm')}
+                                </Text>
+                            </div>
+                        </div>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <LocationOn sx={{ color: '#c9a227' }} />
-                        <Typography variant="body1">
-                            {invitation.location || '地點待定'}
-                        </Typography>
-                    </Box>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            <EnvironmentOutlined style={{ fontSize: 20, color: '#c9a227', marginTop: 4 }} />
+                            <div>
+                                <Text strong style={{ color: '#fff', fontSize: 16, display: 'block' }}>
+                                    {invitation.location || "地點待定"}
+                                </Text>
+                                {/* <Text style={{ color: '#888' }}>點擊查看地圖</Text> */}
+                            </div>
+                        </div>
 
-                    {invitation.description && (
-                        <Typography variant="body2" color="gray" sx={{ pl: 5, borderLeft: '2px solid #333' }}>
-                            {invitation.description}
-                        </Typography>
-                    )}
-                </Stack>
+                        {invitation.description && (
+                            <div style={{ padding: '12px', background: '#333', borderRadius: 8, marginTop: 8 }}>
+                                <Text style={{ color: '#ccc' }}>{invitation.description}</Text>
+                            </div>
+                        )}
+                    </Space>
+                </Card>
 
-                <Divider sx={{ my: 3, borderColor: '#333' }} />
+                <Divider style={{ borderColor: '#333', color: '#c9a227' }}>今日酒單</Divider>
 
                 {/* Wine List */}
-                <Typography variant="h6" sx={{ mb: 2, color: '#c9a227', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WineBar /> 今日酒單
-                </Typography>
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                    {wines.length > 0 ? wines.map(wine => (
+                        <Card key={wine.id} style={{ background: '#2d2d2d', border: 'none', borderRadius: 12 }} bodyStyle={{ padding: 12 }}>
+                            <Row gutter={16} align="middle">
+                                <Col flex="80px">
+                                    <div style={{ width: 80, height: 80, background: '#111', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <img
+                                            src={wine.image_url || 'https://via.placeholder.com/80'}
+                                            alt={wine.name}
+                                            style={{ maxHeight: '90%', maxWidth: '90%', objectFit: 'contain' }}
+                                        />
+                                    </div>
+                                </Col>
+                                <Col flex="auto">
+                                    <Text strong style={{ color: '#fff', fontSize: 16, display: 'block', marginBottom: 4 }}>
+                                        {wine.name}
+                                    </Text>
+                                    <Space>
+                                        <Tag color="gold">{wine.type}</Tag>
+                                        <Tag style={{ background: '#444', border: 'none', color: '#ccc' }}>{wine.vintage || 'NV'}</Tag>
+                                    </Space>
+                                </Col>
+                            </Row>
+                        </Card>
+                    )) : (
+                        <div style={{ textAlign: 'center', color: '#666', padding: 20 }}>
+                            <Text style={{ color: '#666' }}>本次聚會尚未指定酒款</Text>
+                        </div>
+                    )}
+                </Space>
 
-                <Grid container spacing={2}>
-                    {wines.map((wine) => (
-                        <Grid item xs={12} key={wine.id}>
-                            <Card sx={{ display: 'flex', bgcolor: '#2d2d2d', color: '#fff', borderRadius: 2 }}>
-                                <CardMedia
-                                    component="img"
-                                    sx={{ width: 100, objectFit: 'contain', bgcolor: '#000' }}
-                                    image={wine.image_url || 'https://via.placeholder.com/150'}
-                                    alt={wine.name}
-                                />
-                                <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                                    <CardContent sx={{ flex: '1 0 auto', py: 1 }}>
-                                        <Typography component="div" variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                                            {wine.name}
-                                        </Typography>
-                                        <Typography variant="subtitle2" color="#aaa" component="div">
-                                            {wine.type}
-                                        </Typography>
-                                        <Box sx={{ mt: 1 }}>
-                                            <Chip
-                                                label={`${wine.vintage || 'NV'}`}
-                                                size="small"
-                                                sx={{ mr: 1, bgcolor: '#444', color: '#ccc' }}
-                                            />
-                                            <Chip
-                                                label={wine.country || 'Unknown'}
-                                                size="small"
-                                                sx={{ bgcolor: '#444', color: '#ccc' }}
-                                            />
-                                        </Box>
-                                    </CardContent>
-                                </Box>
-                            </Card>
-                        </Grid>
-                    ))}
-                </Grid>
-
-                {/* Action Button */}
                 <Button
-                    variant="contained"
-                    fullWidth
+                    type="primary"
+                    block
                     size="large"
-                    sx={{ mt: 5, bgcolor: '#c9a227', color: '#000', fontWeight: 'bold', borderRadius: 50 }}
-                    onClick={() => {
-                        // Add to Google Calendar logic or simple alert
-                        alert("已收到您的回覆！期待見到您！");
-                    }}
+                    icon={<CheckCircleFilled />}
+                    style={{ marginTop: 40, height: 54, borderRadius: 27, background: '#c9a227', borderColor: '#c9a227', color: '#000', fontWeight: 'bold', fontSize: 18 }}
+                    onClick={() => message.success("已收到您的回覆！期待見到您！")}
                 >
-                    我會參加 🍷
+                    我會參加
                 </Button>
-            </Box>
-        </Box>
+            </Content>
+        </Layout>
     );
 };
 
