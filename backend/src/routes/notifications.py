@@ -163,16 +163,42 @@ async def test_expiry_check(
     user_id: CurrentUserId
 ):
     """
-    手動觸發適飲期提醒檢查（測試用）
+    發送測試通知到用戶的 LINE
 
-    這會立即執行適飲期檢查並發送 LINE 推播通知。
+    直接發送一條測試訊息，確認通知功能正常運作。
     """
+    from src.models.user import User
+    from src.services.line_bot import send_text_message
+
     try:
-        logger.info(f"使用者 {user_id} 手動觸發適飲期提醒檢查")
-        check_drinking_period()
-        return {"message": "適飲期提醒檢查已執行，請查看 LINE 訊息"}
+        # 取得用戶的 LINE User ID
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user or not user.line_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="找不到用戶的 LINE ID"
+            )
+
+        logger.info(f"發送測試通知給用戶 {user_id} (LINE: {user.line_user_id})")
+
+        # 發送測試訊息
+        success = send_text_message(
+            user.line_user_id,
+            "🍷 測試通知\n\n恭喜！您的通知功能運作正常。\n\n當有酒款即將到達最佳飲用期限時，我們會透過 LINE 通知您。"
+        )
+
+        if success:
+            return {"message": "測試通知已發送，請查看 LINE 訊息"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="發送通知失敗，請稍後再試"
+            )
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"手動觸發效期提醒檢查失敗: {e}")
+        logger.error(f"發送測試通知失敗: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
