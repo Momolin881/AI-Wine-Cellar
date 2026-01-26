@@ -105,9 +105,12 @@
 }
 
 .wine-card-square__type {
-    font-size: 0.7rem;
-    color: #c9a227;
-    font-weight: 500;
+    font-size: 0.65rem;
+    color: #1a1a1a;
+    font-weight: 600;
+    background: #c9a227;
+    padding: 2px 8px;
+    border-radius: 10px;
 }
 
 .wine-card-square__abv {

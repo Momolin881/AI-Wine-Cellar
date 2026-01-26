@@ -84,7 +84,7 @@ function WineHome() {
             // 取得酒款列表（只取在庫的）
             let url = `${API_BASE}/api/v1/wine-items?status=active`;
             if (wineTypeFilter !== 'all') {
-                url += `&wine_type=${wineTypeFilter}`;
+                url += `&wine_type=${encodeURIComponent(wineTypeFilter)}`;
             }
 
             const itemsRes = await fetch(url, {
