@@ -21,7 +21,7 @@ import {
     Row,
     Col,
 } from 'antd';
-import { SettingOutlined, CalendarOutlined } from '@ant-design/icons';
+import { BellOutlined, CalendarOutlined } from '@ant-design/icons';
 import {
     PhotoUploadButton,
     WineCardSquare,
@@ -300,8 +300,8 @@ function WineHome() {
                         查看消費月曆
                     </Tag>
                     <Tag
-                        icon={<SettingOutlined />}
-                        onClick={() => navigate('/settings')}
+                        icon={<BellOutlined />}
+                        onClick={() => navigate('/settings/notifications')}
                         style={{
                             cursor: 'pointer',
                             padding: '8px 16px',
@@ -311,7 +311,7 @@ function WineHome() {
                             color: '#888',
                         }}
                     >
-                        酒窖設定
+                        通知設定
                     </Tag>
                 </div>
 
