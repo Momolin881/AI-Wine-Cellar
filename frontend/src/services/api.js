@@ -441,8 +441,25 @@ export const getInvitationFlex = (id) => {
  * @param {number} id - 邀請函 ID
  * @returns {Promise<Object>} 邀請函詳情
  */
-export const getInvitation = (id) => {
+export const getInvitation = async (id) => {
   return apiClient.get(`/invitations/${id}`);
+};
+
+/**
+ * 上傳邀請函主題圖片
+ * @param {File} file - 圖片檔案
+ * @returns {Promise<{url: string}>}
+ */
+export const uploadInvitationImage = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await apiClient.post('/invitations/upload-image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
 };
 
 export default apiClient;

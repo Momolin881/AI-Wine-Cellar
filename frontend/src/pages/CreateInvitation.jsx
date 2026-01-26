@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
+
 import {
     Layout,
     Typography,
@@ -14,15 +15,93 @@ import {
     Col,
     Checkbox,
     message,
-    Spin
+    Spin,
+    Upload, // Import Upload
+    Modal,
+    Space
 } from 'antd';
 import {
     CalendarOutlined,
     EnvironmentOutlined,
     UserOutlined,
+    UploadOutlined // Import Icon
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getFoodItems, createInvitation, getInvitationFlex } from '../services/api';
+import { getFoodItems, createInvitation, getInvitationFlex, uploadInvitationImage } from '../services/api'; // Import upload API
+
+// ... (Previous imports)
+
+const CreateInvitation = () => {
+    const navigate = useNavigate();
+    const [form] = Form.useForm();
+    const [availableWines, setAvailableWines] = useState([]);
+    const [selectedWines, setSelectedWines] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewData, setPreviewData] = useState(null);
+    const [customImageUrl, setCustomImageUrl] = useState(null); // State for custom image
+    const [uploadingImage, setUploadingImage] = useState(false);
+
+    // ... (Previous code)
+
+    const handlePreview = async () => {
+        try {
+            const values = await form.validateFields();
+            setPreviewData({
+                ...values,
+                wineCount: selectedWines.length,
+                // Use custom URL if uploaded, otherwise default
+                theme_image_url: customImageUrl || 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+            });
+            setPreviewVisible(true);
+        } catch (error) {
+            console.log('Validation Failed:', error);
+        }
+    };
+
+    // Image upload handler
+    const handleImageUpload = async (file) => {
+        setUploadingImage(true);
+        try {
+            const result = await uploadInvitationImage(file);
+            setCustomImageUrl(result.url);
+            message.success("圖片上傳成功！");
+        } catch (error) {
+            console.error(error);
+            message.error("圖片上傳失敗，請稍後再試");
+        } finally {
+            setUploadingImage(false);
+        }
+        return false; // Prevent auto upload by antd
+    };
+
+    // ... (handleRealShare remains largely same, but ensure it uses correct theme_image_url)
+
+    return (
+        <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+            <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto' }}>
+                {/* ... (Previous Form Items) */}
+
+                <Form
+                    form={form}
+                    layout="vertical"
+                    initialValues={initialValues}
+                    style={{ color: '#fff' }}
+                >
+                    {/* ... (Existing Fields: Title, Time, Location, Description) */}
+                    {/* I am omitting them here for brevity in replace block, assuming I replace the whole content below wine grid? */}
+                    {/* Better to just insert the Upload button before the Preview Button */}
+
+                    {/* ... (Wine Grid Code) */}
+                </Form>
+            </Content>
+        </Layout>
+    );
+};
+// Wait, I should not replace the whole file content blindly. 
+// I will target the Wine Grid area and insert the Upload button below it.
+
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -270,6 +349,39 @@ const CreateInvitation = () => {
                             )}
                         </Row>
                     )}
+
+                    <div style={{ margin: '24px 0' }}>
+                        <Typography.Text strong style={{ color: '#c9a227', display: 'block', marginBottom: 12 }}>
+                            自訂邀請卡封面 (選填)
+                        </Typography.Text>
+                        <Upload
+                            beforeUpload={handleImageUpload}
+                            showUploadList={false}
+                            maxCount={1}
+                        >
+                            <Button
+                                icon={uploadingImage ? <Spin /> : <UploadOutlined />}
+                                style={{ background: '#2d2d2d', borderColor: '#444', color: '#ccc', width: '100%' }}
+                            >
+                                {uploadingImage ? "上傳中..." : "上傳照片"}
+                            </Button>
+                        </Upload>
+                        {customImageUrl && (
+                            <div style={{ marginTop: 12, position: 'relative' }}>
+                                <img src={customImageUrl} alt="Preview" style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }} />
+                                <Button
+                                    size="small"
+                                    type="text"
+                                    danger
+                                    style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(0,0,0,0.5)' }}
+                                    onClick={(e) => { e.stopPropagation(); setCustomImageUrl(null); }}
+                                >
+                                    移除
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+
 
                     <Button
                         type="primary"

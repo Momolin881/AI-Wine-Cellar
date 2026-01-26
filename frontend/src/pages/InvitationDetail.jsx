@@ -42,9 +42,7 @@ const InvitationDetail = () => {
         const fetchInvitation = async () => {
             try {
                 // Fetch invitation details
-                // Use api client equivalent logic (fetch for now as we didn't export getInvitation from api.js but createInvitation, wait I did export getInvitation in previous turn)
-                // Let's use fetch directly to be safe or import. 
-                // To keep it simple and self-contained I will use fetch, but using the same endpoint logic.
+                // Use fetch directly to bypass auth token requirement for guests
                 const response = await fetch(`${API_BASE_URL}/api/v1/invitations/${id}`);
                 if (!response.ok) {
                     throw new Error('找不到此邀請函');
@@ -52,15 +50,11 @@ const InvitationDetail = () => {
                 const data = await response.json();
                 setInvitation(data);
 
-                if (data.wine_ids && data.wine_ids.length > 0) {
-                    const winePromises = data.wine_ids.map(async (wid) => {
-                        try {
-                            const wRes = await fetch(`${API_BASE_URL}/api/v1/wine-items/${wid}`);
-                            return wRes.ok ? await wRes.json() : null;
-                        } catch (e) { return null; }
-                    });
-                    const fetchedWines = (await Promise.all(winePromises)).filter(w => w !== null);
-                    setWines(fetchedWines);
+                // Backend now returns wine_details directly
+                if (data.wine_details && data.wine_details.length > 0) {
+                    setWines(data.wine_details);
+                } else {
+                    setWines([]);
                 }
 
             } catch (err) {
