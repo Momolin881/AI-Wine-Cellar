@@ -22,15 +22,21 @@ import {
     Upload,
     Spin,
     Radio,
+    Modal,
+    Calendar,
+    Badge,
+    List,
+    Tag,
 } from 'antd';
 import {
     ArrowLeftOutlined,
     CameraOutlined,
     SaveOutlined,
+    CalendarOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
-import apiClient from '../services/api';
+import apiClient, { getFoodItems, getBudgetSettings } from '../services/api';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -52,8 +58,17 @@ function AddWineItem() {
     const [cellars, setCellars] = useState([]);
     const [selectedCellar, setSelectedCellar] = useState(null);
 
+    // 月曆相關狀態
+    const [calendarVisible, setCalendarVisible] = useState(false);
+    const [wineItems, setWineItems] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [dailyItems, setDailyItems] = useState([]);
+    const [calendarMonth, setCalendarMonth] = useState(dayjs());
+    const [budgetSettings, setBudgetSettings] = useState(null);
+
     useEffect(() => {
         loadCellars();
+        loadWineItemsAndBudget();
     }, []);
 
     const loadCellars = async () => {
@@ -71,6 +86,87 @@ function AddWineItem() {
             // 如果沒有酒窖，可能需要建立一個預設的（這裡暫時略過，假設已有）
         }
     };
+
+    // 載入酒款資料和預算設定（用於月曆顯示）
+    const loadWineItemsAndBudget = async () => {
+        try {
+            const [itemsData, budgetData] = await Promise.all([
+                getFoodItems(),
+                getBudgetSettings(),
+            ]);
+            // 只保留有價格的酒款
+            setWineItems(itemsData.filter((item) => item.purchase_price && item.purchase_price > 0));
+            setBudgetSettings(budgetData);
+        } catch (error) {
+            console.error('載入消費資料失敗:', error);
+        }
+    };
+
+    // 計算每日消費總額
+    const getDailySpending = () => {
+        const dailyMap = {};
+        wineItems.forEach((item) => {
+            if (item.purchase_date && item.purchase_price) {
+                const dateKey = dayjs(item.purchase_date).format('YYYY-MM-DD');
+                if (!dailyMap[dateKey]) {
+                    dailyMap[dateKey] = 0;
+                }
+                dailyMap[dateKey] += item.purchase_price;
+            }
+        });
+        return dailyMap;
+    };
+
+    // 計算指定月份的消費總額
+    const getMonthlyTotal = (month) => {
+        const monthKey = month.format('YYYY-MM');
+        return wineItems
+            .filter((item) => dayjs(item.purchase_date).format('YYYY-MM') === monthKey)
+            .reduce((sum, item) => sum + (item.purchase_price || 0), 0);
+    };
+
+    // 日曆單元格渲染
+    const dateCellRender = (value) => {
+        const dateKey = value.format('YYYY-MM-DD');
+        const dailySpending = getDailySpending();
+        const amount = dailySpending[dateKey];
+
+        if (amount) {
+            return (
+                <div style={{ textAlign: 'center' }}>
+                    <Badge
+                        count={`$${amount}`}
+                        style={{
+                            backgroundColor: '#722ed1',
+                            fontSize: '10px',
+                            padding: '0 4px',
+                        }}
+                    />
+                </div>
+            );
+        }
+        return null;
+    };
+
+    // 點擊日期
+    const handleDateSelect = (date) => {
+        const dateKey = date.format('YYYY-MM-DD');
+        const items = wineItems.filter(
+            (item) => dayjs(item.purchase_date).format('YYYY-MM-DD') === dateKey
+        );
+        setSelectedDate(date);
+        setDailyItems(items);
+    };
+
+    // 處理月曆月份切換
+    const handlePanelChange = (date) => {
+        setCalendarMonth(date);
+        setSelectedDate(null);
+        setDailyItems([]);
+    };
+
+    // 計算選中日期的總消費
+    const selectedDateTotal = dailyItems.reduce((sum, item) => sum + (item.purchase_price || 0), 0);
 
     // AI 酒標辨識
     const handleImageUpload = async (file) => {
@@ -137,8 +233,11 @@ function AddWineItem() {
         try {
             setLoading(true);
 
+            // 將 price 映射為 purchase_price
+            const { price, ...restValues } = values;
+
             const payload = {
-                ...values,
+                ...restValues,
                 cellar_id: targetCellarId,
                 image_url: imageUrl,
                 cloudinary_public_id: cloudinaryPublicId,
@@ -146,6 +245,7 @@ function AddWineItem() {
                 optimal_drinking_start: values.optimal_drinking_start?.format('YYYY-MM-DD'),
                 optimal_drinking_end: values.optimal_drinking_end?.format('YYYY-MM-DD'),
                 recognized_by_ai: recognizing ? 1 : 0,
+                purchase_price: price, // 前端 price 映射到後端 purchase_price
             };
 
             await apiClient.post('/wine-items', payload);
@@ -231,6 +331,14 @@ function AddWineItem() {
                         <Input />
                     </Form.Item>
 
+                    {/* 保存類型 - 移到最上方 */}
+                    <Form.Item label="保存類型 (影響開瓶後建議飲用期)" name="preservation_type" rules={[{ required: true }]}>
+                        <Radio.Group buttonStyle="solid">
+                            <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
+                            <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
+                        </Radio.Group>
+                    </Form.Item>
+
                     {/* 基本資訊 */}
                     <Form.Item
                         label="酒名"
@@ -290,34 +398,32 @@ function AddWineItem() {
                         </Form.Item>
                     </Space>
 
-                    {/* 保存類型 */}
-                    <Form.Item label="保存類型 (影響開瓶後建議飲用期)" name="preservation_type" rules={[{ required: true }]}>
-                        <Radio.Group buttonStyle="solid">
-                            <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
-                            <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
-                        </Radio.Group>
+                    {/* 價格（合併為單一欄位） + 日曆按鈕 */}
+                    <Form.Item label="價格（台幣）" style={{ marginBottom: 0 }}>
+                        <Space.Compact style={{ width: '100%' }}>
+                            <Form.Item name="price" noStyle>
+                                <InputNumber
+                                    min={0}
+                                    placeholder="1500"
+                                    style={{ width: 'calc(100% - 40px)' }}
+                                    formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                                    parser={(value) => value.replace(/,/g, '')}
+                                />
+                            </Form.Item>
+                            <Button
+                                icon={<CalendarOutlined />}
+                                onClick={() => setCalendarVisible(true)}
+                                title="查看/紀錄本月消費"
+                                style={{ width: 40 }}
+                            />
+                        </Space.Compact>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            點擊日曆查看本月消費紀錄
+                        </Text>
                     </Form.Item>
 
-                    {/* 價格 */}
-                    <Space style={{ width: '100%' }} size="middle">
-                        <Form.Item label="進貨價 (NT$)" name="purchase_price" style={{ flex: 1 }}>
-                            <InputNumber
-                                min={0}
-                                placeholder="1500"
-                                style={{ width: '100%' }}
-                            />
-                        </Form.Item>
-                        <Form.Item label="零售價 (NT$)" name="retail_price" style={{ flex: 1 }}>
-                            <InputNumber
-                                min={0}
-                                placeholder="2000"
-                                style={{ width: '100%' }}
-                            />
-                        </Form.Item>
-                    </Space>
-
                     {/* 日期 */}
-                    <Form.Item label="購買日期" name="purchase_date">
+                    <Form.Item label="購買日期" name="purchase_date" style={{ marginTop: 16 }}>
                         <DatePicker style={{ width: '100%' }} />
                     </Form.Item>
 
@@ -345,6 +451,92 @@ function AddWineItem() {
                         </Button>
                     </Form.Item>
                 </Form>
+
+                {/* 月曆 Modal */}
+                <Modal
+                    title={<><CalendarOutlined /> 本月消費紀錄</>}
+                    open={calendarVisible}
+                    onCancel={() => {
+                        setCalendarVisible(false);
+                        setSelectedDate(null);
+                        setDailyItems([]);
+                    }}
+                    footer={null}
+                    width={600}
+                >
+                    {/* 月份消費總計和預算 */}
+                    <Card
+                        size="small"
+                        style={{ marginBottom: 16, background: '#f9f0ff', borderColor: '#d3adf7' }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <Text strong style={{ fontSize: 16 }}>
+                                    {calendarMonth.format('YYYY 年 M 月')} 總消費
+                                </Text>
+                                <Text strong style={{ fontSize: 20, color: '#722ed1', marginLeft: 12 }}>
+                                    NT$ {getMonthlyTotal(calendarMonth).toLocaleString()}
+                                </Text>
+                            </div>
+                            {budgetSettings?.monthly_budget && (
+                                <div>
+                                    <Text type="secondary">預算上限：</Text>
+                                    <Text strong>NT$ {budgetSettings.monthly_budget.toLocaleString()}</Text>
+                                </div>
+                            )}
+                        </div>
+                        {budgetSettings?.monthly_budget && (
+                            <div style={{ marginTop: 8 }}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    已使用 {((getMonthlyTotal(calendarMonth) / budgetSettings.monthly_budget) * 100).toFixed(1)}% 的預算
+                                </Text>
+                            </div>
+                        )}
+                    </Card>
+
+                    <Calendar
+                        fullscreen={false}
+                        cellRender={dateCellRender}
+                        onSelect={handleDateSelect}
+                        onPanelChange={handlePanelChange}
+                    />
+
+                    {/* 當日消費明細 */}
+                    {selectedDate && (
+                        <Card
+                            size="small"
+                            title={`${selectedDate.format('YYYY/MM/DD')} 消費明細`}
+                            style={{ marginTop: 16 }}
+                        >
+                            {dailyItems.length === 0 ? (
+                                <Text type="secondary">當日無消費紀錄</Text>
+                            ) : (
+                                <>
+                                    <div style={{ marginBottom: 12 }}>
+                                        <Text strong style={{ fontSize: 16, color: '#722ed1' }}>
+                                            支出：NT$ {selectedDateTotal.toLocaleString()}
+                                        </Text>
+                                    </div>
+                                    <List
+                                        size="small"
+                                        dataSource={dailyItems}
+                                        renderItem={(item) => (
+                                            <List.Item>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                                    <Space>
+                                                        <Text>{item.name}</Text>
+                                                        {item.wine_type && <Tag color="purple">{item.wine_type}</Tag>}
+                                                    </Space>
+                                                    <Text strong>NT$ {item.purchase_price?.toLocaleString()}</Text>
+                                                </div>
+                                            </List.Item>
+                                        )}
+                                    />
+                                </>
+                            )}
+                        </Card>
+                    )}
+                </Modal>
             </Content>
         </Layout>
     );

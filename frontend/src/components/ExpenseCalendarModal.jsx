@@ -53,8 +53,8 @@ function ExpenseCalendarModal({ visible, onClose }) {
     try {
       setLoading(true);
       const items = await getFoodItems();
-      // 只保留有價格的食材
-      setFoodItems(items.filter((item) => item.price && item.price > 0));
+      // 只保留有價格的酒款
+      setFoodItems(items.filter((item) => item.purchase_price && item.purchase_price > 0));
     } catch (error) {
       console.error('載入食材失敗:', error);
     } finally {
@@ -66,12 +66,12 @@ function ExpenseCalendarModal({ visible, onClose }) {
   const getDailySpending = () => {
     const dailyMap = {};
     foodItems.forEach((item) => {
-      if (item.purchase_date && item.price) {
+      if (item.purchase_date && item.purchase_price) {
         const dateKey = dayjs(item.purchase_date).format('YYYY-MM-DD');
         if (!dailyMap[dateKey]) {
           dailyMap[dateKey] = 0;
         }
-        dailyMap[dateKey] += item.price;
+        dailyMap[dateKey] += item.purchase_price;
       }
     });
     return dailyMap;
@@ -82,7 +82,7 @@ function ExpenseCalendarModal({ visible, onClose }) {
     const monthKey = month.format('YYYY-MM');
     return foodItems
       .filter((item) => dayjs(item.purchase_date).format('YYYY-MM') === monthKey)
-      .reduce((sum, item) => sum + (item.price || 0), 0);
+      .reduce((sum, item) => sum + (item.purchase_price || 0), 0);
   };
 
   // 日曆單元格渲染
@@ -126,7 +126,7 @@ function ExpenseCalendarModal({ visible, onClose }) {
   };
 
   // 計算選中日期的總消費
-  const selectedDateTotal = dailyItems.reduce((sum, item) => sum + (item.price || 0), 0);
+  const selectedDateTotal = dailyItems.reduce((sum, item) => sum + (item.purchase_price || 0), 0);
 
   // 關閉時重置狀態
   const handleClose = () => {
@@ -295,11 +295,11 @@ function ExpenseCalendarModal({ visible, onClose }) {
                             {item.quantity > 1 && (
                               <Text type="secondary"> x{item.quantity}</Text>
                             )}
-                            {item.category && (
-                              <Tag style={{ marginLeft: 8 }}>{item.category}</Tag>
+                            {item.wine_type && (
+                              <Tag style={{ marginLeft: 8 }}>{item.wine_type}</Tag>
                             )}
                           </div>
-                          <Text strong>NT$ {item.price?.toLocaleString()}</Text>
+                          <Text strong>NT$ {item.purchase_price?.toLocaleString()}</Text>
                         </div>
                       </List.Item>
                     )}

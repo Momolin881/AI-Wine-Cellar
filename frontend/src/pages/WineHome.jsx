@@ -21,13 +21,14 @@ import {
     Row,
     Col,
 } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
+import { SettingOutlined, CalendarOutlined } from '@ant-design/icons';
 import {
     PhotoUploadButton,
     WineCardSquare,
     FloatAddButton,
     VersionFooter,
     WineDetailModal,
+    ExpenseCalendarModal,
 } from '../components';
 import '../styles/WineCardSquare.css';
 
@@ -47,6 +48,7 @@ function WineHome() {
     const [wineTypeFilter, setWineTypeFilter] = useState('all');
     const [selectedWine, setSelectedWine] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [calendarModalVisible, setCalendarModalVisible] = useState(false);
 
     // 統計資料
     const [stats, setStats] = useState({
@@ -129,13 +131,33 @@ function WineHome() {
     };
 
     const handleModalUpdate = (updatedWine) => {
+        // 如果酒款被刪除，從列表中移除
+        if (updatedWine._deleted) {
+            const newItems = wineItems.filter(item => item.id !== updatedWine.id);
+            setWineItems(newItems);
+            setModalVisible(false);
+            // 更新統計
+            setStats({
+                totalWines: newItems.length,
+                totalValue: newItems.reduce((sum, i) => sum + (i.total_value || 0), 0),
+                unopened: newItems.filter(i => i.bottle_status === 'unopened').length,
+                opened: newItems.filter(i => i.bottle_status === 'opened').length,
+            });
+            return;
+        }
+
         // 更新列表中的該酒款資料
         const newItems = wineItems.map(item =>
             item.id === updatedWine.id ? updatedWine : item
         );
         setWineItems(newItems);
-        // 如果還在搜尋狀態，也要更新 filteredItems (雖然 useEffect 會處理，但為了即時性)
-        // setFilteredItems(newItems... logic handled by effect);
+        // 更新統計
+        setStats({
+            totalWines: newItems.length,
+            totalValue: newItems.reduce((sum, i) => sum + (i.total_value || 0), 0),
+            unopened: newItems.filter(i => i.bottle_status === 'unopened').length,
+            opened: newItems.filter(i => i.bottle_status === 'opened').length,
+        });
     };
 
     return (
@@ -262,7 +284,21 @@ function WineHome() {
                 )}
 
                 {/* 設定按鈕 */}
-                <div style={{ marginTop: 24, marginBottom: 80 }}>
+                <div style={{ marginTop: 24, marginBottom: 80, display: 'flex', gap: 8 }}>
+                    <Tag
+                        icon={<CalendarOutlined />}
+                        onClick={() => setCalendarModalVisible(true)}
+                        style={{
+                            cursor: 'pointer',
+                            padding: '8px 16px',
+                            borderRadius: 20,
+                            background: '#2d2d2d',
+                            border: 'none',
+                            color: '#888',
+                        }}
+                    >
+                        查看消費月曆
+                    </Tag>
                     <Tag
                         icon={<SettingOutlined />}
                         onClick={() => navigate('/settings')}
@@ -291,6 +327,12 @@ function WineHome() {
                     wine={selectedWine}
                     onClose={() => setModalVisible(false)}
                     onUpdate={handleModalUpdate}
+                />
+
+                {/* Expense Calendar Modal */}
+                <ExpenseCalendarModal
+                    visible={calendarModalVisible}
+                    onClose={() => setCalendarModalVisible(false)}
                 />
             </Content>
         </Layout>

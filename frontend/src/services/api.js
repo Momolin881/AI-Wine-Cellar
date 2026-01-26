@@ -101,7 +101,7 @@ export const updateUserSettings = (settings) => {
  * @returns {Promise<Array>} 酒款清單
  */
 export const getFoodItems = (params = {}) => {
-  return apiClient.get('/food-items', { params });
+  return apiClient.get('/wine-items', { params });
 };
 
 /**
@@ -110,7 +110,7 @@ export const getFoodItems = (params = {}) => {
  * @returns {Promise<Object>} 酒款詳情
  */
 export const getFoodItem = (itemId) => {
-  return apiClient.get(`/food-items/${itemId}`);
+  return apiClient.get(`/wine-items/${itemId}`);
 };
 
 /**
@@ -121,18 +121,17 @@ export const getFoodItem = (itemId) => {
  * @param {number} compartmentId - 分區 ID（可選）
  * @returns {Promise<Object>} 辨識結果
  */
-export const recognizeFoodImage = (imageFile, fridgeId, storageType, compartmentId = null) => {
-  // 嚴格驗證 fridgeId 必須是有效數字
-  const validFridgeId = Number(fridgeId);
-  if (!fridgeId || isNaN(validFridgeId) || validFridgeId <= 0) {
-    console.error('❌ Invalid fridge_id in recognizeFoodImage:', { fridgeId, validFridgeId });
+export const recognizeFoodImage = (imageFile, cellarId, storageType, compartmentId = null) => {
+  // 嚴格驗證 cellarId 必須是有效數字
+  const validCellarId = Number(cellarId);
+  if (!cellarId || isNaN(validCellarId) || validCellarId <= 0) {
+    console.error('❌ Invalid cellar_id in recognizeFoodImage:', { cellarId, validCellarId });
     return Promise.reject(new Error('cellar_id 必須是有效的數字'));
   }
 
   const formData = new FormData();
   formData.append('image', imageFile);
-  formData.append('fridge_id', validFridgeId);  // 使用驗證過的數字
-  formData.append('storage_type', storageType);
+  formData.append('cellar_id', validCellarId);  // 使用驗證過的數字
   if (compartmentId) {
     formData.append('compartment_id', compartmentId);
   }
@@ -140,13 +139,12 @@ export const recognizeFoodImage = (imageFile, fridgeId, storageType, compartment
   // Debug logging
   console.log('🔍 recognizeFoodImage called with:', {
     imageFile: imageFile ? { name: imageFile.name, size: imageFile.size, type: imageFile.type } : null,
-    fridgeId: validFridgeId,
-    storageType,
+    cellarId: validCellarId,
     compartmentId,
   });
 
   // 不要手動設置 Content-Type，讓瀏覽器自動處理 FormData（會自動加上 boundary）
-  return apiClient.post('/food-items/recognize', formData);
+  return apiClient.post('/wine-items/recognize', formData);
 };
 
 /**
@@ -155,7 +153,7 @@ export const recognizeFoodImage = (imageFile, fridgeId, storageType, compartment
  * @returns {Promise<Object>} 新增的酒款
  */
 export const createFoodItem = (foodData) => {
-  return apiClient.post('/food-items', foodData);
+  return apiClient.post('/wine-items', foodData);
 };
 
 /**
@@ -165,7 +163,7 @@ export const createFoodItem = (foodData) => {
  * @returns {Promise<Object>} 更新後的酒款
  */
 export const updateFoodItem = (itemId, foodData) => {
-  return apiClient.put(`/food-items/${itemId}`, foodData);
+  return apiClient.put(`/wine-items/${itemId}`, foodData);
 };
 
 /**
@@ -174,7 +172,7 @@ export const updateFoodItem = (itemId, foodData) => {
  * @returns {Promise<void>}
  */
 export const deleteFoodItem = (itemId) => {
-  return apiClient.delete(`/food-items/${itemId}`);
+  return apiClient.delete(`/wine-items/${itemId}`);
 };
 
 /**
@@ -183,7 +181,7 @@ export const deleteFoodItem = (itemId) => {
  * @returns {Promise<Object>} 更新後的酒款
  */
 export const archiveFoodItem = (itemId) => {
-  return apiClient.post(`/food-items/${itemId}/archive`);
+  return apiClient.post(`/wine-items/${itemId}/change-status?new_status=consumed`);
 };
 
 /**
@@ -192,7 +190,7 @@ export const archiveFoodItem = (itemId) => {
  * @returns {Promise<void>}
  */
 export const deleteFoodItems = (itemIds) => {
-  return apiClient.post('/food-items/batch-delete', { item_ids: itemIds });
+  return apiClient.post('/wine-items/batch-delete', { item_ids: itemIds });
 };
 
 // ---------- 酒窖相關 ----------

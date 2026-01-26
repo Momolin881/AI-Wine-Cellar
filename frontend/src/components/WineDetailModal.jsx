@@ -9,37 +9,128 @@
  * - Remaining amount slider
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Modal, Button, Tag, Typography, Slider, Row, Col, Divider, message } from 'antd';
-import { CloseOutlined, SoundOutlined, CalendarOutlined } from '@ant-design/icons';
-import confetti from 'canvas-confetti'; // Assuming we can install this or use a CDN/local fallback
+import { CloseOutlined, CalendarOutlined, EditOutlined } from '@ant-design/icons';
+import confetti from 'canvas-confetti';
 import '../styles/WineDetailModal.css';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
-// Sound effect (Base64 or URL) - Using a placeholder URL for now
-const CORK_POP_SOUND = "https://assets.mixkit.co/sfx/preview/mixkit-cork-pop-glass-clink-1688.mp3";
+// Play a simple "pop" sound using Web Audio API
+const playPopSound = () => {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Create a short "pop" sound
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+
+        // Create a "fizz" noise for champagne effect
+        const bufferSize = audioContext.sampleRate * 0.3;
+        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const noiseSource = audioContext.createBufferSource();
+        const noiseGain = audioContext.createGain();
+        const noiseFilter = audioContext.createBiquadFilter();
+
+        noiseSource.buffer = noiseBuffer;
+        noiseFilter.type = 'highpass';
+        noiseFilter.frequency.value = 3000;
+
+        noiseSource.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(audioContext.destination);
+
+        noiseGain.gain.setValueAtTime(0.3, audioContext.currentTime + 0.05);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+
+        noiseSource.start(audioContext.currentTime + 0.05);
+        noiseSource.stop(audioContext.currentTime + 0.4);
+
+    } catch (e) {
+        console.warn("Audio play failed:", e);
+    }
+};
 
 function WineDetailModal({ visible, wine, onClose, onUpdate }) {
-    if (!wine) return null;
-
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const audioRef = useRef(new Audio(CORK_POP_SOUND));
+
+    if (!wine) return null;
 
     const handleOpenBottle = async () => {
         try {
             setLoading(true);
 
-            // 1. Play Sound
-            audioRef.current.play().catch(e => console.error("Audio play failed", e));
+            // 1. Play Pop Sound
+            playPopSound();
 
-            // 2. Confetti Animation
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#c9a227', '#ffffff', '#e5e5e5'] // Gold and White
+            // 2. Confetti Animation - use higher zIndex to appear above modal
+            // Fire multiple bursts for more dramatic effect
+            const colors = ['#c9a227', '#ffd700', '#ffffff', '#e5e5e5'];
+
+            // Create custom canvas with high z-index
+            const myCanvas = document.createElement('canvas');
+            myCanvas.style.position = 'fixed';
+            myCanvas.style.top = '0';
+            myCanvas.style.left = '0';
+            myCanvas.style.width = '100vw';
+            myCanvas.style.height = '100vh';
+            myCanvas.style.pointerEvents = 'none';
+            myCanvas.style.zIndex = '99999'; // Above modal
+            document.body.appendChild(myCanvas);
+
+            const myConfetti = confetti.create(myCanvas, { resize: true });
+
+            // Fire confetti burst
+            myConfetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.5, x: 0.5 },
+                colors: colors,
+                startVelocity: 45,
+                gravity: 1,
+                ticks: 300,
             });
+
+            // Second burst after short delay
+            setTimeout(() => {
+                myConfetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.6, x: 0.3 },
+                    colors: colors,
+                });
+                myConfetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.6, x: 0.7 },
+                    colors: colors,
+                });
+            }, 200);
+
+            // Remove canvas after animation
+            setTimeout(() => {
+                document.body.removeChild(myCanvas);
+            }, 4000);
 
             // 3. Call API
             const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -47,7 +138,7 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken')}`, // Assuming token logic
+                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
                     'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
                 }
             });
@@ -80,12 +171,48 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
         const amount = map[value];
         if (!amount) return;
 
+        // If empty, confirm and delete the wine
+        if (value === 0) {
+            Modal.confirm({
+                title: '確定喝完了嗎？',
+                content: `將從酒窖中移除「${wine.name}」`,
+                okText: '確定，已喝完',
+                cancelText: '取消',
+                okButtonProps: { danger: true },
+                onOk: async () => {
+                    try {
+                        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                        const res = await fetch(`${API_BASE}/api/v1/wine-items/${wine.id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
+                                'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
+                            }
+                        });
+                        if (res.ok) {
+                            message.success('🍾 乾杯！酒款已從酒窖移除');
+                            onClose();
+                            // Trigger a refresh by calling onUpdate with a deleted flag
+                            onUpdate({ ...wine, _deleted: true });
+                        } else {
+                            message.error('移除失敗，請稍後再試');
+                        }
+                    } catch (error) {
+                        console.error("Delete wine error:", error);
+                        message.error('發生錯誤');
+                    }
+                }
+            });
+            return;
+        }
+
         try {
             const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
             await fetch(`${API_BASE}/api/v1/wine-items/${wine.id}/update-remaining?remaining=${amount}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
                     'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
                 }
             });
@@ -117,8 +244,10 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
             closable={false}
             centered
             width={360}
-            bodyStyle={{ padding: 0, borderRadius: 16, overflow: 'hidden', background: '#2d2d2d' }}
-            maskStyle={{ backdropFilter: 'blur(5px)' }}
+            styles={{
+                body: { padding: 0, borderRadius: 16, overflow: 'hidden', background: '#2d2d2d' },
+                mask: { backdropFilter: 'blur(5px)' }
+            }}
         >
             {/* Header Image */}
             <div style={{ position: 'relative', height: 280, width: '100%', background: '#000' }}>
@@ -216,12 +345,34 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                             step={25}
                             defaultValue={getSliderValue(wine.remaining_amount)}
                             onChange={handleUpdateRemaining}
-                            railStyle={{ backgroundColor: '#444' }}
-                            trackStyle={{ backgroundColor: '#c9a227' }}
-                            handleStyle={{ borderColor: '#c9a227', backgroundColor: '#c9a227' }}
+                            styles={{
+                                rail: { backgroundColor: '#444' },
+                                track: { backgroundColor: '#c9a227' },
+                                handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                            }}
                         />
                     </div>
                 )}
+
+                {/* 編輯按鈕 */}
+                <Divider style={{ borderColor: '#444', margin: '24px 0 16px' }} />
+                <Button
+                    icon={<EditOutlined />}
+                    block
+                    onClick={() => {
+                        onClose();
+                        navigate(`/edit/${wine.id}`);
+                    }}
+                    style={{
+                        background: '#3d3d3d',
+                        borderColor: '#555',
+                        color: '#f5f5f5',
+                        height: 44,
+                        borderRadius: 22,
+                    }}
+                >
+                    編輯酒款資料
+                </Button>
             </div>
         </Modal>
     );
