@@ -104,18 +104,40 @@ const CreateInvitation = () => {
             const flexMessage = await getInvitationFlex(invitationId);
 
             // 3. Use LIFF shareTargetPicker to send message
-            if (liff.isApiAvailable('shareTargetPicker')) {
-                const res = await liff.shareTargetPicker([flexMessage]);
-                if (res) {
-                    message.success("邀請已成功發送！");
-                    setTimeout(() => navigate('/'), 2000);
-                } else {
-                    message.info("已建立邀請，但未發送訊息。");
-                    setTimeout(() => navigate('/'), 2000);
+            console.log("Checking shareTargetPicker support...");
+            const isInClient = liff.isInClient();
+            const isApiAvailable = liff.isApiAvailable('shareTargetPicker');
+
+            console.log(`LIFF Environment: Client=${isInClient}, API=${isApiAvailable}`);
+
+            if (isApiAvailable) {
+                try {
+                    console.log("Attempting to open shareTargetPicker");
+                    const res = await liff.shareTargetPicker([flexMessage]);
+                    if (res) {
+                        message.success("邀請已成功發送！");
+                        setTimeout(() => navigate('/'), 2000);
+                    } else {
+                        // User cancelled picking
+                        message.info("您取消了發送邀請。");
+                        setTimeout(() => navigate('/'), 2000);
+                    }
+                } catch (pickerError) {
+                    console.error("shareTargetPicker error:", pickerError);
+                    // Show explicit error to user for debugging
+                    alert(`發送失敗: ${pickerError.code || pickerError.message}\n請確認 LINE App 為最新版本，且已允許傳訊權限。`);
+
+                    // Fallback
+                    message.success("建立成功！請手動複製連結分享");
                 }
             } else {
                 // Fallback: Copy link
-                message.success("建立成功！請複製連結分享");
+                // Diagnostic alert for the user to tell us what happened
+                if (isInClient) {
+                    alert("您的 LINE 版本似乎不支援或未開啟 'shareTargetPicker' 權限。\n請檢查 LINE Developers Console 的設定。");
+                }
+
+                message.success("建立成功 (手動模式)！請複製連結分享");
                 // navigate(`/invitation/${data.id}`);
             }
 
