@@ -171,34 +171,34 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
         const amount = map[value];
         if (!amount) return;
 
-        // If empty, confirm and delete the wine
+        // If empty, confirm and mark as consumed (not delete, to preserve spending history)
         if (value === 0) {
             Modal.confirm({
                 title: '確定喝完了嗎？',
-                content: `將從酒窖中移除「${wine.name}」`,
+                content: `「${wine.name}」將標記為已喝完，並從酒窖移除`,
                 okText: '確定，已喝完',
                 cancelText: '取消',
-                okButtonProps: { danger: true },
+                okButtonProps: { style: { background: '#c9a227', borderColor: '#c9a227' } },
                 onOk: async () => {
                     try {
                         const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                        const res = await fetch(`${API_BASE}/api/v1/wine-items/${wine.id}`, {
-                            method: 'DELETE',
+                        const res = await fetch(`${API_BASE}/api/v1/wine-items/${wine.id}/change-status?new_status=consumed`, {
+                            method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
                                 'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
                             }
                         });
                         if (res.ok) {
-                            message.success('🍾 乾杯！酒款已從酒窖移除');
+                            message.success('🍾 乾杯！已記錄為喝完');
                             onClose();
-                            // Trigger a refresh by calling onUpdate with a deleted flag
+                            // Trigger a refresh by calling onUpdate with a deleted flag (to remove from active list)
                             onUpdate({ ...wine, _deleted: true });
                         } else {
-                            message.error('移除失敗，請稍後再試');
+                            message.error('操作失敗，請稍後再試');
                         }
                     } catch (error) {
-                        console.error("Delete wine error:", error);
+                        console.error("Change status error:", error);
                         message.error('發生錯誤');
                     }
                 }

@@ -52,11 +52,12 @@ function ExpenseCalendarModal({ visible, onClose }) {
   const loadFoodItems = async () => {
     try {
       setLoading(true);
-      const items = await getFoodItems();
+      // 查詢所有狀態的酒款（包含 consumed, sold, gifted），以保留消費歷史記錄
+      const items = await getFoodItems({ status: 'all' });
       // 只保留有價格的酒款
       setFoodItems(items.filter((item) => item.purchase_price && item.purchase_price > 0));
     } catch (error) {
-      console.error('載入食材失敗:', error);
+      console.error('載入酒款失敗:', error);
     } finally {
       setLoading(false);
     }

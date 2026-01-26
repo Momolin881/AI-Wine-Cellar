@@ -91,7 +91,8 @@ function AddWineItem() {
     const loadWineItemsAndBudget = async () => {
         try {
             const [itemsData, budgetData] = await Promise.all([
-                getFoodItems(),
+                // 查詢所有狀態的酒款（包含 consumed），以保留消費歷史記錄
+                getFoodItems({ status: 'all' }),
                 getBudgetSettings(),
             ]);
             // 只保留有價格的酒款
