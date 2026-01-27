@@ -1,16 +1,24 @@
 
 from typing import Dict, Any, List
+from datetime import timezone, timedelta
 from src.models.invitation import Invitation
 from src.models.wine_item import WineItem
 from src.config import settings
+
+# 台灣時區 (UTC+8)
+TAIWAN_TZ = timezone(timedelta(hours=8))
 
 def create_invitation_flex_message(invitation: Invitation, wines: List[WineItem]) -> Dict[str, Any]:
     """
     產生邀請函的 Flex Message JSON
     """
-    
-    # 格式化時間
-    time_str = invitation.event_time.strftime("%Y/%m/%d %H:%M")
+
+    # 格式化時間（轉換為台灣時間）
+    event_time = invitation.event_time
+    if event_time.tzinfo is None:
+        # 假設資料庫存的是 UTC，轉換為台灣時間
+        event_time = event_time.replace(tzinfo=timezone.utc).astimezone(TAIWAN_TZ)
+    time_str = event_time.strftime("%Y/%m/%d %H:%M")
     
     # 建構酒款清單元件
     wine_components = []
