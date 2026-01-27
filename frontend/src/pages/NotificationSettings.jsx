@@ -222,8 +222,7 @@ function NotificationSettings() {
               查看詳細規則
             </Button>
           </div>
-        </div>
-      </Card>
+        </Card>
 
       {/* 適飲期提醒設定 */}
       <Card
@@ -355,31 +354,31 @@ function NotificationSettings() {
       >
         儲存設定
       </Button>
-    </Form>
+      </Form>
 
-      {/* 規則詳情 Modal */ }
-  <Modal
-    title="開瓶後適飲期規則"
-    open={rulesModalVisible}
-    onCancel={() => setRulesModalVisible(false)}
-    footer={null}
-    styles={{ body: { padding: 0 } }}
-  >
-    <Table
-      dataSource={rulesData}
-      pagination={false}
-      size="small"
-      rowKey="type"
-      columns={[
-        { title: '酒類', dataIndex: 'type', key: 'type' },
-        { title: '建議效期', dataIndex: 'days', key: 'days', render: text => <Text strong style={{ color: '#d48806' }}>{text}</Text> },
-      ]}
-    />
-    <div style={{ padding: '16px', background: '#f5f5f5', color: '#666', fontSize: '12px' }}>
-      註：此期限為「建議最佳飲用期」，實際情況可能因保存環境（溫度、濕度、瓶塞）而有所差異。及早飲用風味最佳。
+      {/* 規則詳情 Modal */}
+      <Modal
+        title="開瓶後適飲期規則"
+        open={rulesModalVisible}
+        onCancel={() => setRulesModalVisible(false)}
+        footer={null}
+        styles={{ body: { padding: 0 } }}
+      >
+        <Table
+          dataSource={rulesData}
+          pagination={false}
+          size="small"
+          rowKey="type"
+          columns={[
+            { title: '酒類', dataIndex: 'type', key: 'type' },
+            { title: '建議效期', dataIndex: 'days', key: 'days', render: text => <Text strong style={{ color: '#d48806' }}>{text}</Text> },
+          ]}
+        />
+        <div style={{ padding: '16px', background: '#f5f5f5', color: '#666', fontSize: '12px' }}>
+          註：此期限為「建議最佳飲用期」，實際情況可能因保存環境（溫度、濕度、瓶塞）而有所差異。及早飲用風味最佳。
+        </div>
+      </Modal>
     </div>
-  </Modal>
-    </div >
   );
 }
 
