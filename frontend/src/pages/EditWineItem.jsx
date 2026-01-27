@@ -34,15 +34,12 @@ import {
     CalendarOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getFoodItems, getBudgetSettings } from '../services/api';
+import apiClient, { getFoodItems, getBudgetSettings } from '../services/api';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
-
-// API base URL
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const wineTypes = ['紅酒', '白酒', '粉紅酒', '氣泡酒', '香檳', '威士忌', '白蘭地', '伏特加', '清酒', '啤酒', '其他'];
 const remainingOptions = ['full', '3/4', '1/2', '1/4', 'empty'];
@@ -78,18 +75,7 @@ function EditWineItem() {
     const loadItem = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_BASE}/api/v1/wine-items/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
-                },
-            });
-
-            if (!res.ok) {
-                throw new Error('載入失敗');
-            }
-
-            const data = await res.json();
+            const data = await apiClient.get(`/wine-items/${id}`);
             setItem(data);
 
             // 填入表單
@@ -190,14 +176,7 @@ function EditWineItem() {
     // 開瓶
     const handleOpenBottle = async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/v1/wine-items/${id}/open`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
-                },
-            });
-            const data = await res.json();
+            const data = await apiClient.post(`/wine-items/${id}/open`);
             setItem(data);
             form.setFieldsValue(data);
             message.success('已標記為開瓶！');
@@ -209,14 +188,7 @@ function EditWineItem() {
     // 更新剩餘量
     const handleUpdateRemaining = async (remaining) => {
         try {
-            const res = await fetch(`${API_BASE}/api/v1/wine-items/${id}/update-remaining?remaining=${remaining}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
-                },
-            });
-            const data = await res.json();
+            const data = await apiClient.post(`/wine-items/${id}/update-remaining?remaining=${remaining}`);
             setItem(data);
             form.setFieldsValue(data);
             message.success('已更新剩餘量');
@@ -234,14 +206,7 @@ function EditWineItem() {
             cancelText: '取消',
             onOk: async () => {
                 try {
-                    const res = await fetch(`${API_BASE}/api/v1/wine-items/${id}/change-status?new_status=${newStatus}`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                            'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
-                        },
-                    });
-                    const data = await res.json();
+                    const data = await apiClient.post(`/wine-items/${id}/change-status?new_status=${newStatus}`);
                     setItem(data);
                     message.success('狀態已變更');
                     navigate('/');
@@ -266,15 +231,7 @@ function EditWineItem() {
             };
             delete payload.price;
 
-            await fetch(`${API_BASE}/api/v1/wine-items/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo',
-                },
-                body: JSON.stringify(payload),
-            });
+            await apiClient.put(`/wine-items/${id}`, payload);
 
             message.success('儲存成功！');
             navigate('/');
@@ -294,15 +251,13 @@ function EditWineItem() {
             okType: 'danger',
             cancelText: '取消',
             onOk: async () => {
-                await fetch(`${API_BASE}/api/v1/wine-items/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                        'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
-                    },
-                });
-                message.success('已刪除');
-                navigate('/');
+                try {
+                    await apiClient.delete(`/wine-items/${id}`);
+                    message.success('已刪除');
+                    navigate('/');
+                } catch (error) {
+                    message.error('刪除失敗');
+                }
             },
         });
     };

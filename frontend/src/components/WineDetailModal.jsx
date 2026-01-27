@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { Modal, Button, Tag, Typography, Slider, Row, Col, Divider, message } from 'antd';
 import { CloseOutlined, CalendarOutlined, EditOutlined } from '@ant-design/icons';
 import confetti from 'canvas-confetti';
+import apiClient from '../services/api';
 import '../styles/WineDetailModal.css';
 
 const { Title, Text } = Typography;
@@ -133,23 +134,9 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
             }, 4000);
 
             // 3. Call API
-            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-            const res = await fetch(`${API_BASE}/api/v1/wine-items/${wine.id}/open`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
-                }
-            });
-
-            if (res.ok) {
-                const updatedWine = await res.json();
-                message.success("🍾 開瓶慶祝！請享受您的美酒！");
-                onUpdate(updatedWine);
-            } else {
-                message.error("開瓶失敗，請稍後再試");
-            }
+            const updatedWine = await apiClient.post(`/wine-items/${wine.id}/open`);
+            message.success("🍾 開瓶慶祝！請享受您的美酒！");
+            onUpdate(updatedWine);
 
         } catch (error) {
             console.error("Open bottle error:", error);
@@ -181,25 +168,13 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                 okButtonProps: { style: { background: '#c9a227', borderColor: '#c9a227' } },
                 onOk: async () => {
                     try {
-                        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                        const res = await fetch(`${API_BASE}/api/v1/wine-items/${wine.id}/change-status?new_status=consumed`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                                'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
-                            }
-                        });
-                        if (res.ok) {
-                            message.success('🍾 乾杯！已記錄為喝完');
-                            onClose();
-                            // Trigger a refresh by calling onUpdate with a deleted flag (to remove from active list)
-                            onUpdate({ ...wine, _deleted: true });
-                        } else {
-                            message.error('操作失敗，請稍後再試');
-                        }
+                        await apiClient.post(`/wine-items/${wine.id}/change-status?new_status=consumed`);
+                        message.success('🍾 乾杯！已記錄為喝完');
+                        onClose();
+                        onUpdate({ ...wine, _deleted: true });
                     } catch (error) {
                         console.error("Change status error:", error);
-                        message.error('發生錯誤');
+                        message.error('操作失敗，請稍後再試');
                     }
                 }
             });
@@ -207,18 +182,11 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
         }
 
         try {
-            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-            await fetch(`${API_BASE}/api/v1/wine-items/${wine.id}/update-remaining?remaining=${amount}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`,
-                    'X-Line-User-Id': localStorage.getItem('lineUserId') || 'demo'
-                }
-            });
+            await apiClient.post(`/wine-items/${wine.id}/update-remaining?remaining=${amount}`);
             onUpdate({ ...wine, remaining_amount: amount });
         } catch (error) {
             console.error("Update remaining error:", error);
+            message.error('更新失敗');
         }
     };
 
