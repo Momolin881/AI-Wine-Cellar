@@ -9,7 +9,10 @@ import axios from 'axios';
 import { getLiffAccessToken } from '../liff';
 
 // API 基礎 URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+// 優先使用 VITE_API_URL（完整 URL），否則使用相對路徑（開發環境靠 proxy）
+const API_BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : (import.meta.env.VITE_API_BASE_URL || '/api/v1');
 
 // 建立 Axios 實例
 const apiClient = axios.create({

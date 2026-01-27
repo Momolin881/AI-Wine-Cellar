@@ -10,6 +10,11 @@ const getGitHash = () => {
     return process.env.VITE_GIT_HASH
   }
 
+  // Zeabur 內建的 git commit hash 變數
+  if (process.env.ZEABUR_GIT_COMMIT_SHA) {
+    return process.env.ZEABUR_GIT_COMMIT_SHA.substring(0, 7)
+  }
+
   // 本地開發時從 git 抓取
   try {
     return execSync('git rev-parse --short HEAD').toString().trim()

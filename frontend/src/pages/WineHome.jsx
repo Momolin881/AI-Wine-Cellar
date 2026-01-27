@@ -30,14 +30,12 @@ import {
     WineDetailModal,
     ExpenseCalendarModal,
 } from '../components';
+import { getFoodItems } from '../services/api';
 import '../styles/WineCardSquare.css';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { Search } = Input;
-
-// API base URL
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function WineHome() {
     const navigate = useNavigate();
@@ -88,22 +86,12 @@ function WineHome() {
             setLoading(true);
 
             // 取得酒款列表（只取在庫的）
-            let url = `${API_BASE}/api/v1/wine-items?status=active`;
+            const params = { status: 'active' };
             if (wineTypeFilter !== 'all') {
-                url += `&wine_type=${encodeURIComponent(wineTypeFilter)}`;
+                params.wine_type = wineTypeFilter;
             }
 
-            const itemsRes = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('liffAccessToken') || 'dev-test-token'}`
-                },
-            });
-
-            if (!itemsRes.ok) {
-                throw new Error(`HTTP error! status: ${itemsRes.status}`);
-            }
-
-            const itemsData = await itemsRes.json();
+            const itemsData = await getFoodItems(params);
 
             if (!Array.isArray(itemsData)) {
                 console.error('API Error: Response is not an array', itemsData);
