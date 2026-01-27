@@ -6,7 +6,7 @@
 
 import logging
 import traceback
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
@@ -137,6 +137,62 @@ class AIWineRecognitionResponse(BaseModel):
 
 
 # ============ Helper Functions ============
+
+# 開瓶後建議效期對照表 (天數)
+OPENED_SHELF_LIFE_MAP = {
+    '啤酒': 1,
+    '氣泡酒': 2,
+    '香檳': 2,
+    '白酒': 4,
+    '粉紅酒': 4,
+    '紅酒': 5,
+    '清酒': 7,
+    '甜酒': 14,
+    '貴腐酒': 14,
+    '波特酒': 30,
+    '雪莉酒': 30,
+    '威士忌': 730,  # 2年
+    '白蘭地': 730,
+    '伏特加': 730,
+    '蘭姆酒': 730,
+    '琴酒': 730,
+    '高粱酒': 730,
+    '梅酒': 365,
+}
+
+def _calculate_open_bottle_expiry(wine_type: str, preservation_type: str, open_date: date) -> date:
+    """
+    根據酒類和保存類型計算開瓶後的最佳飲用期限
+    """
+    # 1. 優先查詢對照表
+    # 部分比對：例如 "波爾多紅酒" -> 包含 "紅酒"
+    expiry_days = 3  # 預設值
+    
+    # 簡單正規化
+    normalized_type = wine_type.strip()
+    
+    # 精確比對
+    if normalized_type in OPENED_SHELF_LIFE_MAP:
+        expiry_days = OPENED_SHELF_LIFE_MAP[normalized_type]
+    else:
+        # 模糊比對
+        match_found = False
+        for key, days in OPENED_SHELF_LIFE_MAP.items():
+            if key in normalized_type:
+                expiry_days = days
+                match_found = True
+                break
+        
+        # 2. 如果沒對應到，使用保存類型 (Legacy Logic)
+        if not match_found:
+            if preservation_type == 'aging':
+                # 注意：這裡的 aging 對應到舊邏輯的 "陳年型/烈酒"，預設給 2 年
+                expiry_days = 730
+            else:
+                expiry_days = 3
+
+    return open_date + timedelta(days=expiry_days)
+
 
 def _build_wine_item_response(item: WineItem) -> WineItemResponse:
     """將 WineItem ORM 物件轉換為 WineItemResponse"""
@@ -373,18 +429,11 @@ async def open_wine_bottle(id: int, db: DBSession, user_id: CurrentUserId):
 
     # 自動計算最佳飲用期限 (Drink By)
     today = date.today()
-    from datetime import timedelta
-    
-    if wine_item.preservation_type == 'aging':
-        # 陳年型：開瓶後可存放較久（預設 2 年，僅供參考，實際上陳年酒開瓶後氧化更快，這裡假設是指「適飲期」內的陳年酒）
-        # 修正：需求文件提到「陳年型」是指長效期酒款 (如威士忌) 還是指開瓶後需盡快喝完的老酒？
-        # 根據 User Story: "陳年型：開瓶後 1-3 年內飲用 (預設 2 年)" -> 這聽起來像烈酒
-        # 如果是紅酒，開瓶後通常只能放幾天。
-        # 假設這裡的「陳年型」是指像威士忌這類開瓶後可以放很久的酒。
-        wine_item.optimal_drinking_end = today + timedelta(days=730)
-    else:
-        # 即飲型：開瓶後盡快飲用（預設 3 天）
-        wine_item.optimal_drinking_end = today + timedelta(days=3)
+    wine_item.optimal_drinking_end = _calculate_open_bottle_expiry(
+        wine_item.wine_type, 
+        wine_item.preservation_type, 
+        today
+    )
 
     db.commit()
     db.refresh(wine_item)
