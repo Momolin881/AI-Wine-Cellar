@@ -129,3 +129,32 @@ MIT License
 ---
 
 **Built with ❤️ using FastAPI, React, and LINE Bot**
+
+---
+
+## 🍷 AI Wine Cellar 開發維護與排錯手冊 (2026 版)
+這份文件紀錄了專案開發中關於 LINE LIFF 權限與前端 UI 優化的關鍵紀錄。
+
+### 🛠 一、LINE LIFF shareTargetPicker 功能解鎖
+當應用程式點擊分享跳出權限錯誤時，請依序檢查後台：
+
+1. **基礎設定 (Basic Settings)**：確保已填寫 Privacy policy URL 與 Terms of use URL。
+2. **頻道層級授權 (LINE Login)**：
+   - 於 OpenID Connect 區塊點擊 Apply 以刷出隱藏的 Scopes 表格。
+   - 於 Scopes 中找到 `share_target_picker` 並點擊 Apply。
+3. **LIFF 實例開啟**：
+   - 於 LIFF 設定中勾選 `share_target_picker` 權限。
+   - 於最下方 Options 將 Share Target Picker 切換為 ON (綠色)。
+
+### 🎨 二、前端 UI 優化：Ant Design (antd) v5 語法
+修正 Deprecated 警告，提升效能與相容性：
+
+- **Card / Modal**：將 `bodyStyle` 替換為 `styles={{ body: { ... } }}`。
+- **DatePicker**：將 `popupStyle` 替換為 `styles={{ popup: { root: { ... } } }}`。
+- **靜態方法**：應改用 `App` 元件包裹，以解決 `message.success` 無法消費動態主題的問題。
+
+### ⚡ 三、重要修復與環境變數
+- **前端初始化**：`liff.init()` 必須確保 `liffId` 不為空。目前 ID 為 `2008946239-5U8c7ry2`。
+- **後端 API 修復**：在 `app/src/routes/invitations.py` 中，必須正確導入 `File`。
+  - 修正：`from fastapi import File, UploadFile`。
+- **部署網址**：https://ai-wine-cellar.zeabur.app
