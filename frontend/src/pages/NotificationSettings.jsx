@@ -18,6 +18,8 @@ import {
   Typography,
   Space,
   Divider,
+  Modal,
+  Table,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -48,6 +50,19 @@ function NotificationSettings() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [rulesModalVisible, setRulesModalVisible] = useState(false);
+
+  // 定義規則資料
+  const rulesData = [
+    { type: '啤酒', days: '1 天' },
+    { type: '氣泡酒、香檳', days: '2 天' },
+    { type: '白酒、粉紅酒', days: '4 天' },
+    { type: '紅酒', days: '5 天' },
+    { type: '清酒', days: '7 天' },
+    { type: '甜酒、貴腐酒', days: '14 天' },
+    { type: '波特、雪莉酒', days: '30 天' },
+    { type: '威士忌、烈酒', days: '2 年' },
+  ];
 
   useEffect(() => {
     loadSettings();
@@ -191,149 +206,180 @@ function NotificationSettings() {
           </div>
 
           {/* 說明區塊 */}
-          <div style={{ padding: '12px', background: '#252525', borderRadius: '8px', border: '1px solid #404040' }}>
-            <Text style={{ color: '#888', fontSize: '13px' }}>
-              根據酒款類型自動設定提醒：
+          <Text style={{ color: '#888', fontSize: '13px' }}>
+            系統將根據 <Text strong style={{ color: '#f5f5f5' }}>酒款類型</Text> 自動計算最佳飲用期限。
+          </Text>
+          <div style={{ marginTop: 8 }}>
+            <Text style={{ color: '#aaa', fontSize: '12px' }}>
+              例如：紅酒約 5 天、威士忌約 2 年。
             </Text>
-            <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px', color: '#aaa', fontSize: '12px' }}>
-              <li>即飲型酒款：開瓶後 <Text style={{ color: '#c9a227' }}>3 天</Text> 提醒</li>
-              <li>陳年型酒款：開瓶後 <Text style={{ color: '#c9a227' }}>每月</Text> 提醒</li>
-            </ul>
-          </div>
-        </Card>
-
-        {/* 適飲期提醒設定 */}
-        <Card
-          title={
-            <Space>
-              <CalendarOutlined style={{ color: '#c9a227' }} />
-              <span style={{ color: '#f5f5f5' }}>適飲期提醒（每月檢查）</span>
-            </Space>
-          }
-          style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
-          headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
-          styles={{ body: { background: '#2d2d2d' } }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <Text strong style={{ color: '#f5f5f5' }}>啟用適飲期提醒</Text>
-              <br />
-              <Text style={{ fontSize: '12px', color: '#888' }}>
-                定期檢查酒窖中即將到達適飲期的酒款
-              </Text>
-            </div>
-            <Form.Item
-              name="expiry_warning_enabled"
-              valuePropName="checked"
-              style={{ marginBottom: 0 }}
+            <Button
+              type="link"
+              size="small"
+              onClick={() => setRulesModalVisible(true)}
+              style={{ padding: '0 4px', fontSize: '12px', color: '#c9a227' }}
             >
-              <Switch />
-            </Form.Item>
+              查看詳細規則
+            </Button>
           </div>
+        </div>
+      </Card>
 
+      {/* 適飲期提醒設定 */}
+      <Card
+        title={
+          <Space>
+            <CalendarOutlined style={{ color: '#c9a227' }} />
+            <span style={{ color: '#f5f5f5' }}>適飲期提醒（每月檢查）</span>
+          </Space>
+        }
+        style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
+        headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
+        styles={{ body: { background: '#2d2d2d' } }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div>
+            <Text strong style={{ color: '#f5f5f5' }}>啟用適飲期提醒</Text>
+            <br />
+            <Text style={{ fontSize: '12px', color: '#888' }}>
+              定期檢查酒窖中即將到達適飲期的酒款
+            </Text>
+          </div>
           <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) =>
-              prevValues.expiry_warning_enabled !== currentValues.expiry_warning_enabled
-            }
+            name="expiry_warning_enabled"
+            valuePropName="checked"
+            style={{ marginBottom: 0 }}
           >
-            {({ getFieldValue }) =>
-              getFieldValue('expiry_warning_enabled') ? (
-                <>
-                  <Divider style={{ borderColor: '#404040', margin: '16px 0' }} />
-
-                  <Form.Item
-                    name="monthly_check_day"
-                    label={<Text style={{ color: '#888' }}>每月檢查日期</Text>}
-                    style={{ marginBottom: '16px' }}
-                  >
-                    <Select style={{ width: 120 }}>
-                      {[...Array(28)].map((_, i) => (
-                        <Option key={i + 1} value={i + 1}>{i + 1} 號</Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-
-                  <Form.Item
-                    name="weekly_notification_day"
-                    label={<Text style={{ color: '#888' }}>每週通知</Text>}
-                    style={{ marginBottom: '16px' }}
-                  >
-                    <Select style={{ width: 120 }}>
-                      {weekDays.map(day => (
-                        <Option key={day.value} value={day.value}>{day.label}</Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-
-                  <Form.Item
-                    name="notification_time"
-                    label={<Text style={{ color: '#888' }}>通知時間</Text>}
-                    style={{ marginBottom: 0 }}
-                  >
-                    <TimePicker
-                      format="HH:mm"
-                      minuteStep={30}
-                      style={{ width: 120 }}
-                    />
-                  </Form.Item>
-                </>
-              ) : null
-            }
+            <Switch />
           </Form.Item>
-        </Card>
+        </div>
 
-        {/* 測試通知按鈕 */}
-        <Card
-          title={
-            <Space>
-              <SendOutlined style={{ color: '#1890ff' }} />
-              <span style={{ color: '#f5f5f5' }}>測試通知</span>
-            </Space>
+        <Form.Item
+          noStyle
+          shouldUpdate={(prevValues, currentValues) =>
+            prevValues.expiry_warning_enabled !== currentValues.expiry_warning_enabled
           }
-          style={{ marginBottom: '24px', background: '#2d2d2d', border: 'none' }}
-          headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
-          styles={{ body: { background: '#2d2d2d' } }}
         >
-          <Paragraph style={{ marginBottom: '16px', color: '#888' }}>
-            點擊下方按鈕立即發送一則測試通知到您的 LINE，確認通知功能正常運作。
-          </Paragraph>
-          <Button
-            icon={<SendOutlined />}
-            onClick={handleTestNotification}
-            loading={testing}
-            block
-            style={{ background: '#3d3d3d', borderColor: '#555', color: '#f5f5f5' }}
-          >
-            發送測試通知
-          </Button>
-        </Card>
+          {({ getFieldValue }) =>
+            getFieldValue('expiry_warning_enabled') ? (
+              <>
+                <Divider style={{ borderColor: '#404040', margin: '16px 0' }} />
 
-        {/* 儲存按鈕 */}
+                <Form.Item
+                  name="monthly_check_day"
+                  label={<Text style={{ color: '#888' }}>每月檢查日期</Text>}
+                  style={{ marginBottom: '16px' }}
+                >
+                  <Select style={{ width: 120 }}>
+                    {[...Array(28)].map((_, i) => (
+                      <Option key={i + 1} value={i + 1}>{i + 1} 號</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  name="weekly_notification_day"
+                  label={<Text style={{ color: '#888' }}>每週通知</Text>}
+                  style={{ marginBottom: '16px' }}
+                >
+                  <Select style={{ width: 120 }}>
+                    {weekDays.map(day => (
+                      <Option key={day.value} value={day.value}>{day.label}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  name="notification_time"
+                  label={<Text style={{ color: '#888' }}>通知時間</Text>}
+                  style={{ marginBottom: 0 }}
+                >
+                  <TimePicker
+                    format="HH:mm"
+                    minuteStep={30}
+                    style={{ width: 120 }}
+                  />
+                </Form.Item>
+              </>
+            ) : null
+          }
+        </Form.Item>
+      </Card>
+
+      {/* 測試通知按鈕 */}
+      <Card
+        title={
+          <Space>
+            <SendOutlined style={{ color: '#1890ff' }} />
+            <span style={{ color: '#f5f5f5' }}>測試通知</span>
+          </Space>
+        }
+        style={{ marginBottom: '24px', background: '#2d2d2d', border: 'none' }}
+        headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
+        styles={{ body: { background: '#2d2d2d' } }}
+      >
+        <Paragraph style={{ marginBottom: '16px', color: '#888' }}>
+          點擊下方按鈕立即發送一則測試通知到您的 LINE，確認通知功能正常運作。
+        </Paragraph>
         <Button
-          type="primary"
-          htmlType="submit"
+          icon={<SendOutlined />}
+          onClick={handleTestNotification}
+          loading={testing}
           block
-          size="large"
-          loading={submitting}
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            left: '20px',
-            right: '20px',
-            maxWidth: '440px',
-            margin: '0 auto',
-            zIndex: 1000,
-            background: 'linear-gradient(45deg, #c9a227, #eebf38)',
-            border: 'none',
-            color: '#000',
-            fontWeight: 'bold',
-          }}
+          style={{ background: '#3d3d3d', borderColor: '#555', color: '#f5f5f5' }}
         >
-          儲存設定
+          發送測試通知
         </Button>
-      </Form>
+      </Card>
+
+      {/* 儲存按鈕 */}
+      <Button
+        type="primary"
+        htmlType="submit"
+        block
+        size="large"
+        loading={submitting}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          left: '20px',
+          right: '20px',
+          maxWidth: '440px',
+          margin: '0 auto',
+          zIndex: 1000,
+          background: 'linear-gradient(45deg, #c9a227, #eebf38)',
+          border: 'none',
+          color: '#000',
+          fontWeight: 'bold',
+        }}
+      >
+        儲存設定
+      </Button>
+    </Form>
+
+      {/* 規則詳情 Modal */ }
+  <Modal
+    title="開瓶後適飲期規則"
+    open={rulesModalVisible}
+    onCancel={() => setRulesModalVisible(false)}
+    footer={null}
+    styles={{ body: { padding: 0 } }}
+  >
+    <Table
+      dataSource={rulesData}
+      pagination={false}
+      size="small"
+      rowKey="type"
+      columns={[
+        { title: '酒類', dataIndex: 'type', key: 'type' },
+        { title: '建議效期', dataIndex: 'days', key: 'days', render: text => <Text strong style={{ color: '#d48806' }}>{text}</Text> },
+      ]}
+    />
+    <div style={{ padding: '16px', background: '#f5f5f5', color: '#666', fontSize: '12px' }}>
+      註：此期限為「建議最佳飲用期」，實際情況可能因保存環境（溫度、濕度、瓶塞）而有所差異。及早飲用風味最佳。
     </div>
+  </Modal>
+    </div >
   );
 }
 
