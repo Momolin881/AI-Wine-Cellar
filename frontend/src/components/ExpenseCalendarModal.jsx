@@ -189,11 +189,11 @@ function ExpenseCalendarModal({ visible, onClose }) {
           {/* 超額警告 */}
           {isOverBudget && (
             <Alert
-              message="超出預算！"
-              description={`本月消費已超出預算 NT$ ${(monthlyTotal - monthlyBudget).toLocaleString()}`}
+              message={<span style={{ color: '#cf1322', fontWeight: 'bold' }}>超出預算！</span>}
+              description={<span style={{ color: '#cf1322' }}>{`本月消費已超出預算 NT$ ${(monthlyTotal - monthlyBudget).toLocaleString()}`}</span>}
               type="error"
               showIcon
-              style={{ marginBottom: 16 }}
+              style={{ marginBottom: 16, backgroundColor: '#fff2f0', border: '1px solid #ffccc7' }}
             />
           )}
 
