@@ -151,7 +151,7 @@ function AddWineItem() {
         return null;
     };
 
-    // 點擊日期
+    // 點擊日期 - 同步更新購買日期欄位
     const handleDateSelect = (date) => {
         const dateKey = date.format('YYYY-MM-DD');
         const items = wineItems.filter(
@@ -159,6 +159,24 @@ function AddWineItem() {
         );
         setSelectedDate(date);
         setDailyItems(items);
+        // 同步更新表單的購買日期
+        form.setFieldsValue({ purchase_date: date });
+    };
+
+    // 開啟月曆時，同步表單的購買日期
+    const handleOpenCalendar = () => {
+        const currentPurchaseDate = form.getFieldValue('purchase_date');
+        if (currentPurchaseDate) {
+            setCalendarMonth(currentPurchaseDate);
+            setSelectedDate(currentPurchaseDate);
+            // 載入該日期的消費明細
+            const dateKey = currentPurchaseDate.format('YYYY-MM-DD');
+            const items = wineItems.filter(
+                (item) => dayjs(item.purchase_date).format('YYYY-MM-DD') === dateKey
+            );
+            setDailyItems(items);
+        }
+        setCalendarVisible(true);
     };
 
     // 處理月曆月份切換
@@ -455,7 +473,7 @@ function AddWineItem() {
                             </Form.Item>
                             <Button
                                 icon={<CalendarOutlined />}
-                                onClick={() => setCalendarVisible(true)}
+                                onClick={handleOpenCalendar}
                                 title="查看/紀錄本月消費"
                                 style={{ width: 40 }}
                             />
