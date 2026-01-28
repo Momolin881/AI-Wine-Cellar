@@ -2,6 +2,47 @@
 
 🍷 智慧酒窖管理系統 - 透過 LINE Bot + AI 幫你管理酒款、追蹤適飲期、推薦酒食搭配！
 
+---
+
+## 🔐 安全性警告（必讀！）
+
+> **⚠️ 絕對不要將金鑰、密碼、API Token 上傳到 Git！**
+
+### 禁止上傳的敏感資訊
+
+| 類型 | 範例 | 風險 |
+|------|------|------|
+| 資料庫密碼 | `DATABASE_URL`, `postgresql://...` | 資料外洩、被刪庫 |
+| API 金鑰 | `OPENAI_API_KEY`, `CLOUDINARY_API_KEY` | 被盜用產生費用 |
+| LINE 憑證 | `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN` | Bot 被冒用 |
+| 環境設定檔 | `.env`, `.env.local` | 包含所有機密 |
+
+### 安全最佳實踐
+
+1. **確認 `.gitignore` 包含**：
+   ```
+   .env
+   .env.local
+   .env.*.local
+   backend/.env
+   *.db
+   ```
+
+2. **使用環境變數**：
+   - 本地開發：`.env` 檔案（不上傳）
+   - 生產環境：Zeabur/Vercel 控制台設定
+
+3. **如果不小心洩漏了**：
+   - 立即更換所有洩漏的密碼/金鑰
+   - 使用 `git filter-branch` 或 BFG Repo-Cleaner 清除歷史
+   - 檢查是否有異常 API 使用量
+
+4. **推薦工具**：
+   - [GitGuardian](https://www.gitguardian.com/) - 自動掃描洩漏的密碼
+   - [git-secrets](https://github.com/awslabs/git-secrets) - 防止 commit 包含密碼
+
+---
+
 ## 功能特色
 
 ### 🎯 P1 - 酒款入庫與管理（MVP）
@@ -158,3 +199,66 @@ MIT License
 - **後端 API 修復**：在 `app/src/routes/invitations.py` 中，必須正確導入 `File`。
   - 修正：`from fastapi import File, UploadFile`。
 - **部署網址**：https://ai-wine-cellar.zeabur.app
+
+---
+
+## 🐛 常見問題排錯 (Troubleshooting)
+
+### PostgreSQL 連線失敗：`password authentication failed`
+
+**症狀**：
+```
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError)
+FATAL: password authentication failed for user "root"
+```
+
+**排錯步驟**：
+
+1. **確認 `DATABASE_URL` 格式正確**
+   ```
+   postgresql://使用者:密碼@主機:埠號/資料庫名稱
+   ```
+
+2. **檢查環境變數**
+   - 有無多餘空格、換行、`\` 符號
+   - 變數名稱是否正確（如 `DATABASE_URL` 不是 `DATABSE_URL`）
+
+3. **Zeabur 專屬：使用內部連線**
+   - 外部連線：`tpe1.clusters.zeabur.com:20845`
+   - 內部連線：`service-xxxxxx:5432`（較穩定）
+
+4. **終極解法：重建 PostgreSQL 服務**
+   - 如果密碼同步出問題，最快的方式是：
+     1. 建立新的 PostgreSQL 服務
+     2. 複製新的 Connection String
+     3. 更新 Backend 的 `DATABASE_URL`
+     4. 確認成功後刪除舊服務
+
+### Zeabur 部署失敗
+
+**症狀**：Build 成功但 Pod 一直重啟
+
+**排錯步驟**：
+
+1. **查看 Runtime Logs**（不是 Build Logs）
+2. **常見原因**：
+   - 環境變數缺失或錯誤
+   - 資料庫連線失敗
+   - Port 設定錯誤
+
+### LINE LIFF 功能異常
+
+**症狀**：`shareTargetPicker` 權限錯誤
+
+**解法**：參考上方「LINE LIFF shareTargetPicker 功能解鎖」章節
+
+### API 呼叫 401/403 錯誤
+
+**可能原因**：
+1. `liff.getAccessToken()` 回傳 null（未在 LINE 內開啟）
+2. Token 過期
+3. CORS 設定問題
+
+**解法**：
+- 確保在 LINE App 內開啟 LIFF
+- 檢查 Backend CORS 設定是否包含前端網域
