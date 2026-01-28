@@ -163,6 +163,18 @@ async def get_current_user_id(
             db.commit()
             db.refresh(user)
 
+            # 為新用戶建立預設酒窖
+            from src.models.wine_cellar import WineCellar
+            default_cellar = WineCellar(
+                user_id=user.id,
+                name="我的酒窖",
+                description="自動建立的預設酒窖",
+                total_capacity=100
+            )
+            db.add(default_cellar)
+            db.commit()
+            logger.info(f"為新用戶 {user.id} 建立預設酒窖 (ID: {default_cellar.id})")
+
         return user.id
 
     except Exception as e:
