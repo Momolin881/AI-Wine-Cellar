@@ -151,23 +151,73 @@ const CreateInvitation = () => {
 
             console.log(`LIFF Environment: Client=${isInClient}, API=${isApiAvailable}`);
 
+            // 检查是否在 LINE App 内
+            if (!isInClient) {
+                console.warn("Not in LINE App - shareTargetPicker may not work properly");
+                // 在外部浏览器中，给用户一个提示
+                const proceed = window.confirm(
+                    "⚠️ 偵測到您是在外部瀏覽器中使用\n\n" +
+                    "shareTargetPicker 在外部瀏覽器可能無法正常發送訊息。\n" +
+                    "建議您：\n" +
+                    "1. 在 LINE App 中開啟此頁面\n" +
+                    "2. 或使用「複製連結」功能手動分享\n\n" +
+                    "點擊「確定」繼續嘗試發送，點擊「取消」複製連結"
+                );
+
+                if (!proceed) {
+                    // 提供複製連結的方式
+                    const invitationLink = `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/invitation/${invitationId}`;
+                    try {
+                        await navigator.clipboard.writeText(invitationLink);
+                        message.success("連結已複製！請手動分享給朋友");
+                    } catch (clipboardErr) {
+                        // Fallback: 显示链接让用户手动复制
+                        prompt("請複製以下連結分享:", invitationLink);
+                    }
+                    setSubmitting(false);
+                    return;
+                }
+            }
+
             if (isApiAvailable) {
                 try {
                     console.log("Attempting to open shareTargetPicker");
+                    console.log("Flex Message to send:", JSON.stringify(flexMessage, null, 2));
+
                     // Close modal before opening picker to avoid UI clutter
                     setPreviewVisible(false);
 
                     const res = await liff.shareTargetPicker([flexMessage]);
+
+                    // 详细记录返回值
+                    console.log("shareTargetPicker result:", res);
+                    console.log("shareTargetPicker result type:", typeof res);
+                    console.log("shareTargetPicker result JSON:", JSON.stringify(res));
+
+                    // 根据 LINE 文档，成功发送后 res.status = 'success'
                     if (res) {
-                        message.success("邀請已成功發送！");
-                        setTimeout(() => navigate('/'), 2000);
+                        if (res.status === 'success') {
+                            console.log("发送成功！");
+                            message.success("邀請已成功發送！");
+                            setTimeout(() => navigate('/'), 2000);
+                        } else {
+                            // 有返回值但不是 success
+                            console.log("收到返回值但状态非 success:", res);
+                            message.info(`發送結果: ${res.status || '未知'}`);
+                        }
                     } else {
-                        // User cancelled picking
+                        // User cancelled picking (res is undefined)
+                        console.log("用户取消了选择");
                         message.info("您取消了發送邀請。");
-                        // Re-open modal or stay on form? Stay on form is safer.
                     }
                 } catch (pickerError) {
                     console.error("shareTargetPicker error:", pickerError);
+                    console.error("Error details:", {
+                        code: pickerError.code,
+                        message: pickerError.message,
+                        stack: pickerError.stack
+                    });
+
                     // Show explicit error to user for debugging
                     alert(`發送失敗: ${pickerError.code || pickerError.message}\n請確認 LINE App 為最新版本，且已允許傳訊權限。`);
 
