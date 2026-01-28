@@ -9,7 +9,7 @@
  * - Remaining amount slider
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Button, Tag, Typography, Slider, Row, Col, Divider, message } from 'antd';
 import { CloseOutlined, CalendarOutlined, EditOutlined } from '@ant-design/icons';
@@ -71,9 +71,93 @@ const playPopSound = () => {
     }
 };
 
+// Play a "clink" sound for finishing a bottle (glass toast)
+const playClinkSound = () => {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const t = audioContext.currentTime;
+
+        // Create two oscillators for a metallic ring
+        const osc1 = audioContext.createOscillator();
+        const osc2 = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        osc1.frequency.setValueAtTime(2000, t); // High pitch
+        osc2.frequency.setValueAtTime(2500, t); // Overtone
+
+        // Exponential decay for clear "ping"
+        gainNode.gain.setValueAtTime(0.5, t);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        osc1.start(t);
+        osc1.stop(t + 1.5);
+        osc2.start(t);
+        osc2.stop(t + 1.5);
+    } catch (e) {
+        console.warn("Audio play failed:", e);
+    }
+};
+
+const triggerFinishAnimation = () => {
+    // Side Cannons Animation (Celebratory)
+    const end = Date.now() + 2000;
+    const colors = ['#800020', '#c9a227']; // Burgundy and Gold
+
+    (function frame() {
+        const myCanvas = document.createElement('canvas');
+        myCanvas.style.position = 'fixed';
+        myCanvas.style.top = '0';
+        myCanvas.style.left = '0';
+        myCanvas.style.width = '100vw';
+        myCanvas.style.height = '100vh';
+        myCanvas.style.pointerEvents = 'none';
+        myCanvas.style.zIndex = '99999';
+        document.body.appendChild(myCanvas);
+
+        const myConfetti = confetti.create(myCanvas, { resize: true });
+        myConfetti({
+            particleCount: 2,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: colors
+        });
+        myConfetti({
+            particleCount: 2,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: colors
+        });
+
+        if (Date.now() < end) {
+            // Remove canvas if frame doesn't clear it (canvas-confetti creates new one if not passed?)
+            // Actually reusing same canvas 
+            setTimeout(() => document.body.removeChild(myCanvas), 50); // Clean up slightly delayed
+            // This loop is tricky with manual canvas. 
+            // Better to just let it fire once per Call or use requestAnimationFrame properly with ONE canvas.
+        } else {
+            document.body.removeChild(myCanvas);
+        }
+    }());
+};
+
+
 function WineDetailModal({ visible, wine, onClose, onUpdate }) {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [tempRemaining, setTempRemaining] = useState(100);
+
+    // Sync slider state when wine changes
+    useEffect(() => {
+        if (wine) {
+            setTempRemaining(getSliderValue(wine.remaining_amount));
+        }
+    }, [wine]);
 
     if (!wine) return null;
 
@@ -84,11 +168,9 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
             // 1. Play Pop Sound
             playPopSound();
 
-            // 2. Confetti Animation - use higher zIndex to appear above modal
-            // Fire multiple bursts for more dramatic effect
+            // 2. Confetti Animation
             const colors = ['#c9a227', '#ffd700', '#ffffff', '#e5e5e5'];
 
-            // Create custom canvas with high z-index
             const myCanvas = document.createElement('canvas');
             myCanvas.style.position = 'fixed';
             myCanvas.style.top = '0';
@@ -101,7 +183,6 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
 
             const myConfetti = confetti.create(myCanvas, { resize: true });
 
-            // Fire confetti burst
             myConfetti({
                 particleCount: 150,
                 spread: 100,
@@ -112,7 +193,6 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                 ticks: 300,
             });
 
-            // Second burst after short delay
             setTimeout(() => {
                 myConfetti({
                     particleCount: 80,
@@ -128,7 +208,6 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                 });
             }, 200);
 
-            // Remove canvas after animation
             setTimeout(() => {
                 document.body.removeChild(myCanvas);
             }, 4000);
@@ -147,7 +226,7 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
     };
 
     const handleUpdateRemaining = async (value) => {
-        // Map slider value (0, 25, 50, 75, 100) to API strings
+        // Map slider value
         const map = {
             100: 'full',
             75: '3/4',
@@ -158,7 +237,7 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
         const amount = map[value];
         if (!amount) return;
 
-        // If empty, confirm and mark as consumed (not delete, to preserve spending history)
+        // If empty, confirm first!
         if (value === 0) {
             Modal.confirm({
                 title: '確定喝完了嗎？',
@@ -168,10 +247,61 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                 okButtonProps: { style: { background: '#c9a227', borderColor: '#c9a227' } },
                 onOk: async () => {
                     try {
+                        // 1. Play Celebration Effects
+                        playClinkSound();
+
+                        // Side Cannons Animation
+                        const colors = ['#800020', '#c9a227', '#ffffff'];
+                        const myCanvas = document.createElement('canvas'); // Create fixed canvas
+                        myCanvas.style.position = 'fixed';
+                        myCanvas.style.top = '0';
+                        myCanvas.style.left = '0';
+                        myCanvas.style.width = '100vw';
+                        myCanvas.style.height = '100vh';
+                        myCanvas.style.pointerEvents = 'none';
+                        myCanvas.style.zIndex = '99999';
+                        document.body.appendChild(myCanvas);
+
+                        const myConfetti = confetti.create(myCanvas, { resize: true });
+                        const end = Date.now() + 2000;
+
+                        (function frame() {
+                            myConfetti({
+                                particleCount: 2,
+                                angle: 60,
+                                spread: 55,
+                                origin: { x: 0 },
+                                colors: colors
+                            });
+                            myConfetti({
+                                particleCount: 2,
+                                angle: 120,
+                                spread: 55,
+                                origin: { x: 1 },
+                                colors: colors
+                            });
+
+                            if (Date.now() < end) {
+                                requestAnimationFrame(frame);
+                            } else {
+                                setTimeout(() => {
+                                    if (document.body.contains(myCanvas)) {
+                                        document.body.removeChild(myCanvas);
+                                    }
+                                }, 100);
+                            }
+                        }());
+
+                        // 2. Call API
                         await apiClient.post(`/wine-items/${wine.id}/change-status?new_status=consumed`);
                         message.success('🍾 乾杯！已記錄為喝完');
-                        onClose();
-                        onUpdate({ ...wine, _deleted: true });
+
+                        // Delay closing slightly
+                        setTimeout(() => {
+                            onClose();
+                            onUpdate({ ...wine, _deleted: true });
+                        }, 1500);
+
                     } catch (error) {
                         console.error("Change status error:", error);
                         message.error('操作失敗，請稍後再試');
@@ -184,13 +314,14 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
         try {
             await apiClient.post(`/wine-items/${wine.id}/update-remaining?remaining=${amount}`);
             onUpdate({ ...wine, remaining_amount: amount });
+            message.success('已更新剩餘量');
         } catch (error) {
             console.error("Update remaining error:", error);
             message.error('更新失敗');
         }
     };
 
-    // Helper to convert API string to slider value
+    // Helper
     const getSliderValue = (amount) => {
         const map = {
             'full': 100,
@@ -308,17 +439,37 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                         </div>
 
                         <Text style={{ color: '#888' }}>剩餘量：</Text>
-                        <Slider
-                            marks={{ 0: '空', 25: '', 50: '半', 75: '', 100: '滿' }}
-                            step={25}
-                            defaultValue={getSliderValue(wine.remaining_amount)}
-                            onChange={handleUpdateRemaining}
-                            styles={{
-                                rail: { backgroundColor: '#444' },
-                                track: { backgroundColor: '#c9a227' },
-                                handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
-                            }}
-                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <div style={{ flex: 1 }}>
+                                <Slider
+                                    marks={{ 0: '空', 25: '', 50: '半', 75: '', 100: '滿' }}
+                                    step={25}
+                                    value={tempRemaining}
+                                    onChange={setTempRemaining}
+                                    styles={{
+                                        rail: { backgroundColor: '#444' },
+                                        track: { backgroundColor: '#c9a227' },
+                                        handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                                    }}
+                                />
+                            </div>
+                            <Button
+                                type="primary"
+                                size="small"
+                                onClick={() => handleUpdateRemaining(tempRemaining)}
+                                disabled={getSliderValue(wine.remaining_amount) === tempRemaining}
+                                style={{
+                                    background: '#c9a227',
+                                    borderColor: '#c9a227',
+                                    color: '#000',
+                                    borderRadius: 16,
+                                    fontSize: 12,
+                                    minWidth: 60
+                                }}
+                            >
+                                儲存
+                            </Button>
+                        </div>
                     </div>
                 )}
 
