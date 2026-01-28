@@ -265,6 +265,21 @@ const CreateInvitation = () => {
                     發起品飲聚會 🥂
                 </Title>
 
+                {/* Debug: 重新授權按鈕 */}
+                {window.location.search.includes('debug=1') && (
+                    <Button
+                        danger
+                        size="small"
+                        style={{ marginBottom: 16 }}
+                        onClick={() => {
+                            liff.logout();
+                            window.location.reload();
+                        }}
+                    >
+                        🔄 登出並重新授權
+                    </Button>
+                )}
+
                 <Form
                     form={form}
                     layout="vertical"
