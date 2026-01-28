@@ -66,8 +66,23 @@ class WineCellarDetailResponse(WineCellarResponse):
 
 @router.get("/wine-cellars", response_model=list[WineCellarResponse])
 async def list_wine_cellars(db: DBSession, user_id: CurrentUserId):
-    """取得使用者的所有酒窖"""
+    """取得使用者的所有酒窖（若無則自動建立預設酒窖）"""
     cellars = db.query(WineCellar).filter(WineCellar.user_id == user_id).all()
+
+    # 若使用者沒有酒窖，自動建立一個預設酒窖
+    if not cellars:
+        default_cellar = WineCellar(
+            user_id=user_id,
+            name="我的酒窖",
+            description="自動建立的預設酒窖",
+            total_capacity=100
+        )
+        db.add(default_cellar)
+        db.commit()
+        db.refresh(default_cellar)
+        logger.info(f"使用者 {user_id} 自動建立預設酒窖 (ID: {default_cellar.id})")
+        cellars = [default_cellar]
+
     return cellars
 
 
