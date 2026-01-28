@@ -265,20 +265,21 @@ const CreateInvitation = () => {
                     發起品飲聚會 🥂
                 </Title>
 
-                {/* Debug: 重新授權按鈕 */}
-                {window.location.search.includes('debug=1') && (
-                    <Button
-                        danger
-                        size="small"
-                        style={{ marginBottom: 16 }}
-                        onClick={() => {
+                {/* 重新授權按鈕 - 暫時直接顯示 */}
+                <Button
+                    danger
+                    size="small"
+                    style={{ marginBottom: 16, display: 'block' }}
+                    onClick={() => {
+                        if (liff.isLoggedIn()) {
                             liff.logout();
-                            window.location.reload();
-                        }}
-                    >
-                        🔄 登出並重新授權
-                    </Button>
-                )}
+                            alert('已登出，將重新載入頁面');
+                        }
+                        window.location.href = `https://liff.line.me/2008946239-5U8c7ry2/create-invitation`;
+                    }}
+                >
+                    🔄 登出並重新授權
+                </Button>
 
                 <Form
                     form={form}
