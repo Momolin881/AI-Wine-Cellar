@@ -187,7 +187,22 @@ const CreateInvitation = () => {
                     // Close modal before opening picker to avoid UI clutter
                     setPreviewVisible(false);
 
-                    const res = await liff.shareTargetPicker([flexMessage]);
+                    // 測試模式：使用簡單文字消息
+                    const testMode = window.location.search.includes('test=1');
+                    let messageToSend;
+
+                    if (testMode) {
+                        // 簡單文字消息測試
+                        messageToSend = [{
+                            type: "text",
+                            text: `🍷 品酒邀請測試\n\n${previewData.title}\n📅 ${previewData.event_time.format('YYYY-MM-DD HH:mm')}\n📍 ${previewData.location || '待定'}`
+                        }];
+                        console.log("使用測試模式：發送純文字消息");
+                    } else {
+                        messageToSend = [flexMessage];
+                    }
+
+                    const res = await liff.shareTargetPicker(messageToSend);
 
                     // 详细记录返回值
                     console.log("shareTargetPicker result:", res);
