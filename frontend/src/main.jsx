@@ -7,8 +7,11 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 
-// 移動端調試工具：URL 加上 ?debug=1 即可啟用
+// 移動端調試工具：URL 加上 ?debug=1 即可啟用（透過 sessionStorage 保持跨 LIFF 重導向）
 if (window.location.search.includes('debug=1')) {
+  sessionStorage.setItem('vconsole_debug', '1');
+}
+if (sessionStorage.getItem('vconsole_debug') === '1') {
   import('vconsole').then(({ default: VConsole }) => {
     new VConsole();
     console.log('vConsole 已啟用');

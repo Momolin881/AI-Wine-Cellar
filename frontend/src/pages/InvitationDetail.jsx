@@ -14,7 +14,8 @@ import {
     Row,
     Col,
     message,
-    Modal
+    Modal,
+    Skeleton
 } from 'antd';
 import {
     CalendarOutlined,
@@ -78,20 +79,37 @@ const InvitationDetail = () => {
 
         setSending(true);
         try {
-            await liff.sendMessages([
-                {
-                    type: 'text',
-                    text: `我要參加「${invitation.title}」 +1 🍷`
-                }
-            ]);
+            const context = liff.getContext();
+            const rsvpMessage = [{ type: 'text', text: `我要參加「${invitation.title}」 +1 🍷` }];
+            const hasChatContext = context && (context.type === 'utou' || context.type === 'group' || context.type === 'room' || context.type === 'square_chat');
 
-            Modal.success({
-                title: '報名成功！',
-                content: '已在聊天室發送 +1 訊息。要順便加入行事曆嗎？',
-                okText: '好的，加入行事曆',
-                closable: true,
-                onOk: handleAddToCalendar
-            });
+            if (hasChatContext) {
+                // Opened from a LINE chat — sendMessages delivers to that chat
+                await liff.sendMessages(rsvpMessage);
+                Modal.success({
+                    title: '報名成功！',
+                    content: '已在聊天室發送 +1 訊息。要順便加入行事曆嗎？',
+                    okText: '好的，加入行事曆',
+                    closable: true,
+                    onOk: handleAddToCalendar
+                });
+            } else if (liff.isApiAvailable('shareTargetPicker')) {
+                // No chat context — let user pick a chat to send to
+                const res = await liff.shareTargetPicker(rsvpMessage);
+                if (res && res.status === 'success') {
+                    Modal.success({
+                        title: '報名成功！',
+                        content: '已發送 +1 訊息。要順便加入行事曆嗎？',
+                        okText: '好的，加入行事曆',
+                        closable: true,
+                        onOk: handleAddToCalendar
+                    });
+                } else {
+                    message.info('已取消發送');
+                }
+            } else {
+                message.warning('請從 LINE 聊天室中開啟此連結，才能使用報名功能');
+            }
 
         } catch (err) {
             console.error('RSVP Error:', err);
@@ -116,9 +134,24 @@ const InvitationDetail = () => {
 
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', background: '#1a1a1a', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Spin size="large" tip="Loading..." />
-            </div>
+            <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+                {/* Hero Skeleton */}
+                <div style={{ height: 240, background: '#2d2d2d', animation: 'pulse 1.5s infinite ease-in-out' }}>
+                    <Skeleton.Image active style={{ width: '100%', height: '100%' }} />
+                </div>
+                <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto', width: '100%' }}>
+                    <Card style={{ background: '#2d2d2d', border: 'none', borderRadius: 12, marginBottom: 24 }} styles={{ body: { padding: 20 } }}>
+                        <Skeleton active paragraph={{ rows: 3 }} />
+                    </Card>
+                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                        {[1, 2, 3].map(i => (
+                            <Card key={i} style={{ background: '#2d2d2d', border: 'none', borderRadius: 12 }} styles={{ body: { padding: 12 } }}>
+                                <Skeleton active avatar paragraph={{ rows: 1 }} />
+                            </Card>
+                        ))}
+                    </Space>
+                </Content>
+            </Layout>
         );
     }
 
@@ -130,15 +163,27 @@ const InvitationDetail = () => {
         );
     }
 
+    const isEventEnded = dayjs(invitation.event_time).isBefore(dayjs());
+
     return (
         <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+            {/* Event Ended Banner */}
+            {isEventEnded && (
+                <div style={{ background: '#444', textAlign: 'center', padding: '10px 16px' }}>
+                    <Text style={{ color: '#ccc', fontSize: 14 }}>此聚會已結束</Text>
+                </div>
+            )}
+
             {/* Hero Section */}
             <div style={{ position: 'relative', height: 240 }}>
                 <img
                     src={invitation.theme_image_url || "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"}
                     alt="Cover"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.6)' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: isEventEnded ? 'brightness(0.35)' : 'brightness(0.6)' }}
                 />
+                {isEventEnded && (
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.3)' }} />
+                )}
                 <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '24px', background: 'linear-gradient(to top, #1a1a1a, transparent)' }}>
                     <Title level={2} style={{ color: '#c9a227', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                         {invitation.title}
@@ -200,8 +245,12 @@ const InvitationDetail = () => {
                                         {wine.name}
                                     </Text>
                                     <Space>
-                                        <Tag color="gold">{wine.type}</Tag>
-                                        <Tag style={{ background: '#444', border: 'none', color: '#ccc' }}>{wine.vintage || 'NV'}</Tag>
+                                        <Tag color="gold">{wine.wine_type}</Tag>
+                                        {wine.vintage && (
+                                            <Tag style={{ background: '#444', border: 'none', color: '#ccc' }}>
+                                                {wine.vintage}
+                                            </Tag>
+                                        )}
                                     </Space>
                                 </Col>
                             </Row>
@@ -231,12 +280,20 @@ const InvitationDetail = () => {
                             type="primary"
                             block
                             size="large"
-                            loading={sending}
+                            loading={!isEventEnded && sending}
+                            disabled={isEventEnded}
                             icon={<CheckCircleFilled />}
-                            style={{ height: 50, borderRadius: 25, background: '#c9a227', borderColor: '#c9a227', color: '#000', fontWeight: 'bold' }}
-                            onClick={handleRSVP}
+                            style={{
+                                height: 50,
+                                borderRadius: 25,
+                                background: isEventEnded ? '#555' : '#c9a227',
+                                borderColor: isEventEnded ? '#555' : '#c9a227',
+                                color: isEventEnded ? '#999' : '#000',
+                                fontWeight: 'bold'
+                            }}
+                            onClick={isEventEnded ? undefined : handleRSVP}
                         >
-                            我會參加
+                            {isEventEnded ? '聚會已結束' : '我會參加'}
                         </Button>
                     </Col>
                 </Row>
