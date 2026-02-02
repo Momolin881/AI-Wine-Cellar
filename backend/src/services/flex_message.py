@@ -186,6 +186,6 @@ def create_invitation_flex_message(invitation: Invitation, wines: List[WineItem]
 
     return {
         "type": "flex",
-        "altText": f"🥂 {invitation.title} — 品酒邀請",
+        "altText": f"🍷 {invitation.title} — 品酒邀請",
         "contents": bubble
     }
