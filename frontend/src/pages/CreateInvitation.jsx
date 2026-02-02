@@ -265,22 +265,6 @@ const CreateInvitation = () => {
                     發起品飲聚會 🥂
                 </Title>
 
-                {/* 重新授權按鈕 - 暫時直接顯示 */}
-                <Button
-                    danger
-                    size="small"
-                    style={{ marginBottom: 16, display: 'block' }}
-                    onClick={() => {
-                        if (liff.isLoggedIn()) {
-                            liff.logout();
-                            alert('已登出，將重新載入頁面');
-                        }
-                        window.location.href = `https://liff.line.me/2008946239-5U8c7ry2/create-invitation`;
-                    }}
-                >
-                    🔄 登出並重新授權
-                </Button>
-
                 <Form
                     form={form}
                     layout="vertical"
@@ -440,7 +424,7 @@ const CreateInvitation = () => {
                     styles={{ body: { padding: 0 } }}
                 >
                     {previewData && (
-                        <div style={{ padding: 20, background: '#f0f0f0' }}>
+                        <div style={{ padding: 20, background: '#1f1f1f' }}>
                             {/* Simulate Flex Message Bubble */}
                             <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
                                 <div style={{ width: '100%', paddingTop: '65%', position: 'relative' }}>
