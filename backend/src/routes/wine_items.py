@@ -25,6 +25,23 @@ router = APIRouter(tags=["Wine Items"])
 
 # ============ Schemas ============
 
+class HistoryMatch(BaseModel):
+    """歷史比對結果"""
+    id: int
+    name: str
+    brand: Optional[str] = None
+    vintage: Optional[int] = None
+    purchase_price: Optional[float] = None
+    purchase_date: Optional[date] = None
+    tasting_notes: Optional[str] = None
+    image_url: Optional[str] = None
+
+class HistoryMatchResponse(BaseModel):
+    """歷史比對 API 回應"""
+    matched: bool
+    history: list[HistoryMatch] = []
+
+
 class WineItemCreate(BaseModel):
     """建立酒款的請求資料"""
     cellar_id: int
@@ -665,21 +682,6 @@ class SplitRequest(BaseModel):
     """拆分酒款請求"""
     split_count: int
 
-class HistoryMatch(BaseModel):
-    """歷史比對結果"""
-    id: int
-    name: str
-    brand: Optional[str] = None
-    vintage: Optional[int] = None
-    purchase_price: Optional[float] = None
-    purchase_date: Optional[date] = None
-    tasting_notes: Optional[str] = None
-    image_url: Optional[str] = None
-
-class HistoryMatchResponse(BaseModel):
-    """歷史比對 API 回應"""
-    matched: bool
-    history: list[HistoryMatch] = []
 
 
 # ============ Split & History Match Routes ============
