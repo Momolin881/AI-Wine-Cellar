@@ -59,6 +59,7 @@ const FoodItemCard = ({
             src={item.image_url}
             style={{ height: 200, objectFit: 'cover' }}
             preview={false}
+            loading="lazy"
           />
         ) : (
           <div

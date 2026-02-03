@@ -32,6 +32,7 @@ function WineCardSquare({ item, onClick }) {
                         src={image_url}
                         alt={name}
                         className="wine-card-square__image"
+                        loading="lazy"
                     />
                 ) : (
                     <div className="wine-card-square__placeholder">

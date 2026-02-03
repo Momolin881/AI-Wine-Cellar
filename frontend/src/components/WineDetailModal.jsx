@@ -352,6 +352,7 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                     src={wine.image_url}
                     alt={wine.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }}
+                    loading="lazy"
                 />
                 <Button
                     type="text"

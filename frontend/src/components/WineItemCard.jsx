@@ -66,6 +66,7 @@ function WineItemCard({ item, onEdit, onDelete }) {
                             src={item.image_url}
                             alt={item.name}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            loading="lazy"
                         />
                     ) : (
                         emoji

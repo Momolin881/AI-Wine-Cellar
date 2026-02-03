@@ -491,6 +491,7 @@ function EditWineItem() {
                             src={item.image_url}
                             alt={item.name}
                             style={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: 12 }}
+                            loading="lazy"
                         />
                     </Card>
                 )}

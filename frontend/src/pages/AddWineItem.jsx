@@ -358,6 +358,7 @@ function AddWineItem() {
                                     src={imageUrl}
                                     alt="酒標"
                                     className="blob-card__image"
+                                    loading="lazy"
                                 />
                                 <div className="blob-card__buttons">
                                     <Upload

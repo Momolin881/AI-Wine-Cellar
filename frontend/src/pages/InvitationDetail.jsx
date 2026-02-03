@@ -232,6 +232,7 @@ const InvitationDetail = () => {
                     src={invitation.theme_image_url || "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"}
                     alt="Cover"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', filter: isEventEnded ? 'brightness(0.35)' : 'brightness(0.6)' }}
+                    loading="lazy"
                 />
                 {isEventEnded && (
                     <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.3)' }} />
@@ -289,6 +290,7 @@ const InvitationDetail = () => {
                                             src={wine.image_url || 'https://via.placeholder.com/80'}
                                             alt={wine.name}
                                             style={{ maxHeight: '90%', maxWidth: '90%', objectFit: 'contain' }}
+                                            loading="lazy"
                                         />
                                     </div>
                                 </Col>

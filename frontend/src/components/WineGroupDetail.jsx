@@ -164,6 +164,7 @@ function WineGroupDetail() {
                             <Image
                                 src={firstBottle.image_url}
                                 alt={firstBottle.name}
+                                loading="lazy"
                                 style={{
                                     width: 120,
                                     height: 120,

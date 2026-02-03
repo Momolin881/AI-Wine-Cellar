@@ -6,7 +6,7 @@
  * Neumorphism 深色主題
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Layout,
@@ -22,7 +22,7 @@ import {
     Col,
     Skeleton,
 } from 'antd';
-import { BellOutlined, CalendarOutlined } from '@ant-design/icons';
+import { BellOutlined, CalendarOutlined, ReloadOutlined } from '@ant-design/icons';
 import {
     PhotoUploadButton,
     WineCardSquare,
@@ -41,6 +41,7 @@ const { Search } = Input;
 function WineHome() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [wineItems, setWineItems] = useState([]);
     const [filteredItems, setFilteredItems] = useState([]);
     const [searchText, setSearchText] = useState('');
@@ -48,6 +49,13 @@ function WineHome() {
     const [selectedWine, setSelectedWine] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [calendarModalVisible, setCalendarModalVisible] = useState(false);
+
+    // 下拉刷新相關
+    const [pullDistance, setPullDistance] = useState(0);
+    const [isPulling, setIsPulling] = useState(false);
+    const contentRef = useRef(null);
+    const startY = useRef(0);
+    const PULL_THRESHOLD = 80;
 
     // 統計資料
     const [stats, setStats] = useState({
@@ -58,6 +66,36 @@ function WineHome() {
     });
 
     const wineTypes = ['紅酒', '白酒', '氣泡酒', '香檳', '威士忌', '白蘭地', '清酒', '啤酒', '其他'];
+
+    // 下拉刷新處理
+    const handleTouchStart = useCallback((e) => {
+        if (contentRef.current?.scrollTop === 0) {
+            startY.current = e.touches[0].clientY;
+            setIsPulling(true);
+        }
+    }, []);
+
+    const handleTouchMove = useCallback((e) => {
+        if (!isPulling) return;
+        const currentY = e.touches[0].clientY;
+        const distance = currentY - startY.current;
+        if (distance > 0 && contentRef.current?.scrollTop === 0) {
+            e.preventDefault();
+            setPullDistance(Math.min(distance * 0.5, PULL_THRESHOLD * 1.5));
+        }
+    }, [isPulling]);
+
+    const handleTouchEnd = useCallback(async () => {
+        if (pullDistance >= PULL_THRESHOLD && !refreshing) {
+            setRefreshing(true);
+            setPullDistance(PULL_THRESHOLD);
+            await loadData();
+            message.success('已刷新');
+            setRefreshing(false);
+        }
+        setPullDistance(0);
+        setIsPulling(false);
+    }, [pullDistance, refreshing]);
 
     // 計算哪些酒類在酒窖中有庫存
     const availableWineTypes = useMemo(() => {
@@ -198,7 +236,48 @@ function WineHome() {
 
     return (
         <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
-            <Content style={{ padding: '16px', maxWidth: 480, margin: '0 auto' }}>
+            <Content
+                ref={contentRef}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                    padding: '16px',
+                    maxWidth: 480,
+                    margin: '0 auto',
+                    overflowY: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                }}
+            >
+                {/* 下拉刷新提示 */}
+                <div style={{
+                    height: pullDistance,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    transition: isPulling ? 'none' : 'height 0.3s ease',
+                }}>
+                    {pullDistance > 0 && (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            color: '#888',
+                            fontSize: 14,
+                        }}>
+                            <ReloadOutlined
+                                spin={refreshing}
+                                style={{
+                                    transform: `rotate(${Math.min(pullDistance / PULL_THRESHOLD * 180, 180)}deg)`,
+                                    transition: refreshing ? 'none' : 'transform 0.1s',
+                                }}
+                            />
+                            {refreshing ? '刷新中...' : pullDistance >= PULL_THRESHOLD ? '放開刷新' : '下拉刷新'}
+                        </div>
+                    )}
+                </div>
+
                 {/* 標題 */}
                 <div style={{ marginBottom: 16 }}>
                     <Title level={2} style={{ marginBottom: 4, color: '#f5f5f5' }}>
@@ -310,22 +389,32 @@ function WineHome() {
                 {loading ? (
                     <div className="wine-grid">
                         {[...Array(6)].map((_, index) => (
-                            <Card
+                            <div
                                 key={`skeleton-${index}`}
-                                style={{
-                                    border: 'none',
-                                    borderRadius: 12,
-                                    background: '#2d2d2d',
-                                    overflow: 'hidden',
-                                    aspectRatio: '1 / 1.3',
-                                }}
-                                styles={{ body: { padding: 0 } }}
+                                className="wine-card-square"
+                                style={{ cursor: 'default' }}
                             >
-                                <Skeleton.Image active style={{ width: '100%', height: '100%', minHeight: 150 }} />
-                                <div style={{ padding: 12 }}>
-                                    <Skeleton active paragraph={{ rows: 1 }} title={{ width: '60%' }} />
+                                <div className="wine-card-square__image-container">
+                                    <Skeleton.Image
+                                        active
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                        }}
+                                    />
                                 </div>
-                            </Card>
+                                <div className="wine-card-square__info">
+                                    <Skeleton
+                                        active
+                                        title={{ width: '80%', style: { marginBottom: 8 } }}
+                                        paragraph={{ rows: 1, width: '50%' }}
+                                        style={{ padding: 0 }}
+                                    />
+                                </div>
+                            </div>
                         ))}
                     </div>
                 ) : filteredItems.length === 0 ? (

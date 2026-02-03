@@ -342,6 +342,7 @@ const CreateInvitation = () => {
                                                 src={wine.image_url || 'https://via.placeholder.com/100'}
                                                 alt={wine.name}
                                                 style={{ maxHeight: '90%', maxWidth: '90%', objectFit: 'contain' }}
+                                                loading="lazy"
                                             />
                                         </div>
                                         <div style={{ padding: 8, background: '#333' }}>
@@ -382,7 +383,7 @@ const CreateInvitation = () => {
                         </Upload>
                         {customImageUrl && (
                             <div style={{ marginTop: 12, position: 'relative' }}>
-                                <img src={customImageUrl} alt="Preview" style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }} />
+                                <img src={customImageUrl} alt="Preview" style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }} loading="lazy" />
                                 <Button
                                     size="small"
                                     type="text"
@@ -432,6 +433,7 @@ const CreateInvitation = () => {
                                         src={previewData.theme_image_url}
                                         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                                         alt="Header"
+                                        loading="lazy"
                                     />
                                 </div>
                                 <div style={{ padding: '16px' }}>

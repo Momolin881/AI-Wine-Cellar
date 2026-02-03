@@ -144,6 +144,7 @@ const ImageUploader = ({
           <Image
             src={imageUrl}
             alt="preview"
+            loading="lazy"
             style={{
               maxWidth: '100%',
               maxHeight: '400px',
