@@ -237,6 +237,12 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                 okText: '確定，已喝完',
                 cancelText: '取消',
                 okButtonProps: { style: { background: '#c9a227', borderColor: '#c9a227' } },
+                styles: {
+                    content: { background: '#f5f5f5', borderRadius: 12 },
+                    header: { background: '#f5f5f5', borderBottom: '1px solid #e8e8e8' },
+                    body: { background: '#f5f5f5', padding: '20px 24px' },
+                    footer: { background: '#f5f5f5' },
+                },
                 onOk: async () => {
                     try {
                         // 1. Play Celebration Effects
@@ -285,6 +291,12 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
             okText: '確定',
             cancelText: '取消',
             okButtonProps: newStatus === 'consumed' ? { style: { background: '#c9a227', borderColor: '#c9a227' } } : {},
+            styles: {
+                content: { background: '#f5f5f5', borderRadius: 12 },
+                header: { background: '#f5f5f5', borderBottom: '1px solid #e8e8e8' },
+                body: { background: '#f5f5f5', padding: '20px 24px' },
+                footer: { background: '#f5f5f5' },
+            },
             onOk: async () => {
                 try {
                     if (newStatus === 'consumed') {

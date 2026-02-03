@@ -242,15 +242,21 @@ function AddWineItem() {
                         Modal.confirm({
                             title: '📚 發現歷史記錄！',
                             content: (
-                                <div>
-                                    <p>您曾於 <strong>{dayjs(lastRecord.purchase_date).format('YYYY/MM/DD')}</strong> 購入此酒。</p>
-                                    {lastRecord.purchase_price && <p>價格：<strong>${lastRecord.purchase_price}</strong></p>}
-                                    {lastRecord.tasting_notes && <p>品飲筆記：{lastRecord.tasting_notes.substring(0, 50)}...</p>}
-                                    <p>是否套用歷史資訊？</p>
+                                <div style={{ color: '#333' }}>
+                                    <p>您曾於 <strong style={{ color: '#722ed1' }}>{dayjs(lastRecord.purchase_date).format('YYYY/MM/DD')}</strong> 購入此酒。</p>
+                                    {lastRecord.purchase_price && <p>價格：<strong style={{ color: '#52c41a', fontSize: 18 }}>NT$ {lastRecord.purchase_price.toLocaleString()}</strong></p>}
+                                    {lastRecord.tasting_notes && <p style={{ color: '#666' }}>品飲筆記：{lastRecord.tasting_notes.substring(0, 50)}...</p>}
+                                    <p style={{ marginTop: 16, fontWeight: 500 }}>是否套用歷史資訊？</p>
                                 </div>
                             ),
                             okText: '套用',
                             cancelText: '不用',
+                            styles: {
+                                content: { background: '#f5f5f5', borderRadius: 12 },
+                                header: { background: '#f5f5f5', borderBottom: '1px solid #e8e8e8' },
+                                body: { background: '#f5f5f5', padding: '20px 24px' },
+                                footer: { background: '#f5f5f5' },
+                            },
                             onOk: () => {
                                 form.setFieldsValue({
                                     purchase_price: lastRecord.purchase_price,

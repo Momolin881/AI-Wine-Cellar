@@ -328,6 +328,12 @@ function EditWineItem() {
                 okText: '確定，乾杯！',
                 cancelText: '取消',
                 okButtonProps: { style: { background: '#c9a227', borderColor: '#c9a227' } },
+                styles: {
+                    content: { background: '#f5f5f5', borderRadius: 12 },
+                    header: { background: '#f5f5f5', borderBottom: '1px solid #e8e8e8' },
+                    body: { background: '#f5f5f5', padding: '20px 24px' },
+                    footer: { background: '#f5f5f5' },
+                },
                 onOk: async () => {
                     try {
                         // 儀式
@@ -363,6 +369,12 @@ function EditWineItem() {
             content: `確定要將此酒款標記為「${statusLabels[newStatus]}」嗎？`,
             okText: '確定',
             cancelText: '取消',
+            styles: {
+                content: { background: '#f5f5f5', borderRadius: 12 },
+                header: { background: '#f5f5f5', borderBottom: '1px solid #e8e8e8' },
+                body: { background: '#f5f5f5', padding: '20px 24px' },
+                footer: { background: '#f5f5f5' },
+            },
             onOk: async () => {
                 try {
                     // 如果是標記為喝完，觸發儀式
@@ -421,6 +433,12 @@ function EditWineItem() {
             okText: '刪除',
             okType: 'danger',
             cancelText: '取消',
+            styles: {
+                content: { background: '#f5f5f5', borderRadius: 12 },
+                header: { background: '#f5f5f5', borderBottom: '1px solid #e8e8e8' },
+                body: { background: '#f5f5f5', padding: '20px 24px' },
+                footer: { background: '#f5f5f5' },
+            },
             onOk: async () => {
                 try {
                     await apiClient.delete(`/wine-items/${id}`);
