@@ -26,6 +26,7 @@ import {
     Calendar,
     List,
     Tag,
+    Slider,
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -34,6 +35,7 @@ import {
     CalendarOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import confetti from 'canvas-confetti';
 import apiClient, { getFoodItems, getBudgetSettings } from '../services/api';
 
 const { Content } = Layout;
@@ -49,6 +51,104 @@ const remainingLabels = {
     '1/2': '1/2',
     '1/4': '1/4',
     'empty': '空瓶',
+};
+
+// 音效函式 - 改進版：成功和弦 (Success Chord)
+const playClinkSound = () => {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        const ctx = new AudioContext();
+        const t = ctx.currentTime;
+
+        // C Major Chord: C5, E5, G5, C6 (輕快和弦)
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+
+        notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sine'; // 柔和的正弦波
+            osc.frequency.setValueAtTime(freq, t);
+
+            // 琶音效果 (Arpeggio): 每個音稍微錯開
+            const startTime = t + (i * 0.04);
+
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.6);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(startTime);
+            osc.stop(startTime + 0.7);
+        });
+
+    } catch (e) {
+        console.warn("Audio play failed:", e);
+    }
+};
+
+// 動畫函式 - Real Fireworks 效果
+const triggerFinishAnimation = () => {
+    const duration = 2000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 99999 };
+
+    function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+            return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+    }, 250);
+};
+
+// 開瓶音效 - 模擬軟木塞彈出
+const playPopSound = () => {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const t = ctx.currentTime;
+
+        // 噪聲部分 (Fizz)
+        const bufferSize = ctx.sampleRate * 0.1;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.4, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+        noise.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        noise.start(t);
+
+        // 低頻 Pop 聲
+        const osc = ctx.createOscillator();
+        const oscGain = ctx.createGain();
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+        oscGain.gain.setValueAtTime(0.6, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        osc.connect(oscGain);
+        oscGain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.1);
+    } catch (e) { }
 };
 
 function EditWineItem() {
@@ -194,17 +294,58 @@ function EditWineItem() {
     // 開瓶
     const handleOpenBottle = async () => {
         try {
+            // 1. 播放開瓶音效
+            playPopSound();
+
+            // 2. 噴灑噴粉 (Confetti)
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.5, x: 0.5 },
+                colors: ['#c9a227', '#ffd700', '#ffffff'],
+                startVelocity: 45,
+                gravity: 1,
+                ticks: 200,
+            });
+
             const data = await apiClient.post(`/wine-items/${id}/open`);
             setItem(data);
             form.setFieldsValue(data);
-            message.success('已標記為開瓶！');
+            message.success('🍾 蹦！已成功開瓶！');
         } catch (error) {
             message.error('操作失敗');
         }
     };
 
     // 更新剩餘量
+    // 更新剩餘量
     const handleUpdateRemaining = async (remaining) => {
+        // 如果是標記為空瓶，先確認並觸發儀式
+        if (remaining === 'empty') {
+            Modal.confirm({
+                title: '確定喝完了嗎？',
+                content: `「${item.name}」將標記為空瓶，並從酒窖移除（標記為喝完）`,
+                okText: '確定，乾杯！',
+                cancelText: '取消',
+                okButtonProps: { style: { background: '#c9a227', borderColor: '#c9a227' } },
+                onOk: async () => {
+                    try {
+                        // 儀式
+                        playClinkSound();
+                        triggerFinishAnimation();
+
+                        // 更新狀態為 consumed
+                        await apiClient.post(`/wine-items/${id}/change-status?new_status=consumed`);
+                        message.success('🍾 乾杯！已記錄為喝完');
+                        navigate('/'); // 返回首頁
+                    } catch (error) {
+                        message.error('操作失敗');
+                    }
+                }
+            });
+            return;
+        }
+
         try {
             const data = await apiClient.post(`/wine-items/${id}/update-remaining?remaining=${remaining}`);
             setItem(data);
@@ -224,10 +365,22 @@ function EditWineItem() {
             cancelText: '取消',
             onOk: async () => {
                 try {
+                    // 如果是標記為喝完，觸發儀式
+                    if (newStatus === 'consumed') {
+                        playClinkSound();
+                        triggerFinishAnimation();
+                    }
+
                     const data = await apiClient.post(`/wine-items/${id}/change-status?new_status=${newStatus}`);
                     setItem(data);
                     message.success('狀態已變更');
-                    navigate('/');
+
+                    // 如果有儀式，延遲一下跳轉，讓人看完
+                    if (newStatus === 'consumed') {
+                        setTimeout(() => navigate('/'), 2000);
+                    } else {
+                        navigate('/');
+                    }
                 } catch (error) {
                     message.error('操作失敗');
                 }
@@ -335,21 +488,36 @@ function EditWineItem() {
                             </Button>
                         ) : (
                             <div>
-                                <Text style={{ display: 'block', marginBottom: 8, color: '#888' }}>
+                                <Text style={{ display: 'block', marginBottom: 24, color: '#888' }}>
                                     剩餘量：{remainingLabels[item.remaining_amount]}
                                 </Text>
-                                <Space wrap>
-                                    {remainingOptions.map((opt) => (
-                                        <Button
-                                            key={opt}
-                                            type={item.remaining_amount === opt ? 'primary' : 'default'}
-                                            onClick={() => handleUpdateRemaining(opt)}
-                                            style={item.remaining_amount === opt ? { background: '#c9a227', borderColor: '#c9a227' } : {}}
-                                        >
-                                            {remainingLabels[opt]}
-                                        </Button>
-                                    ))}
-                                </Space>
+                                <div style={{ padding: '0 10px' }}>
+                                    <Slider
+                                        marks={{
+                                            0: '空',
+                                            25: '1/4',
+                                            50: '半',
+                                            75: '3/4',
+                                            100: '滿'
+                                        }}
+                                        step={null}
+                                        reverse={true}
+                                        value={(() => {
+                                            const map = { 'full': 100, '3/4': 75, '1/2': 50, '1/4': 25, 'empty': 0 };
+                                            return map[item.remaining_amount] || 100;
+                                        })()}
+                                        tooltip={{ formatter: null }}
+                                        styles={{
+                                            rail: { backgroundColor: '#444' },
+                                            track: { backgroundColor: '#c9a227' },
+                                            handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                                        }}
+                                        onChangeComplete={(value) => {
+                                            const map = { 100: 'full', 75: '3/4', 50: '1/2', 25: '1/4', 0: 'empty' };
+                                            handleUpdateRemaining(map[value]);
+                                        }}
+                                    />
+                                </div>
                             </div>
                         )}
                     </Card>
@@ -360,7 +528,6 @@ function EditWineItem() {
                     <Card style={{ marginBottom: 16, background: '#2d2d2d', border: 'none' }}>
                         <Title level={5} style={{ color: '#f5f5f5' }}>📤 變更狀態</Title>
                         <Space wrap>
-                            <Button onClick={() => handleChangeStatus('sold')}>標記為售出</Button>
                             <Button onClick={() => handleChangeStatus('gifted')}>標記為送禮</Button>
                             <Button onClick={() => handleChangeStatus('consumed')}>標記為喝完</Button>
                         </Space>

@@ -63,6 +63,12 @@ class WineItem(Base):
     status = Column(String(20), default='active', nullable=False, index=True)  # active / sold / gifted / consumed
     status_changed_at = Column(DateTime, nullable=True)  # 狀態變更時間
     status_changed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    
+    # 用途/去向 (personal: 自飲, gift: 送禮, sale: 售出, collection: 收藏)
+    disposition = Column(String(20), default='personal', nullable=False)
+    
+    # 拆分來源 (如果這瓶酒是從另一筆拆分出來的，記錄原始 ID)
+    split_from_id = Column(Integer, ForeignKey("wine_items.id", ondelete="SET NULL"), nullable=True)
 
     # 備註
     notes = Column(String(1000), nullable=True)  # 備註（如：送禮對象、品酒筆記）

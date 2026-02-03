@@ -20,6 +20,7 @@ import {
   CreateInvitation,
   InvitationDetail,
 } from './pages';
+import WineGroupDetail from './components/WineGroupDetail';
 
 // 深色主題配置
 const darkTheme = {
@@ -146,6 +147,9 @@ function App() {
 
             {/* 編輯酒款 */}
             <Route path="/edit/:id" element={<EditWineItem />} />
+
+            {/* 酒款群組詳情 */}
+            <Route path="/wine-group/:brand/:name/:vintage?" element={<WineGroupDetail />} />
 
             {/* 酒窖設定 */}
             <Route path="/settings" element={<CellarSettings />} />

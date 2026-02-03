@@ -41,6 +41,7 @@ class WineItemCreate(BaseModel):
     bottle_status: str = "unopened"
     preservation_type: str = "immediate"  # immediate / aging
     remaining_amount: str = "full"
+    disposition: str = "personal"  # personal / gift / sale / collection
     purchase_price: Optional[float] = None
     retail_price: Optional[float] = None
     purchase_date: Optional[str] = None
@@ -97,6 +98,8 @@ class WineItemResponse(BaseModel):
 
     preservation_type: str
     remaining_amount: str
+    disposition: str = "personal"
+    split_from_id: Optional[int] = None
     purchase_price: Optional[float]
     retail_price: Optional[float]
     purchase_date: Optional[str]
@@ -213,6 +216,8 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
 
         preservation_type=item.preservation_type,
         remaining_amount=item.remaining_amount,
+        disposition=getattr(item, 'disposition', 'personal') or 'personal',
+        split_from_id=getattr(item, 'split_from_id', None),
         purchase_price=item.purchase_price,
         retail_price=item.retail_price,
         purchase_date=str(item.purchase_date) if item.purchase_date else None,
@@ -273,6 +278,53 @@ async def list_wine_items(
     return [_build_wine_item_response(item) for item in wine_items]
 
 
+@router.get("/wine-items/match-history", response_model=HistoryMatchResponse)
+def match_wine_history(
+    brand: str,
+    name: str,
+    db: DBSession,
+    user_id: CurrentUserId
+):
+    """
+    歷史酒款比對 - 根據品牌和酒名查找過去購買記錄
+
+    用於 AI 辨識後，提示使用者是否套用歷史價格和品飲筆記。
+    """
+    from src.models.wine_cellar import WineCellar
+
+    # 取得使用者的所有酒窖 IDs
+    cellar_ids = [c.id for c in db.query(WineCellar).filter(WineCellar.user_id == user_id).all()]
+
+    if not cellar_ids:
+        return HistoryMatchResponse(matched=False, history=[])
+
+    # 查詢相符的歷史酒款（包含已售出、送禮、喝完）
+    matches = db.query(WineItem).filter(
+        WineItem.cellar_id.in_(cellar_ids),
+        WineItem.brand == brand,
+        WineItem.name == name
+    ).order_by(WineItem.purchase_date.desc()).limit(5).all()
+
+    if not matches:
+        return HistoryMatchResponse(matched=False, history=[])
+
+    history = [
+        HistoryMatch(
+            id=m.id,
+            name=m.name,
+            brand=m.brand,
+            vintage=m.vintage,
+            purchase_price=m.purchase_price,
+            purchase_date=m.purchase_date,
+            tasting_notes=m.tasting_notes,
+            image_url=m.image_url
+        )
+        for m in matches
+    ]
+
+    return HistoryMatchResponse(matched=True, history=history)
+
+
 @router.get("/wine-items/{id}", response_model=WineItemResponse)
 async def get_wine_item(id: int, db: DBSession, user_id: CurrentUserId):
     """取得單一酒款"""
@@ -328,14 +380,29 @@ async def create_wine_item(data: WineItemCreate, db: DBSession, user_id: Current
                 else:
                     item_data[field] = None
 
-        # 建立酒款
-        wine_item = WineItem(**item_data)
-        db.add(wine_item)
-        db.commit()
-        db.refresh(wine_item)
+        # 自動拆分：quantity > 1 時建立 N 筆獨立記錄（一筆記錄 = 一瓶酒）
+        requested_quantity = item_data.get('quantity', 1)
+        item_data['quantity'] = 1
 
-        logger.info(f"使用者 {user_id} 新增酒款: {wine_item.name} (ID: {wine_item.id})")
-        return _build_wine_item_response(wine_item)
+        # 建立主記錄
+        primary_item = WineItem(**item_data)
+        db.add(primary_item)
+        db.flush()  # 取得 primary_item.id，但不 commit
+
+        # 建立額外記錄
+        if requested_quantity > 1:
+            for _ in range(requested_quantity - 1):
+                clone_data = {**item_data, 'split_from_id': primary_item.id}
+                db.add(WineItem(**clone_data))
+
+        db.commit()
+        db.refresh(primary_item)
+
+        logger.info(
+            f"使用者 {user_id} 新增酒款: {primary_item.name} (ID: {primary_item.id})"
+            f"{f', 自動拆分為 {requested_quantity} 瓶' if requested_quantity > 1 else ''}"
+        )
+        return _build_wine_item_response(primary_item)
         
     except HTTPException:
         # 重新拋出 HTTPException
@@ -590,3 +657,153 @@ async def recognize_wine_label(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"AI 辨識失敗: {str(e)}",
         ) from e
+
+
+# ============ Split & History Match Schemas ============
+
+class SplitRequest(BaseModel):
+    """拆分酒款請求"""
+    split_count: int
+
+class HistoryMatch(BaseModel):
+    """歷史比對結果"""
+    id: int
+    name: str
+    brand: Optional[str] = None
+    vintage: Optional[int] = None
+    purchase_price: Optional[float] = None
+    purchase_date: Optional[date] = None
+    tasting_notes: Optional[str] = None
+    image_url: Optional[str] = None
+
+class HistoryMatchResponse(BaseModel):
+    """歷史比對 API 回應"""
+    matched: bool
+    history: list[HistoryMatch] = []
+
+
+# ============ Split & History Match Routes ============
+
+@router.post("/wine-items/{id}/split")
+def split_wine_item(
+    id: int,
+    data: SplitRequest,
+    db: DBSession,
+    user_id: CurrentUserId
+):
+    """
+    拆分酒款 - 將多瓶酒款拆分成獨立記錄
+    
+    例如：將 quantity=3 的酒款拆分出 2 瓶，
+    原酒款變成 quantity=1，新建 2 筆各 quantity=1 的記錄。
+    """
+    # 驗證拆分數量
+    if data.split_count < 1:
+        raise HTTPException(status_code=400, detail="拆分數量必須大於 0")
+    
+    # 取得原酒款
+    item = db.query(WineItem).filter(WineItem.id == id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="找不到酒款")
+    
+    # 驗證擁有權（透過酒窖）
+    from src.models.wine_cellar import WineCellar
+    cellar = db.query(WineCellar).filter(WineCellar.id == item.cellar_id).first()
+    if not cellar or cellar.user_id != user_id:
+        raise HTTPException(status_code=403, detail="無權限操作此酒款")
+    
+    # 驗證數量足夠
+    if item.quantity <= data.split_count:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"拆分數量 ({data.split_count}) 必須小於原數量 ({item.quantity})"
+        )
+    
+    # 減少原酒款數量
+    item.quantity -= data.split_count
+    
+    # 建立新酒款記錄
+    new_items = []
+    for _ in range(data.split_count):
+        new_item = WineItem(
+            cellar_id=item.cellar_id,
+            name=item.name,
+            wine_type=item.wine_type,
+            brand=item.brand,
+            vintage=item.vintage,
+            region=item.region,
+            country=item.country,
+            abv=item.abv,
+            quantity=1,
+            space_units=item.space_units / (item.quantity + data.split_count),
+            container_type=item.container_type,
+            bottle_status=item.bottle_status,
+            preservation_type=item.preservation_type,
+            remaining_amount=item.remaining_amount,
+            disposition=item.disposition,
+            purchase_price=item.purchase_price,
+            retail_price=item.retail_price,
+            purchase_date=item.purchase_date,
+            optimal_drinking_start=item.optimal_drinking_start,
+            optimal_drinking_end=item.optimal_drinking_end,
+            storage_location=item.storage_location,
+            storage_temp=item.storage_temp,
+            image_url=item.image_url,
+            cloudinary_public_id=item.cloudinary_public_id,
+            notes=item.notes,
+            tasting_notes=item.tasting_notes,
+            recognized_by_ai=item.recognized_by_ai,
+            split_from_id=item.id,  # 記錄來源
+        )
+        db.add(new_item)
+        new_items.append(new_item)
+    
+    db.commit()
+    
+    # Refresh to get IDs
+    for new_item in new_items:
+        db.refresh(new_item)
+    
+    logger.info(f"使用者 {user_id} 拆分酒款 {id}，拆出 {data.split_count} 瓶")
+    
+    return {
+        "original_remaining": item.quantity,
+        "new_items": [_build_wine_item_response(ni) for ni in new_items]
+    }
+
+
+@router.patch("/wine-items/{id}/disposition")
+def update_disposition(
+    id: int,
+    disposition: str,  # personal / gift / sale / collection
+    db: DBSession,
+    user_id: CurrentUserId
+):
+    """
+    更新酒款用途（自飲/送禮/待售/收藏）
+    """
+    valid_dispositions = ['personal', 'gift', 'sale', 'collection']
+    if disposition not in valid_dispositions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"無效的用途，必須是: {', '.join(valid_dispositions)}"
+        )
+    
+    # 取得酒款
+    item = db.query(WineItem).filter(WineItem.id == id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="找不到酒款")
+    
+    # 驗證擁有權
+    from src.models.wine_cellar import WineCellar
+    cellar = db.query(WineCellar).filter(WineCellar.id == item.cellar_id).first()
+    if not cellar or cellar.user_id != user_id:
+        raise HTTPException(status_code=403, detail="無權限操作此酒款")
+    
+    item.disposition = disposition
+    db.commit()
+    db.refresh(item)
+    
+    logger.info(f"使用者 {user_id} 更新酒款 {id} 用途為 {disposition}")
+    
+    return _build_wine_item_response(item)

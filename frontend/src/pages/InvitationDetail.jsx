@@ -15,7 +15,8 @@ import {
     Col,
     message,
     Modal,
-    Skeleton
+    Skeleton,
+    Avatar
 } from 'antd';
 import {
     CalendarOutlined,
@@ -24,6 +25,7 @@ import {
     GoogleOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { joinInvitation } from '../services/api';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -38,6 +40,8 @@ const InvitationDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [sending, setSending] = useState(false);
+    const [attendees, setAttendees] = useState([]);
+    const [hasRSVPd, setHasRSVPd] = useState(false);
 
     useEffect(() => {
         const fetchInvitation = async () => {
@@ -51,11 +55,20 @@ const InvitationDetail = () => {
                 const data = await response.json();
                 setInvitation(data);
 
-                // Backend now returns wine_details directly
                 if (data.wine_details && data.wine_details.length > 0) {
                     setWines(data.wine_details);
                 } else {
                     setWines([]);
+                }
+
+                // Set attendees from API response
+                if (data.attendees && data.attendees.length > 0) {
+                    setAttendees(data.attendees);
+                }
+
+                // Check localStorage for existing RSVP
+                if (localStorage.getItem(`rsvp_${id}`) === 'true') {
+                    setHasRSVPd(true);
                 }
 
             } catch (err) {
@@ -86,6 +99,26 @@ const InvitationDetail = () => {
             if (hasChatContext) {
                 // Opened from a LINE chat — sendMessages delivers to that chat
                 await liff.sendMessages(rsvpMessage);
+
+                // Save to backend
+                try {
+                    const profile = await liff.getProfile();
+                    const result = await joinInvitation(id, {
+                        line_user_id: profile.userId,
+                        name: profile.displayName,
+                        avatar_url: profile.pictureUrl
+                    });
+                    setAttendees(prev => {
+                        if (prev.some(a => a.line_user_id === result.line_user_id)) return prev;
+                        return [...prev, result];
+                    });
+                    // Save to localStorage
+                    localStorage.setItem(`rsvp_${id}`, 'true');
+                    setHasRSVPd(true);
+                } catch (joinErr) {
+                    console.warn('Failed to save attendee:', joinErr);
+                }
+
                 Modal.success({
                     title: '報名成功！',
                     content: '已在聊天室發送 +1 訊息。要順便加入行事曆嗎？',
@@ -97,6 +130,25 @@ const InvitationDetail = () => {
                 // No chat context — let user pick a chat to send to
                 const res = await liff.shareTargetPicker(rsvpMessage);
                 if (res && res.status === 'success') {
+                    // Save to backend
+                    try {
+                        const profile = await liff.getProfile();
+                        const result = await joinInvitation(id, {
+                            line_user_id: profile.userId,
+                            name: profile.displayName,
+                            avatar_url: profile.pictureUrl
+                        });
+                        setAttendees(prev => {
+                            if (prev.some(a => a.line_user_id === result.line_user_id)) return prev;
+                            return [...prev, result];
+                        });
+                        // Save to localStorage
+                        localStorage.setItem(`rsvp_${id}`, 'true');
+                        setHasRSVPd(true);
+                    } catch (joinErr) {
+                        console.warn('Failed to save attendee:', joinErr);
+                    }
+
                     Modal.success({
                         title: '報名成功！',
                         content: '已發送 +1 訊息。要順便加入行事曆嗎？',
@@ -262,6 +314,30 @@ const InvitationDetail = () => {
                     )}
                 </Space>
 
+                {/* Attendees Avatar List */}
+                {attendees.length > 0 && (
+                    <>
+                        <Divider style={{ borderColor: '#333', color: '#c9a227' }}>已報名 ({attendees.length})</Divider>
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                            <Avatar.Group
+                                maxCount={10}
+                                size="large"
+                                maxStyle={{ color: '#c9a227', backgroundColor: '#2d2d2d', border: '2px solid #c9a227' }}
+                            >
+                                {attendees.map((att, index) => (
+                                    <Avatar
+                                        key={att.line_user_id || index}
+                                        src={att.avatar_url}
+                                        style={{ border: '2px solid #c9a227' }}
+                                    >
+                                        {att.name?.charAt(0)}
+                                    </Avatar>
+                                ))}
+                            </Avatar.Group>
+                        </div>
+                    </>
+                )}
+
                 {/* Actions */}
                 <Row gutter={16} style={{ marginTop: 40 }}>
                     <Col span={12}>
@@ -280,20 +356,20 @@ const InvitationDetail = () => {
                             type="primary"
                             block
                             size="large"
-                            loading={!isEventEnded && sending}
-                            disabled={isEventEnded}
+                            loading={!isEventEnded && !hasRSVPd && sending}
+                            disabled={isEventEnded || hasRSVPd}
                             icon={<CheckCircleFilled />}
                             style={{
                                 height: 50,
                                 borderRadius: 25,
-                                background: isEventEnded ? '#555' : '#c9a227',
-                                borderColor: isEventEnded ? '#555' : '#c9a227',
-                                color: isEventEnded ? '#999' : '#000',
+                                background: isEventEnded ? '#555' : hasRSVPd ? '#2d5016' : '#c9a227',
+                                borderColor: isEventEnded ? '#555' : hasRSVPd ? '#3d7a1c' : '#c9a227',
+                                color: isEventEnded ? '#999' : hasRSVPd ? '#8fbc8f' : '#000',
                                 fontWeight: 'bold'
                             }}
-                            onClick={isEventEnded ? undefined : handleRSVP}
+                            onClick={(isEventEnded || hasRSVPd) ? undefined : handleRSVP}
                         >
-                            {isEventEnded ? '聚會已結束' : '我會參加'}
+                            {isEventEnded ? '聚會已結束' : hasRSVPd ? '✓ 已報名' : '我會參加'}
                         </Button>
                     </Col>
                 </Row>

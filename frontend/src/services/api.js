@@ -196,7 +196,38 @@ export const deleteFoodItems = (itemIds) => {
   return apiClient.post('/wine-items/batch-delete', { item_ids: itemIds });
 };
 
+/**
+ * 拆分酒款 - 將多瓶酒款拆分成獨立記錄
+ * @param {number} id - 酒款 ID
+ * @param {number} splitCount - 要拆分的數量
+ * @returns {Promise<Object>} { original_remaining, new_items }
+ */
+export const splitWineItem = (id, splitCount) => {
+  return apiClient.post(`/wine-items/${id}/split`, { split_count: splitCount });
+};
+
+/**
+ * 歷史酒款比對 - 根據品牌和酒名查找過去購買記錄
+ * @param {string} brand - 品牌
+ * @param {string} name - 酒名
+ * @returns {Promise<Object>} { matched, history }
+ */
+export const matchWineHistory = (brand, name) => {
+  return apiClient.get('/wine-items/match-history', { params: { brand, name } });
+};
+
+/**
+ * 更新酒款用途
+ * @param {number} id - 酒款 ID
+ * @param {string} disposition - 用途 (personal/gift/sale/collection)
+ * @returns {Promise<Object>} 更新後的酒款
+ */
+export const updateWineDisposition = (id, disposition) => {
+  return apiClient.patch(`/wine-items/${id}/disposition`, null, { params: { disposition } });
+};
+
 // ---------- 酒窖相關 ----------
+
 
 /**
  * 獲取使用者的所有酒窖
@@ -459,6 +490,25 @@ export const uploadInvitationImage = async (file) => {
 
   // apiClient 的 response interceptor 已經回傳 response.data
   return await apiClient.post('/invitations/upload-image', formData);
+};
+
+/**
+ * 報名參加邀請函
+ * @param {number} id - 邀請函 ID
+ * @param {Object} userInfo - 使用者資訊 { line_user_id, name, avatar_url }
+ * @returns {Promise<Object>} 報名者資訊
+ */
+export const joinInvitation = (id, userInfo) => {
+  return apiClient.post(`/invitations/${id}/join`, userInfo);
+};
+
+/**
+ * 取得邀請函報名者列表
+ * @param {number} id - 邀請函 ID
+ * @returns {Promise<Array>} 報名者列表
+ */
+export const getInvitationAttendees = (id) => {
+  return apiClient.get(`/invitations/${id}/attendees`);
 };
 
 export default apiClient;

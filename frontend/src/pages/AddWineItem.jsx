@@ -37,7 +37,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
-import apiClient, { getFoodItems, getBudgetSettings } from '../services/api';
+import apiClient, { getFoodItems, getBudgetSettings, matchWineHistory } from '../services/api';
 import '../styles/BlobCard.css';
 
 const { Content } = Layout;
@@ -232,6 +232,38 @@ function AddWineItem() {
             setCloudinaryPublicId(data.cloudinary_public_id);
 
             message.success('辨識成功！');
+
+            // 歷史酒款比對
+            if (data.brand && data.name) {
+                try {
+                    const historyMatch = await matchWineHistory(data.brand, data.name);
+                    if (historyMatch.matched && historyMatch.history.length > 0) {
+                        const lastRecord = historyMatch.history[0];
+                        Modal.confirm({
+                            title: '📚 發現歷史記錄！',
+                            content: (
+                                <div>
+                                    <p>您曾於 <strong>{dayjs(lastRecord.purchase_date).format('YYYY/MM/DD')}</strong> 購入此酒。</p>
+                                    {lastRecord.purchase_price && <p>價格：<strong>${lastRecord.purchase_price}</strong></p>}
+                                    {lastRecord.tasting_notes && <p>品飲筆記：{lastRecord.tasting_notes.substring(0, 50)}...</p>}
+                                    <p>是否套用歷史資訊？</p>
+                                </div>
+                            ),
+                            okText: '套用',
+                            cancelText: '不用',
+                            onOk: () => {
+                                form.setFieldsValue({
+                                    purchase_price: lastRecord.purchase_price,
+                                    tasting_notes: lastRecord.tasting_notes,
+                                });
+                                message.success('已套用歷史資訊');
+                            }
+                        });
+                    }
+                } catch (historyErr) {
+                    console.warn('歷史比對失敗:', historyErr);
+                }
+            }
         } catch (error) {
             console.error('AI 辨識失敗:', error);
             message.error('辨識失敗，請手動輸入');
@@ -257,8 +289,16 @@ function AddWineItem() {
             // 將 price 映射為 purchase_price
             const { price, ...restValues } = values;
 
+            // 處理剩餘量數值對應
+            let remainingString = values.remaining_amount;
+            if (typeof values.remaining_amount === 'number') {
+                const map = { 100: 'full', 75: '3/4', 50: '1/2', 25: '1/4', 0: 'empty' };
+                remainingString = map[values.remaining_amount] || 'full';
+            }
+
             const payload = {
                 ...restValues,
+                remaining_amount: remainingString,
                 cellar_id: targetCellarId,
                 image_url: imageUrl,
                 cloudinary_public_id: cloudinaryPublicId,
@@ -383,7 +423,7 @@ function AddWineItem() {
                         container_type: '瓶',
                         bottle_status: 'unopened',
                         preservation_type: 'immediate',
-                        remaining_amount: 'full',
+                        remaining_amount: 100,
                         purchase_date: dayjs(),
                     }}
                 >
@@ -398,6 +438,40 @@ function AddWineItem() {
                             <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
                             <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
                         </Radio.Group>
+                    </Form.Item>
+
+                    <Form.Item label="開瓶狀態" name="bottle_status">
+                        <Radio.Group buttonStyle="solid">
+                            <Radio.Button value="unopened">未開瓶</Radio.Button>
+                            <Radio.Button value="opened">已開瓶</Radio.Button>
+                        </Radio.Group>
+                    </Form.Item>
+
+                    {/* 只有在已開瓶時顯示剩餘量 */}
+                    <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.bottle_status !== currentValues.bottle_status}>
+                        {({ getFieldValue }) =>
+                            getFieldValue('bottle_status') === 'opened' && (
+                                <Form.Item label="剩餘量" name="remaining_amount">
+                                    <Slider
+                                        marks={{
+                                            0: '空',
+                                            25: '1/4',
+                                            50: '半',
+                                            75: '3/4',
+                                            100: '滿'
+                                        }}
+                                        step={null}
+                                        reverse={true}
+                                        tooltip={{ formatter: null }}
+                                        styles={{
+                                            rail: { backgroundColor: '#444' },
+                                            track: { backgroundColor: '#c9a227' },
+                                            handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                                        }}
+                                    />
+                                </Form.Item>
+                            )
+                        }
                     </Form.Item>
 
                     {/* 基本資訊 */}

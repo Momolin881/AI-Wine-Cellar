@@ -185,8 +185,10 @@ function NotificationSettings() {
             </Space>
           }
           style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
-          headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
-          styles={{ body: { background: '#2d2d2d' } }}
+          styles={{
+            header: { background: '#2d2d2d', borderBottom: '1px solid #404040' },
+            body: { background: '#2d2d2d' }
+          }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
@@ -224,136 +226,140 @@ function NotificationSettings() {
           </div>
         </Card>
 
-      {/* 適飲期提醒設定 */}
-      <Card
-        title={
-          <Space>
-            <CalendarOutlined style={{ color: '#c9a227' }} />
-            <span style={{ color: '#f5f5f5' }}>適飲期提醒（每月檢查）</span>
-          </Space>
-        }
-        style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
-        headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
-        styles={{ body: { background: '#2d2d2d' } }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div>
-            <Text strong style={{ color: '#f5f5f5' }}>啟用適飲期提醒</Text>
-            <br />
-            <Text style={{ fontSize: '12px', color: '#888' }}>
-              定期檢查酒窖中即將到達適飲期的酒款
-            </Text>
+        {/* 適飲期提醒設定 */}
+        <Card
+          title={
+            <Space>
+              <CalendarOutlined style={{ color: '#c9a227' }} />
+              <span style={{ color: '#f5f5f5' }}>適飲期提醒（每月檢查）</span>
+            </Space>
+          }
+          style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
+          styles={{
+            header: { background: '#2d2d2d', borderBottom: '1px solid #404040' },
+            body: { background: '#2d2d2d' }
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div>
+              <Text strong style={{ color: '#f5f5f5' }}>啟用適飲期提醒</Text>
+              <br />
+              <Text style={{ fontSize: '12px', color: '#888' }}>
+                定期檢查酒窖中即將到達適飲期的酒款
+              </Text>
+            </div>
+            <Form.Item
+              name="expiry_warning_enabled"
+              valuePropName="checked"
+              style={{ marginBottom: 0 }}
+            >
+              <Switch />
+            </Form.Item>
           </div>
+
           <Form.Item
-            name="expiry_warning_enabled"
-            valuePropName="checked"
-            style={{ marginBottom: 0 }}
+            noStyle
+            shouldUpdate={(prevValues, currentValues) =>
+              prevValues.expiry_warning_enabled !== currentValues.expiry_warning_enabled
+            }
           >
-            <Switch />
+            {({ getFieldValue }) =>
+              getFieldValue('expiry_warning_enabled') ? (
+                <>
+                  <Divider style={{ borderColor: '#404040', margin: '16px 0' }} />
+
+                  <Form.Item
+                    name="monthly_check_day"
+                    label={<Text style={{ color: '#888' }}>每月檢查日期</Text>}
+                    style={{ marginBottom: '16px' }}
+                  >
+                    <Select style={{ width: 120 }}>
+                      {[...Array(28)].map((_, i) => (
+                        <Option key={i + 1} value={i + 1}>{i + 1} 號</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="weekly_notification_day"
+                    label={<Text style={{ color: '#888' }}>每週通知</Text>}
+                    style={{ marginBottom: '16px' }}
+                  >
+                    <Select style={{ width: 120 }}>
+                      {weekDays.map(day => (
+                        <Option key={day.value} value={day.value}>{day.label}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="notification_time"
+                    label={<Text style={{ color: '#888' }}>通知時間</Text>}
+                    style={{ marginBottom: 0 }}
+                  >
+                    <TimePicker
+                      format="HH:mm"
+                      minuteStep={30}
+                      style={{ width: 120 }}
+                    />
+                  </Form.Item>
+                </>
+              ) : null
+            }
           </Form.Item>
-        </div>
+        </Card>
 
-        <Form.Item
-          noStyle
-          shouldUpdate={(prevValues, currentValues) =>
-            prevValues.expiry_warning_enabled !== currentValues.expiry_warning_enabled
+        {/* 測試通知按鈕 */}
+        <Card
+          title={
+            <Space>
+              <SendOutlined style={{ color: '#1890ff' }} />
+              <span style={{ color: '#f5f5f5' }}>測試通知</span>
+            </Space>
           }
+          style={{ marginBottom: '24px', background: '#2d2d2d', border: 'none' }}
+          styles={{
+            header: { background: '#2d2d2d', borderBottom: '1px solid #404040' },
+            body: { background: '#2d2d2d' }
+          }}
         >
-          {({ getFieldValue }) =>
-            getFieldValue('expiry_warning_enabled') ? (
-              <>
-                <Divider style={{ borderColor: '#404040', margin: '16px 0' }} />
+          <Paragraph style={{ marginBottom: '16px', color: '#888' }}>
+            點擊下方按鈕立即發送一則測試通知到您的 LINE，確認通知功能正常運作。
+          </Paragraph>
+          <Button
+            icon={<SendOutlined />}
+            onClick={handleTestNotification}
+            loading={testing}
+            block
+            style={{ background: '#3d3d3d', borderColor: '#555', color: '#f5f5f5' }}
+          >
+            發送測試通知
+          </Button>
+        </Card>
 
-                <Form.Item
-                  name="monthly_check_day"
-                  label={<Text style={{ color: '#888' }}>每月檢查日期</Text>}
-                  style={{ marginBottom: '16px' }}
-                >
-                  <Select style={{ width: 120 }}>
-                    {[...Array(28)].map((_, i) => (
-                      <Option key={i + 1} value={i + 1}>{i + 1} 號</Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="weekly_notification_day"
-                  label={<Text style={{ color: '#888' }}>每週通知</Text>}
-                  style={{ marginBottom: '16px' }}
-                >
-                  <Select style={{ width: 120 }}>
-                    {weekDays.map(day => (
-                      <Option key={day.value} value={day.value}>{day.label}</Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="notification_time"
-                  label={<Text style={{ color: '#888' }}>通知時間</Text>}
-                  style={{ marginBottom: 0 }}
-                >
-                  <TimePicker
-                    format="HH:mm"
-                    minuteStep={30}
-                    style={{ width: 120 }}
-                  />
-                </Form.Item>
-              </>
-            ) : null
-          }
-        </Form.Item>
-      </Card>
-
-      {/* 測試通知按鈕 */}
-      <Card
-        title={
-          <Space>
-            <SendOutlined style={{ color: '#1890ff' }} />
-            <span style={{ color: '#f5f5f5' }}>測試通知</span>
-          </Space>
-        }
-        style={{ marginBottom: '24px', background: '#2d2d2d', border: 'none' }}
-        headStyle={{ background: '#2d2d2d', borderBottom: '1px solid #404040' }}
-        styles={{ body: { background: '#2d2d2d' } }}
-      >
-        <Paragraph style={{ marginBottom: '16px', color: '#888' }}>
-          點擊下方按鈕立即發送一則測試通知到您的 LINE，確認通知功能正常運作。
-        </Paragraph>
+        {/* 儲存按鈕 */}
         <Button
-          icon={<SendOutlined />}
-          onClick={handleTestNotification}
-          loading={testing}
+          type="primary"
+          htmlType="submit"
           block
-          style={{ background: '#3d3d3d', borderColor: '#555', color: '#f5f5f5' }}
+          size="large"
+          loading={submitting}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '20px',
+            right: '20px',
+            maxWidth: '440px',
+            margin: '0 auto',
+            zIndex: 1000,
+            background: 'linear-gradient(45deg, #c9a227, #eebf38)',
+            border: 'none',
+            color: '#000',
+            fontWeight: 'bold',
+          }}
         >
-          發送測試通知
+          儲存設定
         </Button>
-      </Card>
-
-      {/* 儲存按鈕 */}
-      <Button
-        type="primary"
-        htmlType="submit"
-        block
-        size="large"
-        loading={submitting}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          left: '20px',
-          right: '20px',
-          maxWidth: '440px',
-          margin: '0 auto',
-          zIndex: 1000,
-          background: 'linear-gradient(45deg, #c9a227, #eebf38)',
-          border: 'none',
-          color: '#000',
-          fontWeight: 'bold',
-        }}
-      >
-        儲存設定
-      </Button>
       </Form>
 
       {/* 規則詳情 Modal */}

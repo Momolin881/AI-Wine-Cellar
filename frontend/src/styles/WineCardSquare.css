@@ -65,7 +65,7 @@
 .wine-card-square__status-badge {
     position: absolute;
     top: 8px;
-    right: 8px;
+    left: 8px;
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 0.65rem;

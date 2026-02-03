@@ -28,6 +28,9 @@ class Invitation(Base):
     # 儲存與此邀請相關的酒款 ID 列表
     # 使用 generic JSON type，SQLAlchemy 會自動處理 SQLite (as Text) 和 PG (as JSON)
     wine_ids = Column(JSON, default=list, comment="酒款 ID 列表")
+    
+    # 報名者列表 [{line_user_id, name, avatar_url}]
+    attendees = Column(JSON, default=list, comment="報名者列表")
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

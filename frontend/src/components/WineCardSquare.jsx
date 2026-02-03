@@ -8,7 +8,7 @@
 import '../styles/WineCardSquare.css';
 
 function WineCardSquare({ item, onClick }) {
-    const { name, wine_type, abv, bottle_status, image_url } = item;
+    const { name, wine_type, abv, bottle_status, image_url, count } = item;
 
     const getWineEmoji = (type) => {
         const emojiMap = {
@@ -37,6 +37,26 @@ function WineCardSquare({ item, onClick }) {
                     <div className="wine-card-square__placeholder">
                         {getWineEmoji(wine_type)}
                     </div>
+                )}
+                {count && count > 1 && (
+                    <span
+                        className="wine-card-square__count-badge"
+                        style={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            background: '#c9a227',
+                            color: '#1a1a1a',
+                            padding: '4px 8px',
+                            borderRadius: 12,
+                            fontSize: 12,
+                            fontWeight: 'bold',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                            zIndex: 2
+                        }}
+                    >
+                        x{count}
+                    </span>
                 )}
                 <span
                     className={`wine-card-square__status-badge wine-card-square__status-badge--${bottle_status}`}

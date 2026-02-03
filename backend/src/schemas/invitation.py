@@ -27,6 +27,16 @@ class WineSimple(BaseModel):
     image_url: Optional[str] = None
     vintage: Optional[int] = None
 
+class AttendeeInfo(BaseModel):
+    line_user_id: str
+    name: str
+    avatar_url: Optional[str] = None
+
+class AttendeeJoinRequest(BaseModel):
+    line_user_id: str
+    name: str
+    avatar_url: Optional[str] = None
+
 class InvitationResponse(InvitationBase):
     id: int
     host_id: Optional[int] = None
@@ -35,6 +45,9 @@ class InvitationResponse(InvitationBase):
     
     # 加入 wine_details 用於回傳詳細酒款資訊 (公開資訊)
     wine_details: List[WineSimple] = []
+    
+    # 報名者列表
+    attendees: List[AttendeeInfo] = []
 
     class Config:
         from_attributes = True

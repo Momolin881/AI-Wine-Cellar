@@ -4,7 +4,7 @@ from typing import List
 
 from src.database import get_db
 from src.models.invitation import Invitation
-from src.schemas.invitation import InvitationCreate, InvitationResponse, InvitationUpdate
+from src.schemas.invitation import InvitationCreate, InvitationResponse, InvitationUpdate, AttendeeJoinRequest, AttendeeInfo
 from src.services import storage
 
 router = APIRouter(
@@ -88,3 +88,45 @@ def get_invitation_flex(invitation_id: int, db: Session = Depends(get_db)):
 
     # 使用完整版 Flex Message（包含地點和酒名）
     return create_invitation_flex_message(db_invitation, wines)
+
+
+@router.post("/{invitation_id}/join", response_model=AttendeeInfo)
+def join_invitation(
+    invitation_id: int,
+    attendee: AttendeeJoinRequest,
+    db: Session = Depends(get_db)
+):
+    """報名參加邀請函"""
+    db_invitation = db.query(Invitation).filter(Invitation.id == invitation_id).first()
+    if not db_invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    
+    # 取得現有的 attendees 列表
+    current_attendees = db_invitation.attendees or []
+    
+    # 檢查是否已經報名 (避免重複)
+    for att in current_attendees:
+        if att.get("line_user_id") == attendee.line_user_id:
+            # 已報名，直接返回
+            return AttendeeInfo(**att)
+    
+    # 新增報名者
+    new_attendee = attendee.model_dump()
+    current_attendees.append(new_attendee)
+    
+    # 更新資料庫 (SQLAlchemy JSON 需要重新賦值才能偵測變更)
+    db_invitation.attendees = current_attendees
+    db.commit()
+    db.refresh(db_invitation)
+    
+    return AttendeeInfo(**new_attendee)
+
+
+@router.get("/{invitation_id}/attendees", response_model=List[AttendeeInfo])
+def get_invitation_attendees(invitation_id: int, db: Session = Depends(get_db)):
+    """取得邀請函的報名者列表"""
+    db_invitation = db.query(Invitation).filter(Invitation.id == invitation_id).first()
+    if not db_invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    
+    return [AttendeeInfo(**att) for att in (db_invitation.attendees or [])]

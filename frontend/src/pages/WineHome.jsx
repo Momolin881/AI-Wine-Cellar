@@ -20,6 +20,7 @@ import {
     Statistic,
     Row,
     Col,
+    Skeleton,
 } from 'antd';
 import { BellOutlined, CalendarOutlined } from '@ant-design/icons';
 import {
@@ -120,11 +121,26 @@ function WineHome() {
     };
 
     const handleCardClick = (item) => {
-        setSelectedWine(item);
-        setModalVisible(true);
+        if (item.count > 1 && item.items && item.items.length > 1) {
+            // 多筆記錄（已拆分）→ 跳群組詳情頁
+            const brand = encodeURIComponent(item.brand || 'unknown');
+            const name = encodeURIComponent(item.name);
+            const vintage = item.vintage ? encodeURIComponent(item.vintage) : '';
+            navigate(`/wine-group/${brand}/${name}${vintage ? '/' + vintage : ''}`);
+        } else {
+            // 單筆記錄（可能 quantity > 1 的舊資料，可在 Modal 拆分）
+            setSelectedWine(item);
+            setModalVisible(true);
+        }
     };
 
     const handleModalUpdate = (updatedWine) => {
+        // 拆分或無資料時，整頁重載
+        if (!updatedWine || updatedWine._split) {
+            loadData();
+            setModalVisible(false);
+            return;
+        }
         // 如果酒款被刪除，從列表中移除
         if (updatedWine._deleted) {
             const newItems = wineItems.filter(item => item.id !== updatedWine.id);
@@ -153,6 +169,32 @@ function WineHome() {
             opened: newItems.filter(i => i.bottle_status === 'opened').reduce((sum, i) => sum + (i.quantity || 1), 0),
         });
     };
+
+    // 群組相同的酒款（brand + name + vintage）
+    const groupedWines = useMemo(() => {
+        // console.log('開始計算群組酒款, filteredItems:', filteredItems);
+        const groups = {};
+
+        filteredItems.forEach(item => {
+            const key = `${item.brand || 'unknown'}_${item.name}_${item.vintage || 'no-vintage'}`;
+
+            const bottleCount = item.quantity || 1;
+            if (!groups[key]) {
+                groups[key] = {
+                    ...item,
+                    count: bottleCount,
+                    items: [item]
+                };
+            } else {
+                groups[key].count += bottleCount;
+                groups[key].items.push(item);
+            }
+        });
+
+        const result = Object.values(groups);
+        // console.log('群組計算完成:', result);
+        return result;
+    }, [filteredItems]);
 
     return (
         <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
@@ -265,10 +307,26 @@ function WineHome() {
                     })}
                 </div>
 
-                {/* 酒款正方形卡片網格 */}
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '60px 0' }}>
-                        <Spin size="large" />
+                    <div className="wine-grid">
+                        {[...Array(6)].map((_, index) => (
+                            <Card
+                                key={`skeleton-${index}`}
+                                style={{
+                                    border: 'none',
+                                    borderRadius: 12,
+                                    background: '#2d2d2d',
+                                    overflow: 'hidden',
+                                    aspectRatio: '1 / 1.3',
+                                }}
+                                styles={{ body: { padding: 0 } }}
+                            >
+                                <Skeleton.Image active style={{ width: '100%', height: '100%', minHeight: 150 }} />
+                                <div style={{ padding: 12 }}>
+                                    <Skeleton active paragraph={{ rows: 1 }} title={{ width: '60%' }} />
+                                </div>
+                            </Card>
+                        ))}
                     </div>
                 ) : filteredItems.length === 0 ? (
                     <Empty
@@ -283,11 +341,11 @@ function WineHome() {
                     />
                 ) : (
                     <div className="wine-grid">
-                        {filteredItems.map((item) => (
+                        {groupedWines.map((group) => (
                             <WineCardSquare
-                                key={item.id}
-                                item={item}
-                                onClick={() => handleCardClick(item)}
+                                key={`${group.brand}_${group.name}_${group.vintage || 'no-vintage'}`}
+                                item={group}
+                                onClick={() => handleCardClick(group)}
                             />
                         ))}
                     </div>

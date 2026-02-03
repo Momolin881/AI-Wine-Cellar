@@ -11,10 +11,10 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, Button, Tag, Typography, Slider, Row, Col, Divider, message } from 'antd';
-import { CloseOutlined, CalendarOutlined, EditOutlined } from '@ant-design/icons';
+import { Modal, Button, Tag, Typography, Slider, Row, Col, Divider, message, Select, InputNumber, Space } from 'antd';
+import { CloseOutlined, CalendarOutlined, EditOutlined, ScissorOutlined } from '@ant-design/icons';
 import confetti from 'canvas-confetti';
-import apiClient from '../services/api';
+import apiClient, { splitWineItem, updateWineDisposition } from '../services/api';
 import '../styles/WineDetailModal.css';
 
 const { Title, Text } = Typography;
@@ -23,127 +23,119 @@ const { Title, Text } = Typography;
 const playPopSound = () => {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const t = audioContext.currentTime;
 
-        // Create a short "pop" sound
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.2);
-
-        // Create a "fizz" noise for champagne effect
-        const bufferSize = audioContext.sampleRate * 0.3;
-        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
-        }
-
+        // 模擬軟木塞彈出的聲音：短促的噪聲 + 低頻衝擊
+        const noiseBuffer = createNoiseBuffer(audioContext);
         const noiseSource = audioContext.createBufferSource();
         const noiseGain = audioContext.createGain();
         const noiseFilter = audioContext.createBiquadFilter();
 
         noiseSource.buffer = noiseBuffer;
-        noiseFilter.type = 'highpass';
-        noiseFilter.frequency.value = 3000;
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.value = 1000;
+        noiseFilter.Q.value = 1;
 
         noiseSource.connect(noiseFilter);
         noiseFilter.connect(noiseGain);
         noiseGain.connect(audioContext.destination);
 
-        noiseGain.gain.setValueAtTime(0.3, audioContext.currentTime + 0.05);
-        noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+        noiseGain.gain.setValueAtTime(0, t);
+        noiseGain.gain.linearRampToValueAtTime(0.4, t + 0.005);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
 
-        noiseSource.start(audioContext.currentTime + 0.05);
-        noiseSource.stop(audioContext.currentTime + 0.4);
+        noiseSource.start(t);
+        noiseSource.stop(t + 0.05);
 
-    } catch (e) {
-        console.warn("Audio play failed:", e);
+        // 低頻 "Pop"
+        const osc = audioContext.createOscillator();
+        const oscGain = audioContext.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.1);
+
+        oscGain.gain.setValueAtTime(0.6, t);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+
+        osc.connect(oscGain);
+        oscGain.connect(audioContext.destination);
+
+        osc.start(t);
+        osc.stop(t + 0.1);
+    } catch (error) {
+        console.error("Audio error:", error);
     }
+};
+
+const createNoiseBuffer = (ctx) => {
+    const bufferSize = ctx.sampleRate * 0.1;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+    }
+    return buffer;
 };
 
 // Play a "clink" sound for finishing a bottle (glass toast)
+// Play a "Success Chord" sound (C Major Arpeggio)
 const playClinkSound = () => {
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const t = audioContext.currentTime;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
 
-        // Create two oscillators for a metallic ring
-        const osc1 = audioContext.createOscillator();
-        const osc2 = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        const ctx = new AudioContext();
+        const t = ctx.currentTime;
 
-        osc1.frequency.setValueAtTime(2000, t); // High pitch
-        osc2.frequency.setValueAtTime(2500, t); // Overtone
+        // C Major Chord: C5, E5, G5, C6
+        const notes = [523.25, 659.25, 783.99, 1046.50];
 
-        // Exponential decay for clear "ping"
-        gainNode.gain.setValueAtTime(0.5, t);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+        notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
 
-        osc1.connect(gainNode);
-        osc2.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, t);
 
-        osc1.start(t);
-        osc1.stop(t + 1.5);
-        osc2.start(t);
-        osc2.stop(t + 1.5);
+            // Stagger start times slightly for arpeggio effect
+            const startTime = t + (i * 0.04);
+
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.6);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(startTime);
+            osc.stop(startTime + 0.7);
+        });
     } catch (e) {
         console.warn("Audio play failed:", e);
     }
 };
 
+// Real Fireworks 效果
 const triggerFinishAnimation = () => {
-    // Side Cannons Animation (Celebratory)
-    const end = Date.now() + 2000;
-    const colors = ['#800020', '#c9a227']; // Burgundy and Gold
+    const duration = 2000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 99999 };
 
-    (function frame() {
-        const myCanvas = document.createElement('canvas');
-        myCanvas.style.position = 'fixed';
-        myCanvas.style.top = '0';
-        myCanvas.style.left = '0';
-        myCanvas.style.width = '100vw';
-        myCanvas.style.height = '100vh';
-        myCanvas.style.pointerEvents = 'none';
-        myCanvas.style.zIndex = '99999';
-        document.body.appendChild(myCanvas);
+    function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
 
-        const myConfetti = confetti.create(myCanvas, { resize: true });
-        myConfetti({
-            particleCount: 2,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: colors
-        });
-        myConfetti({
-            particleCount: 2,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: colors
-        });
+    const interval = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
 
-        if (Date.now() < end) {
-            // Remove canvas if frame doesn't clear it (canvas-confetti creates new one if not passed?)
-            // Actually reusing same canvas 
-            setTimeout(() => document.body.removeChild(myCanvas), 50); // Clean up slightly delayed
-            // This loop is tricky with manual canvas. 
-            // Better to just let it fire once per Call or use requestAnimationFrame properly with ONE canvas.
-        } else {
-            document.body.removeChild(myCanvas);
+        if (timeLeft <= 0) {
+            return clearInterval(interval);
         }
-    }());
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+    }, 250);
 };
 
 
@@ -249,48 +241,7 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                     try {
                         // 1. Play Celebration Effects
                         playClinkSound();
-
-                        // Side Cannons Animation
-                        const colors = ['#800020', '#c9a227', '#ffffff'];
-                        const myCanvas = document.createElement('canvas'); // Create fixed canvas
-                        myCanvas.style.position = 'fixed';
-                        myCanvas.style.top = '0';
-                        myCanvas.style.left = '0';
-                        myCanvas.style.width = '100vw';
-                        myCanvas.style.height = '100vh';
-                        myCanvas.style.pointerEvents = 'none';
-                        myCanvas.style.zIndex = '99999';
-                        document.body.appendChild(myCanvas);
-
-                        const myConfetti = confetti.create(myCanvas, { resize: true });
-                        const end = Date.now() + 2000;
-
-                        (function frame() {
-                            myConfetti({
-                                particleCount: 2,
-                                angle: 60,
-                                spread: 55,
-                                origin: { x: 0 },
-                                colors: colors
-                            });
-                            myConfetti({
-                                particleCount: 2,
-                                angle: 120,
-                                spread: 55,
-                                origin: { x: 1 },
-                                colors: colors
-                            });
-
-                            if (Date.now() < end) {
-                                requestAnimationFrame(frame);
-                            } else {
-                                setTimeout(() => {
-                                    if (document.body.contains(myCanvas)) {
-                                        document.body.removeChild(myCanvas);
-                                    }
-                                }, 100);
-                            }
-                        }());
+                        triggerFinishAnimation();
 
                         // 2. Call API
                         await apiClient.post(`/wine-items/${wine.id}/change-status?new_status=consumed`);
@@ -319,6 +270,41 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
             console.error("Update remaining error:", error);
             message.error('更新失敗');
         }
+    };
+
+    const handleChangeStatus = async (newStatus) => {
+        const labels = {
+            'sold': '已售出',
+            'gifted': '已送禮',
+            'consumed': '已喝完'
+        };
+
+        Modal.confirm({
+            title: '確認變更狀態',
+            content: `確定要將此酒款標記為「${labels[newStatus]}」嗎？`,
+            okText: '確定',
+            cancelText: '取消',
+            okButtonProps: newStatus === 'consumed' ? { style: { background: '#c9a227', borderColor: '#c9a227' } } : {},
+            onOk: async () => {
+                try {
+                    if (newStatus === 'consumed') {
+                        playClinkSound();
+                        triggerFinishAnimation();
+                    }
+
+                    await apiClient.post(`/wine-items/${wine.id}/change-status?new_status=${newStatus}`);
+                    message.success(`已標記為${labels[newStatus]}`);
+
+                    setTimeout(() => {
+                        onClose();
+                        onUpdate && onUpdate();
+                    }, newStatus === 'consumed' ? 2000 : 500);
+                } catch (error) {
+                    console.error("Change status error:", error);
+                    message.error('操作失敗');
+                }
+            },
+        });
     };
 
     // Helper
@@ -442,8 +428,15 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <div style={{ flex: 1 }}>
                                 <Slider
-                                    marks={{ 0: '空', 25: '', 50: '半', 75: '', 100: '滿' }}
-                                    step={25}
+                                    marks={{
+                                        0: '空',
+                                        25: '1/4',
+                                        50: '半',
+                                        75: '3/4',
+                                        100: '滿'
+                                    }}
+                                    step={null}
+                                    reverse={true}
                                     value={tempRemaining}
                                     onChange={setTempRemaining}
                                     styles={{
@@ -492,6 +485,96 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                 >
                     編輯酒款資料
                 </Button>
+
+                {/* 拆分按鈕 - 只在 quantity > 1 時顯示 */}
+                {wine.quantity > 1 && (
+                    <>
+                        <Divider style={{ borderColor: '#444', margin: '16px 0' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <Text style={{ color: '#888', whiteSpace: 'nowrap' }}>拆分數量：</Text>
+                            <InputNumber
+                                min={1}
+                                max={wine.quantity - 1}
+                                defaultValue={1}
+                                style={{ width: 80, background: '#3d3d3d', borderColor: '#555' }}
+                                id="split-count-input"
+                            />
+                            <Button
+                                icon={<ScissorOutlined />}
+                                onClick={async () => {
+                                    const input = document.getElementById('split-count-input');
+                                    const splitCount = parseInt(input?.value || 1);
+                                    if (splitCount < 1 || splitCount >= wine.quantity) {
+                                        message.warning(`拆分數量必須在 1 到 ${wine.quantity - 1} 之間`);
+                                        return;
+                                    }
+                                    try {
+                                        const result = await splitWineItem(wine.id, splitCount);
+                                        message.success(`已拆分 ${splitCount} 瓶，原酒款剩餘 ${result.original_remaining} 瓶`);
+                                        onClose();
+                                        onUpdate && onUpdate({ _split: true });
+                                    } catch (err) {
+                                        message.error('拆分失敗: ' + (err.response?.data?.detail || err.message));
+                                    }
+                                }}
+                                style={{
+                                    background: '#3d3d3d',
+                                    borderColor: '#555',
+                                    color: '#f5f5f5',
+                                }}
+                            >
+                                拆分
+                            </Button>
+                        </div>
+                        <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 12 }}>
+                            將此酒款拆分成獨立記錄，方便分別追蹤
+                        </Text>
+                    </>
+                )}
+
+                {/* 用途選擇器 */}
+                <Divider style={{ borderColor: '#444', margin: '16px 0' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Text style={{ color: '#888', whiteSpace: 'nowrap' }}>用途：</Text>
+                    <Select
+                        value={wine.disposition || 'personal'}
+                        style={{ flex: 1 }}
+                        onChange={async (value) => {
+                            try {
+                                await updateWineDisposition(wine.id, value);
+                                message.success('已更新用途');
+                                onUpdate && onUpdate();
+                            } catch (err) {
+                                message.error('更新失敗');
+                            }
+                        }}
+                        options={[
+                            { value: 'personal', label: '🍷 自飲' },
+                            { value: 'gift', label: '🎁 送禮' },
+                            { value: 'collection', label: '📦 收藏' },
+                        ]}
+                    />
+                </div>
+
+                {/* 狀態變更按鈕 */}
+                <Divider style={{ borderColor: '#444', margin: '24px 0 16px' }} />
+                <Text style={{ color: '#888', display: 'block', marginBottom: 12 }}>變更狀態：</Text>
+                <Space wrap style={{ width: '100%' }}>
+                    <Button
+                        size="small"
+                        onClick={() => handleChangeStatus('consumed')}
+                        style={{ background: '#3d3d3d', color: '#f5f5f5', borderColor: '#555' }}
+                    >
+                        🍷 標記為喝完
+                    </Button>
+                    <Button
+                        size="small"
+                        onClick={() => handleChangeStatus('gifted')}
+                        style={{ background: '#3d3d3d', color: '#f5f5f5', borderColor: '#555' }}
+                    >
+                        🎁 標記為送禮
+                    </Button>
+                </Space>
             </div>
         </Modal>
     );
