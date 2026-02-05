@@ -37,6 +37,7 @@ import {
 import dayjs from 'dayjs';
 import confetti from 'canvas-confetti';
 import apiClient, { getFoodItems, getBudgetSettings } from '../services/api';
+import { useMode } from '../contexts/ModeContext';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -154,6 +155,7 @@ const playPopSound = () => {
 function EditWineItem() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { theme, isChill } = useMode();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -239,12 +241,13 @@ function EditWineItem() {
         if (spending) {
             return (
                 <div style={{
-                    background: '#c9a227',
-                    color: '#000',
+                    background: isChill ? '#00ff88' : '#c9a227',
+                    color: isChill ? '#1A1A2E' : '#000',
                     borderRadius: 4,
                     padding: '2px 4px',
                     fontSize: 10,
                     textAlign: 'center',
+                    boxShadow: isChill ? '0 0 6px rgba(0, 255, 136, 0.5)' : 'none',
                 }}>
                     ${spending.toLocaleString()}
                 </div>
@@ -460,7 +463,7 @@ function EditWineItem() {
 
     if (loading) {
         return (
-            <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+            <Layout style={{ minHeight: '100vh', background: theme.background }}>
                 <Content style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Spin size="large" tip="載入中..." />
                 </Content>
@@ -469,7 +472,7 @@ function EditWineItem() {
     }
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+        <Layout style={{ minHeight: '100vh', background: theme.background }}>
             <Content style={{ padding: '16px', maxWidth: 480, margin: '0 auto' }}>
                 {/* 標題 */}
                 <div style={{ marginBottom: 16 }}>
@@ -486,7 +489,7 @@ function EditWineItem() {
 
                 {/* 圖片 */}
                 {item?.image_url && (
-                    <Card style={{ marginBottom: 16, textAlign: 'center', background: '#2d2d2d', border: 'none' }}>
+                    <Card style={{ marginBottom: 16, textAlign: 'center', background: theme.card, border: 'none' }}>
                         <img
                             src={item.image_url}
                             alt={item.name}
@@ -498,7 +501,7 @@ function EditWineItem() {
 
                 {/* 開瓶狀態操作 */}
                 {item?.status === 'active' && (
-                    <Card style={{ marginBottom: 16, background: '#2d2d2d', border: 'none' }}>
+                    <Card style={{ marginBottom: 16, background: theme.card, border: 'none' }}>
                         <Title level={5} style={{ color: '#f5f5f5' }}>🍷 開瓶狀態</Title>
 
                         {item.bottle_status === 'unopened' ? (
@@ -544,7 +547,7 @@ function EditWineItem() {
 
                 {/* 狀態變更 */}
                 {item?.status === 'active' && (
-                    <Card style={{ marginBottom: 16, background: '#2d2d2d', border: 'none' }}>
+                    <Card style={{ marginBottom: 16, background: theme.card, border: 'none' }}>
                         <Title level={5} style={{ color: '#f5f5f5' }}>📤 變更狀態</Title>
                         <Space wrap>
                             <Button onClick={() => handleChangeStatus('gifted')}>標記為送禮</Button>
@@ -555,6 +558,14 @@ function EditWineItem() {
 
                 {/* 表單 */}
                 <Form form={form} layout="vertical" onFinish={handleSubmit}>
+                    {/* 保存類型 - 與 AddWineItem 順序一致 */}
+                    <Form.Item label={<span style={{ color: '#888' }}>保存類型 (影響開瓶後建議飲用期)</span>} name="preservation_type" rules={[{ required: true }]}>
+                        <Radio.Group buttonStyle="solid">
+                            <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
+                            <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
+                        </Radio.Group>
+                    </Form.Item>
+
                     <Form.Item label={<span style={{ color: '#888' }}>酒名</span>} name="name" rules={[{ required: true }]}>
                         <Input />
                     </Form.Item>
@@ -591,13 +602,6 @@ function EditWineItem() {
                             <InputNumber min={1} style={{ width: '100%' }} />
                         </Form.Item>
                     </Space>
-
-                    <Form.Item label={<span style={{ color: '#888' }}>保存類型 (影響開瓶後建議飲用期)</span>} name="preservation_type" rules={[{ required: true }]}>
-                        <Radio.Group buttonStyle="solid">
-                            <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
-                            <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
-                        </Radio.Group>
-                    </Form.Item>
 
                     {/* 價格 + 日曆按鈕 */}
                     <Form.Item label={<span style={{ color: '#888' }}>價格（台幣）</span>} style={{ marginBottom: 0 }}>
@@ -666,27 +670,49 @@ function EditWineItem() {
                     width={600}
                 >
                     {/* 月份消費總計 */}
-                    <Card
-                        size="small"
-                        style={{ marginBottom: 16, background: '#2d2d2d', border: '1px solid #404040' }}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <Text strong style={{ fontSize: 16, color: '#f5f5f5' }}>
-                                    {calendarMonth.format('YYYY 年 M 月')} 總消費
-                                </Text>
-                                <Text strong style={{ fontSize: 20, color: '#c9a227', marginLeft: 12 }}>
-                                    NT$ {getMonthlyTotal(calendarMonth).toLocaleString()}
-                                </Text>
-                            </div>
-                            {budgetSettings?.monthly_budget && (
-                                <div>
-                                    <Text style={{ color: '#888' }}>預算上限：</Text>
-                                    <Text strong style={{ color: '#f5f5f5' }}>NT$ {budgetSettings.monthly_budget.toLocaleString()}</Text>
+                    {(() => {
+                        const monthlyTotal = getMonthlyTotal(calendarMonth);
+                        const isOverBudget = budgetSettings?.monthly_budget && monthlyTotal > budgetSettings.monthly_budget;
+                        const statusColor = isChill
+                            ? (isOverBudget ? '#ff00ff' : '#00ff88')
+                            : (isOverBudget ? '#ff4d4f' : '#c9a227');
+                        return (
+                            <Card
+                                size="small"
+                                style={{
+                                    marginBottom: 16,
+                                    background: isChill
+                                        ? (isOverBudget ? 'rgba(255, 0, 255, 0.15)' : 'rgba(0, 255, 136, 0.15)')
+                                        : theme.card,
+                                    border: isChill
+                                        ? `1px solid ${isOverBudget ? '#ff00ff' : '#00ff88'}`
+                                        : '1px solid #404040',
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <Text strong style={{ fontSize: 16, color: '#f5f5f5' }}>
+                                            {calendarMonth.format('YYYY 年 M 月')} 總消費
+                                        </Text>
+                                        <Text strong style={{
+                                            fontSize: 20,
+                                            color: statusColor,
+                                            marginLeft: 12,
+                                            textShadow: isChill ? `0 0 10px ${statusColor}` : 'none'
+                                        }}>
+                                            NT$ {monthlyTotal.toLocaleString()}
+                                        </Text>
+                                    </div>
+                                    {budgetSettings?.monthly_budget && (
+                                        <div>
+                                            <Text style={{ color: '#888' }}>預算上限：</Text>
+                                            <Text strong style={{ color: '#f5f5f5' }}>NT$ {budgetSettings.monthly_budget.toLocaleString()}</Text>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    </Card>
+                            </Card>
+                        );
+                    })()}
 
                     <Calendar
                         fullscreen={false}
@@ -700,14 +726,22 @@ function EditWineItem() {
                         <Card
                             size="small"
                             title={<span style={{ color: '#f5f5f5' }}>{selectedDate.format('YYYY/MM/DD')} 消費明細</span>}
-                            style={{ marginTop: 16, background: '#2d2d2d', border: '1px solid #404040' }}
+                            style={{
+                                marginTop: 16,
+                                background: theme.card,
+                                border: isChill ? '1px solid rgba(0, 240, 255, 0.2)' : '1px solid #404040'
+                            }}
                         >
                             {dailyItems.length === 0 ? (
                                 <Text style={{ color: '#888' }}>當日無消費紀錄</Text>
                             ) : (
                                 <>
                                     <div style={{ marginBottom: 12 }}>
-                                        <Text strong style={{ fontSize: 16, color: '#c9a227' }}>
+                                        <Text strong style={{
+                                            fontSize: 16,
+                                            color: isChill ? '#00ff88' : '#c9a227',
+                                            textShadow: isChill ? '0 0 10px #00ff88' : 'none'
+                                        }}>
                                             支出：NT$ {selectedDateTotal.toLocaleString()}
                                         </Text>
                                     </div>
@@ -715,13 +749,16 @@ function EditWineItem() {
                                         size="small"
                                         dataSource={dailyItems}
                                         renderItem={(listItem) => (
-                                            <List.Item style={{ borderBottom: '1px solid #404040' }}>
+                                            <List.Item style={{ borderBottom: isChill ? '1px solid rgba(0, 240, 255, 0.1)' : '1px solid #404040' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                                                     <Space>
                                                         <Text style={{ color: '#f5f5f5' }}>{listItem.name}</Text>
-                                                        {listItem.wine_type && <Tag color="gold">{listItem.wine_type}</Tag>}
+                                                        {listItem.wine_type && <Tag color={isChill ? 'cyan' : 'gold'}>{listItem.wine_type}</Tag>}
                                                     </Space>
-                                                    <Text strong style={{ color: '#c9a227' }}>NT$ {listItem.purchase_price?.toLocaleString()}</Text>
+                                                    <Text strong style={{
+                                                        color: isChill ? '#00ff88' : '#c9a227',
+                                                        textShadow: isChill ? '0 0 8px #00ff88' : 'none'
+                                                    }}>NT$ {listItem.purchase_price?.toLocaleString()}</Text>
                                                 </div>
                                             </List.Item>
                                         )}

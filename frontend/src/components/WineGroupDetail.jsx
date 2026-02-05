@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import { getFoodItems, updateWineDisposition } from '../services/api';
 import WineDetailModal from './WineDetailModal';
+import { useMode } from '../contexts/ModeContext';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -59,6 +60,7 @@ const dispositionColors = {
 function WineGroupDetail() {
     const { brand, name, vintage } = useParams();
     const navigate = useNavigate();
+    const { isChill, theme } = useMode();
     const [loading, setLoading] = useState(true);
     const [bottles, setBottles] = useState([]);
     const [selectedBottle, setSelectedBottle] = useState(null);
@@ -180,14 +182,14 @@ function WineGroupDetail() {
                                 {firstBottle.name}
                             </Title>
                             <Space wrap>
-                                <Tag color="gold">{firstBottle.wine_type}</Tag>
+                                <Tag color={isChill ? "cyan" : "gold"}>{firstBottle.wine_type}</Tag>
                                 {firstBottle.vintage && <Tag>{firstBottle.vintage}</Tag>}
                                 {firstBottle.brand && <Tag color="blue">{firstBottle.brand}</Tag>}
                                 {firstBottle.region && <Tag>{firstBottle.region}</Tag>}
                             </Space>
                             <Divider style={{ borderColor: '#555', margin: '16px 0' }} />
                             <Text style={{ color: '#888', fontSize: 16 }}>
-                                總數量：<span style={{ color: '#c9a227', fontSize: 20, fontWeight: 'bold' }}>{bottles.length}</span> 瓶
+                                總數量：<span style={{ color: isChill ? theme.primary : '#c9a227', fontSize: 20, fontWeight: 'bold' }}>{bottles.length}</span> 瓶
                             </Text>
                         </div>
                     </div>
@@ -217,7 +219,7 @@ function WineGroupDetail() {
                                         type="text"
                                         icon={<EyeOutlined />}
                                         onClick={() => handleViewBottle(bottle)}
-                                        style={{ color: '#c9a227' }}
+                                        style={{ color: isChill ? theme.primary : '#c9a227' }}
                                     >
                                         查看
                                     </Button>,
@@ -238,11 +240,11 @@ function WineGroupDetail() {
                                             width: 40,
                                             height: 40,
                                             borderRadius: '50%',
-                                            background: '#c9a227',
+                                            background: isChill ? theme.primary : '#c9a227',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            color: '#2d2d2d',
+                                            color: isChill ? '#1A1A2E' : '#2d2d2d',
                                             fontWeight: 'bold',
                                             fontSize: 16
                                         }}>

@@ -11,11 +11,13 @@ import { CalendarOutlined, EditOutlined, CheckOutlined } from '@ant-design/icons
 import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 import { getFoodItems, getNotificationSettings, updateNotificationSettings } from '../services/api';
+import { useMode } from '../contexts/ModeContext';
 
 const { Text } = Typography;
 const BUDGET_STORAGE_KEY = 'fridge-elf-monthly-budget';
 
 function ExpenseCalendarModal({ visible, onClose }) {
+  const { isChill } = useMode();
   const [loading, setLoading] = useState(true);
   const [foodItems, setFoodItems] = useState([]);
   const [calendarMonth, setCalendarMonth] = useState(dayjs());
@@ -206,8 +208,12 @@ function ExpenseCalendarModal({ visible, onClose }) {
             size="small"
             style={{
               marginBottom: 16,
-              background: isOverBudget ? '#fff2f0' : '#f6ffed',
-              borderColor: isOverBudget ? '#ffccc7' : '#b7eb8f',
+              background: isChill
+                ? (isOverBudget ? 'rgba(255, 0, 85, 0.15)' : 'rgba(0, 255, 136, 0.15)')
+                : (isOverBudget ? '#fff2f0' : '#f6ffed'),
+              borderColor: isChill
+                ? (isOverBudget ? '#ff0055' : '#00ff88')
+                : (isOverBudget ? '#ffccc7' : '#b7eb8f'),
             }}
           >
             <Space direction="vertical" style={{ width: '100%' }} size="small">
@@ -216,7 +222,13 @@ function ExpenseCalendarModal({ visible, onClose }) {
                 <Text strong style={{ fontSize: 16 }}>
                   {calendarMonth.format('YYYY 年 M 月')} 總消費
                 </Text>
-                <Text strong style={{ fontSize: 20, color: isOverBudget ? '#ff4d4f' : '#52c41a' }}>
+                <Text strong style={{
+                  fontSize: 20,
+                  color: isChill
+                    ? (isOverBudget ? '#ff0055' : '#00ff88')
+                    : (isOverBudget ? '#ff4d4f' : '#52c41a'),
+                  textShadow: isChill ? `0 0 10px ${isOverBudget ? '#ff0055' : '#00ff88'}` : 'none'
+                }}>
                   NT$ {monthlyTotal.toLocaleString()}
                 </Text>
               </div>
@@ -257,7 +269,9 @@ function ExpenseCalendarModal({ visible, onClose }) {
                 <Progress
                   percent={Math.min(budgetPercent, 100)}
                   strokeColor={
-                    budgetPercent > 100 ? '#ff4d4f' : budgetPercent > 80 ? '#faad14' : '#52c41a'
+                    isChill
+                      ? (budgetPercent > 100 ? '#ff0055' : budgetPercent > 80 ? '#ff00ff' : '#00ff88')
+                      : (budgetPercent > 100 ? '#ff4d4f' : budgetPercent > 80 ? '#faad14' : '#52c41a')
                   }
                   format={() => `${budgetPercent}%`}
                   status={isOverBudget ? 'exception' : 'active'}

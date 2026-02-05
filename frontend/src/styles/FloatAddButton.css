@@ -130,3 +130,27 @@
 .float-add-button:hover .plus-icon::after {
     background-color: #e0c068;
 }
+
+/* ===== Chill Mode - Cyberpunk Gradient ===== */
+body.chill-mode .float-add-button {
+    background: linear-gradient(135deg, #00f0ff 0%, #ff00ff 100%);
+    box-shadow:
+        0 0 20px rgba(0, 240, 255, 0.4),
+        0 0 40px rgba(255, 0, 255, 0.2);
+}
+
+body.chill-mode .float-add-button:hover {
+    box-shadow:
+        0 0 30px rgba(0, 240, 255, 0.6),
+        0 0 50px rgba(255, 0, 255, 0.4);
+}
+
+body.chill-mode .float-add-button .plus-icon::before,
+body.chill-mode .float-add-button .plus-icon::after {
+    background-color: #000;
+}
+
+body.chill-mode .float-add-button:hover .plus-icon::before,
+body.chill-mode .float-add-button:hover .plus-icon::after {
+    background-color: #1a1a2e;
+}

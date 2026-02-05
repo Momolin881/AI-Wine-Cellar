@@ -38,6 +38,7 @@ import {
 import dayjs from 'dayjs';
 
 import apiClient, { getFoodItems, getBudgetSettings, matchWineHistory } from '../services/api';
+import { useMode } from '../contexts/ModeContext';
 import '../styles/BlobCard.css';
 
 const { Content } = Layout;
@@ -52,6 +53,7 @@ const wineTypes = ['紅酒', '白酒', '粉紅酒', '氣泡酒', '香檳', '威�
 
 function AddWineItem() {
     const navigate = useNavigate();
+    const { isPro, isChill, theme } = useMode();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [recognizing, setRecognizing] = useState(false);
@@ -140,7 +142,7 @@ function AddWineItem() {
                     <Badge
                         count={`$${amount}`}
                         style={{
-                            backgroundColor: '#722ed1',
+                            backgroundColor: isChill ? '#00ff88' : '#722ed1',
                             fontSize: '10px',
                             padding: '0 4px',
                         }}
@@ -245,11 +247,25 @@ function AddWineItem() {
                                 <div style={{ color: '#333' }}>
                                     <p>您曾於 <strong style={{ color: '#722ed1' }}>{dayjs(lastRecord.purchase_date).format('YYYY/MM/DD')}</strong> 購入此酒。</p>
                                     {lastRecord.purchase_price && <p>價格：<strong style={{ color: '#52c41a', fontSize: 18 }}>NT$ {lastRecord.purchase_price.toLocaleString()}</strong></p>}
-                                    {lastRecord.tasting_notes && <p style={{ color: '#666' }}>品飲筆記：{lastRecord.tasting_notes.substring(0, 50)}...</p>}
-                                    <p style={{ marginTop: 16, fontWeight: 500 }}>是否套用歷史資訊？</p>
+                                    {lastRecord.notes && <p style={{ color: '#666', marginTop: 8 }}>📝 備註：{lastRecord.notes.substring(0, 50)}{lastRecord.notes.length > 50 ? '...' : ''}</p>}
+                                    {/* Pro Mode only: 品飲筆記 */}
+                                    {isPro && lastRecord.rating && (
+                                        <p style={{ color: '#666', marginTop: 8 }}>
+                                            ⭐ 評分：<strong style={{ color: '#faad14' }}>{lastRecord.rating}/10</strong>
+                                        </p>
+                                    )}
+                                    {isPro && (lastRecord.aroma || lastRecord.palate || lastRecord.finish) && (
+                                        <div style={{ marginTop: 8, padding: '8px 12px', background: '#fff', borderRadius: 8, border: '1px solid #e8e8e8' }}>
+                                            <p style={{ color: '#999', fontSize: 12, marginBottom: 4 }}>品飲筆記</p>
+                                            {lastRecord.aroma && <p style={{ color: '#666', fontSize: 13, margin: '2px 0' }}>🌸 香氣：{lastRecord.aroma.substring(0, 30)}{lastRecord.aroma.length > 30 ? '...' : ''}</p>}
+                                            {lastRecord.palate && <p style={{ color: '#666', fontSize: 13, margin: '2px 0' }}>👅 口感：{lastRecord.palate.substring(0, 30)}{lastRecord.palate.length > 30 ? '...' : ''}</p>}
+                                            {lastRecord.finish && <p style={{ color: '#666', fontSize: 13, margin: '2px 0' }}>✨ 餘韻：{lastRecord.finish.substring(0, 30)}{lastRecord.finish.length > 30 ? '...' : ''}</p>}
+                                        </div>
+                                    )}
+                                    <p style={{ marginTop: 16, fontWeight: 500 }}>是否套用歷史價格？</p>
                                 </div>
                             ),
-                            okText: '套用',
+                            okText: '套用價格',
                             cancelText: '不用',
                             styles: {
                                 content: { background: '#f5f5f5', borderRadius: 12 },
@@ -259,10 +275,9 @@ function AddWineItem() {
                             },
                             onOk: () => {
                                 form.setFieldsValue({
-                                    purchase_price: lastRecord.purchase_price,
-                                    tasting_notes: lastRecord.tasting_notes,
+                                    price: lastRecord.purchase_price,
                                 });
-                                message.success('已套用歷史資訊');
+                                message.success('已套用歷史價格');
                             }
                         });
                     }
@@ -328,7 +343,7 @@ function AddWineItem() {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
+        <Layout style={{ minHeight: '100vh', background: theme.background }}>
             <Content style={{ padding: '16px', maxWidth: 480, margin: '0 auto' }}>
                 {/* 標題 */}
                 <div style={{ marginBottom: 16 }}>
@@ -607,34 +622,56 @@ function AddWineItem() {
                     width={600}
                 >
                     {/* 月份消費總計和預算 */}
-                    <Card
-                        size="small"
-                        style={{ marginBottom: 16, background: '#f9f0ff', borderColor: '#d3adf7' }}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <Text strong style={{ fontSize: 16 }}>
-                                    {calendarMonth.format('YYYY 年 M 月')} 總消費
-                                </Text>
-                                <Text strong style={{ fontSize: 20, color: '#722ed1', marginLeft: 12 }}>
-                                    NT$ {getMonthlyTotal(calendarMonth).toLocaleString()}
-                                </Text>
-                            </div>
-                            {budgetSettings?.monthly_budget && (
-                                <div>
-                                    <Text type="secondary">預算上限：</Text>
-                                    <Text strong>NT$ {budgetSettings.monthly_budget.toLocaleString()}</Text>
+                    {(() => {
+                        const monthlyTotal = getMonthlyTotal(calendarMonth);
+                        const isOverBudget = budgetSettings?.monthly_budget && monthlyTotal > budgetSettings.monthly_budget;
+                        const statusColor = isChill
+                            ? (isOverBudget ? '#ff00ff' : '#00ff88')
+                            : (isOverBudget ? '#ff4d4f' : '#722ed1');
+                        return (
+                            <Card
+                                size="small"
+                                style={{
+                                    marginBottom: 16,
+                                    background: isChill
+                                        ? (isOverBudget ? 'rgba(255, 0, 255, 0.15)' : 'rgba(0, 255, 136, 0.15)')
+                                        : '#f9f0ff',
+                                    borderColor: isChill
+                                        ? (isOverBudget ? '#ff00ff' : '#00ff88')
+                                        : '#d3adf7',
+                                }}
+                            >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <Text strong style={{ fontSize: 16, color: isChill ? '#e0e0e0' : undefined }}>
+                                            {calendarMonth.format('YYYY 年 M 月')} 總消費
+                                        </Text>
+                                        <Text strong style={{
+                                            fontSize: 20,
+                                            color: statusColor,
+                                            marginLeft: 12,
+                                            textShadow: isChill ? `0 0 10px ${statusColor}` : 'none'
+                                        }}>
+                                            NT$ {monthlyTotal.toLocaleString()}
+                                        </Text>
+                                    </div>
+                                    {budgetSettings?.monthly_budget && (
+                                        <div>
+                                            <Text style={{ color: isChill ? '#888' : undefined }}>預算上限：</Text>
+                                            <Text strong style={{ color: isChill ? '#e0e0e0' : undefined }}>NT$ {budgetSettings.monthly_budget.toLocaleString()}</Text>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                        {budgetSettings?.monthly_budget && (
-                            <div style={{ marginTop: 8 }}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                    已使用 {((getMonthlyTotal(calendarMonth) / budgetSettings.monthly_budget) * 100).toFixed(1)}% 的預算
-                                </Text>
-                            </div>
-                        )}
-                    </Card>
+                                {budgetSettings?.monthly_budget && (
+                                    <div style={{ marginTop: 8 }}>
+                                        <Text style={{ fontSize: 12, color: isChill ? '#888' : undefined }}>
+                                            已使用 {((monthlyTotal / budgetSettings.monthly_budget) * 100).toFixed(1)}% 的預算
+                                        </Text>
+                                    </div>
+                                )}
+                            </Card>
+                        );
+                    })()}
 
                     <Calendar
                         fullscreen={false}
@@ -647,15 +684,23 @@ function AddWineItem() {
                     {selectedDate && (
                         <Card
                             size="small"
-                            title={`${selectedDate.format('YYYY/MM/DD')} 消費明細`}
-                            style={{ marginTop: 16 }}
+                            title={<span style={{ color: isChill ? '#e0e0e0' : undefined }}>{selectedDate.format('YYYY/MM/DD')} 消費明細</span>}
+                            style={{
+                                marginTop: 16,
+                                background: isChill ? theme.card : undefined,
+                                borderColor: isChill ? 'rgba(0, 240, 255, 0.2)' : undefined,
+                            }}
                         >
                             {dailyItems.length === 0 ? (
-                                <Text type="secondary">當日無消費紀錄</Text>
+                                <Text style={{ color: isChill ? '#888' : undefined }}>當日無消費紀錄</Text>
                             ) : (
                                 <>
                                     <div style={{ marginBottom: 12 }}>
-                                        <Text strong style={{ fontSize: 16, color: '#722ed1' }}>
+                                        <Text strong style={{
+                                            fontSize: 16,
+                                            color: isChill ? '#00ff88' : '#722ed1',
+                                            textShadow: isChill ? '0 0 10px #00ff88' : 'none'
+                                        }}>
                                             支出：NT$ {selectedDateTotal.toLocaleString()}
                                         </Text>
                                     </div>
@@ -663,13 +708,13 @@ function AddWineItem() {
                                         size="small"
                                         dataSource={dailyItems}
                                         renderItem={(item) => (
-                                            <List.Item>
+                                            <List.Item style={{ borderColor: isChill ? 'rgba(0, 240, 255, 0.1)' : undefined }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
                                                     <Space>
-                                                        <Text>{item.name}</Text>
-                                                        {item.wine_type && <Tag color="purple">{item.wine_type}</Tag>}
+                                                        <Text style={{ color: isChill ? '#e0e0e0' : undefined }}>{item.name}</Text>
+                                                        {item.wine_type && <Tag color={isChill ? 'cyan' : 'purple'}>{item.wine_type}</Tag>}
                                                     </Space>
-                                                    <Text strong>NT$ {item.purchase_price?.toLocaleString()}</Text>
+                                                    <Text strong style={{ color: isChill ? '#00ff88' : undefined }}>NT$ {item.purchase_price?.toLocaleString()}</Text>
                                                 </div>
                                             </List.Item>
                                         )}

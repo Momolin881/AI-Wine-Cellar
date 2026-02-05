@@ -7,7 +7,7 @@
 
 /* ===== Background ===== */
 body.chill-mode {
-    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%) !important;
+    background: #1A1A2E !important;
     min-height: 100vh;
 }
 
@@ -35,17 +35,18 @@ body.chill-mode::before {
 
 /* ===== Layout ===== */
 body.chill-mode .ant-layout {
-    background: transparent !important;
+    background: #1A1A2E !important;
 }
 
 body.chill-mode .ant-layout-content {
+    background: transparent !important;
     position: relative;
     z-index: 1;
 }
 
 /* ===== Cards ===== */
 body.chill-mode .ant-card {
-    background: rgba(26, 26, 46, 0.9) !important;
+    background: #252538 !important;
     border: 1px solid rgba(0, 240, 255, 0.2) !important;
     border-radius: 16px !important;
     box-shadow: 0 0 20px rgba(0, 240, 255, 0.1) !important;
@@ -82,47 +83,127 @@ body.chill-mode .ant-btn-primary:hover {
 
 /* ===== Buttons - Default ===== */
 body.chill-mode .ant-btn-default {
-    background: rgba(26, 26, 46, 0.8) !important;
+    background: #252538 !important;
     border: 1px solid rgba(0, 240, 255, 0.3) !important;
     color: #00f0ff !important;
+    transition: all 0.2s ease !important;
 }
 
 body.chill-mode .ant-btn-default:hover {
     border-color: #00f0ff !important;
     box-shadow: 0 0 15px rgba(0, 240, 255, 0.3) !important;
+    transform: scale(1.05);
+}
+
+/* ===== Radio Buttons ===== */
+body.chill-mode .ant-radio-group {
+    display: flex !important;
+    width: 100% !important;
+}
+
+body.chill-mode .ant-radio-button-wrapper {
+    flex: 1 !important;
+    text-align: center !important;
+    background: #161622 !important;
+    border: 1px solid rgba(0, 240, 255, 0.2) !important;
+    color: #e0e0e0 !important;
+    height: 40px !important;
+    line-height: 38px !important;
+    border-radius: 0 !important;
+}
+
+body.chill-mode .ant-radio-button-wrapper:first-child {
+    border-radius: 6px 0 0 6px !important;
+}
+
+body.chill-mode .ant-radio-button-wrapper:last-child {
+    border-radius: 0 6px 6px 0 !important;
+}
+
+body.chill-mode .ant-radio-button-wrapper-checked {
+    background: linear-gradient(135deg, #00f0ff 0%, #ff00ff 100%) !important;
+    border-color: #00f0ff !important;
+    color: #000 !important;
+    font-weight: 700 !important;
+}
+
+body.chill-mode .ant-radio-button-wrapper-checked::before {
+    background-color: transparent !important;
+}
+
+body.chill-mode .ant-radio-button-wrapper:hover {
+    color: #00f0ff !important;
+}
+
+body.chill-mode .ant-radio-button-wrapper-checked:hover {
+    color: #000 !important;
 }
 
 /* ===== Input ===== */
 body.chill-mode .ant-input,
 body.chill-mode .ant-input-affix-wrapper,
 body.chill-mode .ant-select-selector,
-body.chill-mode .ant-picker {
-    background: rgba(10, 10, 15, 0.8) !important;
+body.chill-mode .ant-picker,
+body.chill-mode .ant-input-number,
+body.chill-mode .ant-input-number-input {
+    background: #161622 !important;
     border: 1px solid rgba(0, 240, 255, 0.2) !important;
     color: #e0e0e0 !important;
 }
 
+body.chill-mode .ant-input-number {
+    border-radius: 6px !important;
+}
+
+body.chill-mode .ant-input-number-handler-wrap {
+    background: #252538 !important;
+    border-left: 1px solid rgba(0, 240, 255, 0.2) !important;
+}
+
+body.chill-mode .ant-input-number-handler {
+    border-color: rgba(0, 240, 255, 0.2) !important;
+}
+
+body.chill-mode .ant-input-number-handler:hover {
+    background: rgba(0, 240, 255, 0.1) !important;
+}
+
+body.chill-mode .ant-input-number-handler-up-inner,
+body.chill-mode .ant-input-number-handler-down-inner {
+    color: #00f0ff !important;
+}
+
 body.chill-mode .ant-input:focus,
 body.chill-mode .ant-input-affix-wrapper:focus,
-body.chill-mode .ant-input-affix-wrapper-focused {
+body.chill-mode .ant-input-affix-wrapper-focused,
+body.chill-mode .ant-input-number:focus,
+body.chill-mode .ant-input-number-focused {
     border-color: #00f0ff !important;
     box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
 }
 
-body.chill-mode .ant-input::placeholder {
+body.chill-mode .ant-input::placeholder,
+body.chill-mode .ant-input-number-input::placeholder {
     color: #666 !important;
 }
 
 /* ===== Tags ===== */
 body.chill-mode .ant-tag {
-    background: rgba(26, 26, 46, 0.8) !important;
+    background: #252538 !important;
     border: 1px solid rgba(0, 240, 255, 0.2) !important;
     color: #e0e0e0 !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer;
+}
+
+body.chill-mode .ant-tag:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4) !important;
 }
 
 /* ===== Segmented Control ===== */
 body.chill-mode .ant-segmented {
-    background: rgba(10, 10, 15, 0.8) !important;
+    background: #161622 !important;
     border: 1px solid rgba(0, 240, 255, 0.2) !important;
 }
 
@@ -133,7 +214,7 @@ body.chill-mode .ant-segmented-item-selected {
 
 /* ===== Modal ===== */
 body.chill-mode .ant-modal-content {
-    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%) !important;
+    background: #1D1D2F !important;
     border: 1px solid rgba(0, 240, 255, 0.3) !important;
     box-shadow: 0 0 40px rgba(0, 240, 255, 0.2) !important;
 }
@@ -154,6 +235,24 @@ body.chill-mode .ant-modal-close-x {
 /* ===== Statistic ===== */
 body.chill-mode .ant-statistic-title {
     color: #888 !important;
+}
+
+body.chill-mode .ant-statistic-content {
+    color: #fff !important;
+}
+
+body.chill-mode .ant-statistic-content-value {
+    color: #fff !important;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    font-size: 24px !important;
+}
+
+body.chill-mode .ant-statistic-content-suffix {
+    color: #fff !important;
+}
+
+body.chill-mode .ant-statistic-content-prefix {
+    color: #fff !important;
 }
 
 /* ===== List ===== */
@@ -199,4 +298,53 @@ body.chill-mode .ant-slider-track {
 
 body.chill-mode .ant-slider-handle::after {
     box-shadow: 0 0 10px rgba(0, 240, 255, 0.5) !important;
+}
+
+/* ===== Blob Card (AI 辨識區塊) ===== */
+body.chill-mode .blob-card {
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.2) !important;
+}
+
+body.chill-mode .blob-card__bg {
+    background: rgba(37, 37, 56, 0.95) !important;
+    outline: 1px solid rgba(0, 240, 255, 0.2) !important;
+}
+
+body.chill-mode .blob-card__blob {
+    background: linear-gradient(135deg, #00f0ff 0%, #0088aa 100%) !important;
+}
+
+body.chill-mode .blob-card__blob--secondary {
+    background: linear-gradient(135deg, #ff00ff 0%, #aa0088 100%) !important;
+}
+
+/* ===== Wine Card Square ===== */
+body.chill-mode .wine-card-square {
+    background: #252538 !important;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.15) !important;
+}
+
+body.chill-mode .wine-card-square:hover {
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.3) !important;
+}
+
+/* 未開封 badge - 金色 → 霓虹藍 */
+body.chill-mode .wine-card-square__status-badge--unopened {
+    background: rgba(0, 240, 255, 0.9) !important;
+    color: #1A1A2E !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+/* 已開瓶 badge - 紅色 → 霓虹粉紅 */
+body.chill-mode .wine-card-square__status-badge--opened {
+    background: rgba(255, 0, 255, 0.9) !important;
+    color: #1A1A2E !important;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+}
+
+/* 酒類標籤 - 金色 → 霓虹紫 */
+body.chill-mode .wine-card-square__type {
+    background: #a855f7 !important;
+    color: #1A1A2E !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
 }

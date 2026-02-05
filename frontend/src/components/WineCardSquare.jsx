@@ -6,9 +6,11 @@
  */
 
 import '../styles/WineCardSquare.css';
+import { useMode } from '../contexts/ModeContext';
 
 function WineCardSquare({ item, onClick }) {
     const { name, wine_type, abv, bottle_status, image_url, count } = item;
+    const { isChill, theme } = useMode();
 
     const getWineEmoji = (type) => {
         const emojiMap = {
@@ -46,13 +48,13 @@ function WineCardSquare({ item, onClick }) {
                             position: 'absolute',
                             top: 8,
                             right: 8,
-                            background: '#c9a227',
-                            color: '#1a1a1a',
+                            background: isChill ? theme.primary : '#c9a227',
+                            color: isChill ? '#1A1A2E' : '#1a1a1a',
                             padding: '4px 8px',
                             borderRadius: 12,
                             fontSize: 12,
                             fontWeight: 'bold',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                            boxShadow: isChill ? `0 0 10px ${theme.primary}80` : '0 2px 8px rgba(0,0,0,0.3)',
                             zIndex: 2
                         }}
                     >

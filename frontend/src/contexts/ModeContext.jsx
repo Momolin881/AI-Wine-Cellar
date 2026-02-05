@@ -15,9 +15,9 @@ export const CHILL_THEME = {
     primary: '#00f0ff',      // 霓虹青
     accent: '#ff00ff',       // 霓虹粉
     secondary: '#b967ff',    // 電紫
-    background: '#0a0a0f',   // 深黑
-    card: '#1a1a2e',         // 暗紫黑
-    cardHover: '#252542',    // 卡片 hover
+    background: '#1A1A2E',   // 暗紫黑（與 ModeSelect 一致）
+    card: '#252538',         // 卡片深紫
+    cardHover: '#2d2d45',    // 卡片 hover
     success: '#00ff88',      // 霓虹綠
     text: '#e0e0e0',
     textSecondary: '#888',
