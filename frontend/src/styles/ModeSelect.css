@@ -1,0 +1,179 @@
+/**
+ * Mode Select Page Styles
+ * Cyberpunk-inspired design
+ */
+
+.mode-select {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated background grid */
+.mode-select::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+.mode-select__header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.mode-select__title {
+    color: #fff !important;
+    margin-bottom: 8px !important;
+    text-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+}
+
+.mode-select__subtitle {
+    color: #888 !important;
+    font-size: 16px;
+}
+
+.mode-select__cards {
+    display: flex;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Mode Card */
+.mode-card {
+    width: 160px;
+    padding: 24px 16px;
+    border-radius: 16px;
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mode-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--card-primary), var(--card-accent));
+}
+
+.mode-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--card-glow), 0 20px 40px rgba(0, 0, 0, 0.3);
+    border-color: var(--card-primary);
+}
+
+.mode-card:active {
+    transform: translateY(-4px);
+}
+
+/* Chill Mode specific */
+.mode-card--chill:hover {
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.4), 0 0 60px rgba(255, 0, 255, 0.2);
+}
+
+/* Pro Mode specific */
+.mode-card--pro:hover {
+    box-shadow: 0 0 30px rgba(201, 162, 39, 0.4);
+}
+
+.mode-card__icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.mode-card__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--card-primary);
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+.mode-card__subtitle {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.mode-card__features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+}
+
+.mode-card__features li {
+    font-size: 12px;
+    color: #aaa;
+    padding: 4px 0;
+    position: relative;
+    padding-left: 16px;
+}
+
+.mode-card__features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--card-primary);
+    font-size: 10px;
+}
+
+.mode-card__tag {
+    font-size: 10px;
+    color: var(--card-bg);
+    background: var(--card-primary);
+    padding: 4px 8px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.mode-select__footer {
+    margin-top: 32px;
+    color: #555 !important;
+    font-size: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Responsive */
+@media (max-width: 380px) {
+    .mode-select__cards {
+        flex-direction: column;
+    }
+
+    .mode-card {
+        width: 100%;
+        max-width: 200px;
+    }
+}

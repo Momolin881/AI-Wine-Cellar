@@ -1,0 +1,202 @@
+/**
+ * Cyberpunk Theme - Chill Mode Global Styles
+ *
+ * Applied when body has class "chill-mode"
+ * Consistent neon cyan/pink styling across all pages
+ */
+
+/* ===== Background ===== */
+body.chill-mode {
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%) !important;
+    min-height: 100vh;
+}
+
+/* Animated grid overlay */
+body.chill-mode::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+    animation: cyberpunkGridMove 20s linear infinite;
+}
+
+@keyframes cyberpunkGridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+/* ===== Layout ===== */
+body.chill-mode .ant-layout {
+    background: transparent !important;
+}
+
+body.chill-mode .ant-layout-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== Cards ===== */
+body.chill-mode .ant-card {
+    background: rgba(26, 26, 46, 0.9) !important;
+    border: 1px solid rgba(0, 240, 255, 0.2) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.1) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Cyan top border accent */
+body.chill-mode .ant-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #00f0ff, #ff00ff);
+    z-index: 1;
+}
+
+/* ===== Buttons - Primary ===== */
+body.chill-mode .ant-btn-primary {
+    background: linear-gradient(135deg, #00f0ff 0%, #ff00ff 100%) !important;
+    border: none !important;
+    color: #000 !important;
+    font-weight: 600 !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
+    transition: all 0.3s ease !important;
+}
+
+body.chill-mode .ant-btn-primary:hover {
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.6), 0 0 40px rgba(255, 0, 255, 0.3) !important;
+    transform: translateY(-2px);
+}
+
+/* ===== Buttons - Default ===== */
+body.chill-mode .ant-btn-default {
+    background: rgba(26, 26, 46, 0.8) !important;
+    border: 1px solid rgba(0, 240, 255, 0.3) !important;
+    color: #00f0ff !important;
+}
+
+body.chill-mode .ant-btn-default:hover {
+    border-color: #00f0ff !important;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3) !important;
+}
+
+/* ===== Input ===== */
+body.chill-mode .ant-input,
+body.chill-mode .ant-input-affix-wrapper,
+body.chill-mode .ant-select-selector,
+body.chill-mode .ant-picker {
+    background: rgba(10, 10, 15, 0.8) !important;
+    border: 1px solid rgba(0, 240, 255, 0.2) !important;
+    color: #e0e0e0 !important;
+}
+
+body.chill-mode .ant-input:focus,
+body.chill-mode .ant-input-affix-wrapper:focus,
+body.chill-mode .ant-input-affix-wrapper-focused {
+    border-color: #00f0ff !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
+}
+
+body.chill-mode .ant-input::placeholder {
+    color: #666 !important;
+}
+
+/* ===== Tags ===== */
+body.chill-mode .ant-tag {
+    background: rgba(26, 26, 46, 0.8) !important;
+    border: 1px solid rgba(0, 240, 255, 0.2) !important;
+    color: #e0e0e0 !important;
+}
+
+/* ===== Segmented Control ===== */
+body.chill-mode .ant-segmented {
+    background: rgba(10, 10, 15, 0.8) !important;
+    border: 1px solid rgba(0, 240, 255, 0.2) !important;
+}
+
+body.chill-mode .ant-segmented-item-selected {
+    background: linear-gradient(135deg, #00f0ff 0%, #ff00ff 100%) !important;
+    color: #000 !important;
+}
+
+/* ===== Modal ===== */
+body.chill-mode .ant-modal-content {
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%) !important;
+    border: 1px solid rgba(0, 240, 255, 0.3) !important;
+    box-shadow: 0 0 40px rgba(0, 240, 255, 0.2) !important;
+}
+
+body.chill-mode .ant-modal-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(0, 240, 255, 0.2) !important;
+}
+
+body.chill-mode .ant-modal-title {
+    color: #fff !important;
+}
+
+body.chill-mode .ant-modal-close-x {
+    color: #888 !important;
+}
+
+/* ===== Statistic ===== */
+body.chill-mode .ant-statistic-title {
+    color: #888 !important;
+}
+
+/* ===== List ===== */
+body.chill-mode .ant-list-item {
+    border-color: rgba(0, 240, 255, 0.1) !important;
+}
+
+body.chill-mode .ant-list-item-meta-title {
+    color: #e0e0e0 !important;
+}
+
+body.chill-mode .ant-list-item-meta-description {
+    color: #888 !important;
+}
+
+/* ===== Typography ===== */
+body.chill-mode .ant-typography {
+    color: #e0e0e0 !important;
+}
+
+body.chill-mode h1,
+body.chill-mode h2,
+body.chill-mode h3,
+body.chill-mode h4,
+body.chill-mode h5 {
+    color: #fff !important;
+}
+
+/* ===== Spin ===== */
+body.chill-mode .ant-spin-dot-item {
+    background-color: #00f0ff !important;
+}
+
+/* ===== Form ===== */
+body.chill-mode .ant-form-item-label > label {
+    color: #e0e0e0 !important;
+}
+
+/* ===== Slider ===== */
+body.chill-mode .ant-slider-track {
+    background: linear-gradient(90deg, #00f0ff, #ff00ff) !important;
+}
+
+body.chill-mode .ant-slider-handle::after {
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.5) !important;
+}

@@ -22,7 +22,7 @@ import {
     Col,
     Skeleton,
 } from 'antd';
-import { BellOutlined, CalendarOutlined, ReloadOutlined } from '@ant-design/icons';
+import { BellOutlined, CalendarOutlined, ReloadOutlined, SettingOutlined } from '@ant-design/icons';
 import {
     PhotoUploadButton,
     WineCardSquare,
@@ -31,7 +31,8 @@ import {
     WineDetailModal,
     ExpenseCalendarModal,
 } from '../components';
-import { getFoodItems } from '../services/api';
+import apiClient, { getFoodItems } from '../services/api';
+import { useMode } from '../contexts/ModeContext';
 import '../styles/WineCardSquare.css';
 
 const { Content } = Layout;
@@ -40,6 +41,7 @@ const { Search } = Input;
 
 function WineHome() {
     const navigate = useNavigate();
+    const { theme, isChill } = useMode();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [wineItems, setWineItems] = useState([]);
@@ -49,6 +51,7 @@ function WineHome() {
     const [selectedWine, setSelectedWine] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [calendarModalVisible, setCalendarModalVisible] = useState(false);
+    const [cellarName, setCellarName] = useState('我的酒窖');
 
     // 下拉刷新相關
     const [pullDistance, setPullDistance] = useState(0);
@@ -141,6 +144,16 @@ function WineHome() {
 
             setWineItems(itemsData);
             setFilteredItems(itemsData);
+
+            // 取得酒窖名稱
+            try {
+                const cellarRes = await apiClient.get('/wine-cellars');
+                if (cellarRes.data && cellarRes.data.length > 0) {
+                    setCellarName(cellarRes.data[0].name);
+                }
+            } catch (cellarErr) {
+                console.warn('取得酒窖名稱失敗:', cellarErr);
+            }
 
             // 計算統計（以瓶數計算）
             setStats({
@@ -235,7 +248,7 @@ function WineHome() {
     }, [filteredItems]);
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+        <Layout style={{ minHeight: '100vh', background: theme.background }}>
             <Content
                 ref={contentRef}
                 onTouchStart={handleTouchStart}
@@ -280,10 +293,10 @@ function WineHome() {
 
                 {/* 標題 */}
                 <div style={{ marginBottom: 16 }}>
-                    <Title level={2} style={{ marginBottom: 4, color: '#f5f5f5' }}>
-                        🍷 我的酒窖
+                    <Title level={2} style={{ marginBottom: 4, color: theme.text }}>
+                        🍷 {cellarName}
                     </Title>
-                    <Text style={{ color: '#888' }}>個人數位酒窖管理</Text>
+                    <Text style={{ color: theme.textSecondary }}>個人數位酒窖管理</Text>
                 </div>
 
                 {/* 主要 CTA 按鈕 - 並排顯示 */}
@@ -300,44 +313,45 @@ function WineHome() {
                 <Card
                     style={{
                         marginBottom: 20,
-                        background: '#2d2d2d',
-                        border: 'none',
+                        background: theme.card,
+                        border: isChill ? `1px solid ${theme.border}` : 'none',
                         borderRadius: 12,
+                        boxShadow: isChill ? theme.glow : 'none',
                     }}
                     styles={{ body: { padding: '16px' } }}
                 >
                     <Row gutter={8}>
                         <Col span={6}>
                             <Statistic
-                                title={<span style={{ color: '#888', fontSize: 12 }}>總酒數</span>}
+                                title={<span style={{ color: theme.textSecondary, fontSize: 12 }}>總酒數</span>}
                                 value={stats.totalWines}
                                 suffix="瓶"
-                                valueStyle={{ color: '#f5f5f5', fontSize: 20 }}
+                                valueStyle={{ color: theme.text, fontSize: 20 }}
                             />
                         </Col>
                         <Col span={6}>
                             <Statistic
-                                title={<span style={{ color: '#888', fontSize: 12 }}>未開封</span>}
+                                title={<span style={{ color: theme.textSecondary, fontSize: 12 }}>未開封</span>}
                                 value={stats.unopened}
                                 suffix="瓶"
-                                valueStyle={{ color: '#c9a227', fontSize: 20 }}
+                                valueStyle={{ color: theme.primary, fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.primary}` : 'none' }}
                             />
                         </Col>
                         <Col span={6}>
                             <Statistic
-                                title={<span style={{ color: '#888', fontSize: 12 }}>已開瓶</span>}
+                                title={<span style={{ color: theme.textSecondary, fontSize: 12 }}>已開瓶</span>}
                                 value={stats.opened}
                                 suffix="瓶"
-                                valueStyle={{ color: '#f5f5f5', fontSize: 20 }}
+                                valueStyle={{ color: isChill ? theme.accent : theme.text, fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.accent}` : 'none' }}
                             />
                         </Col>
                         <Col span={6}>
                             <Statistic
-                                title={<span style={{ color: '#888', fontSize: 12 }}>總價值</span>}
+                                title={<span style={{ color: theme.textSecondary, fontSize: 12 }}>總價值</span>}
                                 value={stats.totalValue}
                                 prefix="$"
                                 precision={0}
-                                valueStyle={{ color: '#f5f5f5', fontSize: 20 }}
+                                valueStyle={{ color: isChill ? theme.success : theme.text, fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.success}` : 'none' }}
                             />
                         </Col>
                     </Row>
@@ -357,27 +371,34 @@ function WineHome() {
                 {/* 酒類篩選標籤 */}
                 <div style={{ marginBottom: 16, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <Tag
-                        color={wineTypeFilter === 'all' ? 'gold' : 'default'}
                         onClick={() => setWineTypeFilter('all')}
                         style={{
                             cursor: 'pointer',
                             borderRadius: 16,
-                            boxShadow: wineItems.length > 0 ? '0 0 8px 2px rgba(139, 0, 0, 0.6)' : 'none',
+                            background: wineTypeFilter === 'all' ? theme.primary : theme.card,
+                            color: wineTypeFilter === 'all' ? '#000' : theme.text,
+                            border: `1px solid ${wineTypeFilter === 'all' ? theme.primary : theme.border}`,
+                            boxShadow: wineTypeFilter === 'all' && isChill ? `0 0 12px ${theme.primary}` : 'none',
                         }}
                     >
                         全部
                     </Tag>
                     {wineTypes.map(type => {
                         const hasWines = availableWineTypes.has(type);
+                        const isActive = wineTypeFilter === type;
                         return (
                             <Tag
                                 key={type}
-                                color={wineTypeFilter === type ? 'gold' : 'default'}
                                 onClick={() => setWineTypeFilter(type)}
                                 style={{
                                     cursor: 'pointer',
                                     borderRadius: 16,
-                                    boxShadow: hasWines ? '0 0 8px 2px rgba(139, 0, 0, 0.6)' : 'none',
+                                    background: isActive ? theme.primary : theme.card,
+                                    color: isActive ? '#000' : theme.text,
+                                    border: `1px solid ${isActive ? theme.primary : theme.border}`,
+                                    boxShadow: hasWines && isChill
+                                        ? `0 0 8px 2px ${isActive ? theme.primary : theme.accent}40`
+                                        : hasWines ? '0 0 8px 2px rgba(139, 0, 0, 0.6)' : 'none',
                                 }}
                             >
                                 {type}
@@ -441,7 +462,7 @@ function WineHome() {
                 )}
 
                 {/* 設定按鈕 */}
-                <div style={{ marginTop: 24, marginBottom: 80, display: 'flex', gap: 8 }}>
+                <div style={{ marginTop: 24, marginBottom: 80, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <Tag
                         icon={<CalendarOutlined />}
                         onClick={() => setCalendarModalVisible(true)}
@@ -449,9 +470,10 @@ function WineHome() {
                             cursor: 'pointer',
                             padding: '8px 16px',
                             borderRadius: 20,
-                            background: '#2d2d2d',
-                            border: 'none',
-                            color: '#888',
+                            background: theme.card,
+                            border: `1px solid ${theme.border}`,
+                            color: isChill ? theme.primary : theme.textSecondary,
+                            boxShadow: isChill ? `0 0 8px ${theme.primary}30` : 'none',
                         }}
                     >
                         查看消費月曆
@@ -463,12 +485,28 @@ function WineHome() {
                             cursor: 'pointer',
                             padding: '8px 16px',
                             borderRadius: 20,
-                            background: '#2d2d2d',
-                            border: 'none',
-                            color: '#888',
+                            background: theme.card,
+                            border: `1px solid ${theme.border}`,
+                            color: isChill ? theme.accent : theme.textSecondary,
+                            boxShadow: isChill ? `0 0 8px ${theme.accent}30` : 'none',
                         }}
                     >
                         通知設定
+                    </Tag>
+                    <Tag
+                        icon={<SettingOutlined />}
+                        onClick={() => navigate('/settings/cellar')}
+                        style={{
+                            cursor: 'pointer',
+                            padding: '8px 16px',
+                            borderRadius: 20,
+                            background: theme.card,
+                            border: `1px solid ${theme.border}`,
+                            color: isChill ? theme.secondary : theme.textSecondary,
+                            boxShadow: isChill ? `0 0 8px ${theme.secondary}30` : 'none',
+                        }}
+                    >
+                        酒窖設定
                     </Tag>
                 </div>
 

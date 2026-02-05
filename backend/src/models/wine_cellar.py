@@ -22,7 +22,7 @@ class WineCellar(Base):
     # 酒窖資訊
     name = Column(String(255), default="我的酒窖", nullable=False)  # 酒窖名稱
     description = Column(String(500), nullable=True)  # 描述
-    total_capacity = Column(Integer, default=100, nullable=False)  # 總容量（瓶位數）
+    total_capacity = Column(Integer, default=50, nullable=False)  # 總容量（瓶位數）
 
     # 時間戳記
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

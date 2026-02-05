@@ -169,7 +169,7 @@ async def get_current_user_id(
                 user_id=user.id,
                 name="我的酒窖",
                 description="自動建立的預設酒窖",
-                total_capacity=100
+                total_capacity=50
             )
             db.add(default_cellar)
             db.commit()

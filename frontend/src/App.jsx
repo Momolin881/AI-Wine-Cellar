@@ -2,52 +2,58 @@
  * App 主元件 - AI Wine Cellar
  *
  * 應用程式的根元件，負責路由設定和 LIFF 初始化。
- * Neumorphism 深色主題
+ * 支援 Chill Mode (Cyberpunk) 和 Pro Mode (經典金色)
  */
 
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ConfigProvider, Spin, App as AntApp } from 'antd';
 import zhTW from 'antd/locale/zh_TW';
 import { initializeLiff } from './liff';
+import { ModeProvider, useMode } from './contexts/ModeContext';
 import {
   WineHome,
   AddWineItem,
   EditWineItem,
   CellarSettings,
-
   NotificationSettings,
   CreateInvitation,
   InvitationDetail,
+  ModeSelect,
 } from './pages';
 import WineGroupDetail from './components/WineGroupDetail';
+import './styles/CyberpunkTheme.css';
 
-// 深色主題配置
-const darkTheme = {
-  token: {
-    colorPrimary: '#c9a227',
-    colorBgContainer: '#2d2d2d',
-    colorBgElevated: '#353535',
-    colorText: '#f5f5f5',
-    colorTextSecondary: '#b0b0b0',
-    colorBorder: '#404040',
-    borderRadius: 12,
-  },
-  components: {
-    Card: {
-      colorBgContainer: '#2d2d2d',
+// 根據 Mode 動態生成主題
+const createTheme = (mode) => {
+  const isPro = mode === 'pro';
+
+  return {
+    token: {
+      colorPrimary: isPro ? '#c9a227' : '#00f0ff',
+      colorBgContainer: isPro ? '#2d2d2d' : '#1a1a2e',
+      colorBgElevated: isPro ? '#353535' : '#252542',
+      colorText: '#f5f5f5',
+      colorTextSecondary: '#b0b0b0',
+      colorBorder: isPro ? '#404040' : '#2a2a4a',
+      borderRadius: 12,
     },
-    Button: {
-      colorPrimary: '#c9a227',
-      algorithm: true,
+    components: {
+      Card: {
+        colorBgContainer: isPro ? '#2d2d2d' : '#1a1a2e',
+      },
+      Button: {
+        colorPrimary: isPro ? '#c9a227' : '#00f0ff',
+        algorithm: true,
+      },
+      Input: {
+        colorBgContainer: isPro ? '#2d2d2d' : '#1a1a2e',
+      },
+      Select: {
+        colorBgContainer: isPro ? '#2d2d2d' : '#1a1a2e',
+      },
     },
-    Input: {
-      colorBgContainer: '#2d2d2d',
-    },
-    Select: {
-      colorBgContainer: '#2d2d2d',
-    },
-  },
+  };
 };
 
 // 載入元件
@@ -135,38 +141,68 @@ function App() {
 
   // LIFF 已就緒，顯示應用
   return (
-    <ConfigProvider locale={zhTW} theme={darkTheme}>
+    <ModeProvider>
+      <AppWithMode />
+    </ModeProvider>
+  );
+}
+
+// 根據 Mode 渲染的內部元件
+function AppWithMode() {
+  const { mode, isFirstTime } = useMode();
+  const theme = createTheme(mode);
+
+  return (
+    <ConfigProvider locale={zhTW} theme={theme}>
       <AntApp>
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <Routes>
-            {/* 首頁 - 酒款清單 */}
-            <Route path="/" element={<WineHome />} />
-
-            {/* 新增酒款 */}
-            <Route path="/add" element={<AddWineItem />} />
-
-            {/* 編輯酒款 */}
-            <Route path="/edit/:id" element={<EditWineItem />} />
-
-            {/* 酒款群組詳情 */}
-            <Route path="/wine-group/:brand/:name/:vintage?" element={<WineGroupDetail />} />
-
-            {/* 酒窖設定 */}
-            <Route path="/settings" element={<CellarSettings />} />
-
-            {/* 通知設定 */}
-            <Route path="/settings/notifications" element={<NotificationSettings />} />
-
-            {/* 聚會邀請 */}
-            <Route path="/invitation/create" element={<CreateInvitation />} />
-            <Route path="/invitation/:id" element={<InvitationDetail />} />
-
-            {/* 404 重新導向到首頁 */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <AppRoutes isFirstTime={isFirstTime} />
         </Router>
       </AntApp>
     </ConfigProvider>
+  );
+}
+
+// 路由元件（處理首次使用者導向）
+function AppRoutes({ isFirstTime }) {
+  const location = useLocation();
+
+  // 首次使用者導向選擇頁面
+  if (isFirstTime && location.pathname !== '/mode-select') {
+    return <Navigate to="/mode-select" replace />;
+  }
+
+  return (
+    <Routes>
+      {/* Mode 選擇頁 */}
+      <Route path="/mode-select" element={<ModeSelect />} />
+
+      {/* 首頁 - 酒款清單 */}
+      <Route path="/" element={<WineHome />} />
+
+      {/* 新增酒款 */}
+      <Route path="/add" element={<AddWineItem />} />
+
+      {/* 編輯酒款 */}
+      <Route path="/edit/:id" element={<EditWineItem />} />
+
+      {/* 酒款群組詳情 */}
+      <Route path="/wine-group/:brand/:name/:vintage?" element={<WineGroupDetail />} />
+
+      {/* 酒窖設定 */}
+      <Route path="/settings" element={<CellarSettings />} />
+      <Route path="/settings/cellar" element={<CellarSettings />} />
+
+      {/* 通知設定 */}
+      <Route path="/settings/notifications" element={<NotificationSettings />} />
+
+      {/* 聚會邀請 */}
+      <Route path="/invitation/create" element={<CreateInvitation />} />
+      <Route path="/invitation/:id" element={<InvitationDetail />} />
+
+      {/* 404 重新導向到首頁 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

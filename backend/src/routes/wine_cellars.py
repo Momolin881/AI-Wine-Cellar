@@ -26,7 +26,7 @@ class WineCellarCreate(BaseModel):
     """建立酒窖的請求資料"""
     name: str = "我的酒窖"
     description: Optional[str] = None
-    total_capacity: int = 100
+    total_capacity: int = 50
 
 
 class WineCellarUpdate(BaseModel):
@@ -75,7 +75,7 @@ async def list_wine_cellars(db: DBSession, user_id: CurrentUserId):
             user_id=user_id,
             name="我的酒窖",
             description="自動建立的預設酒窖",
-            total_capacity=100
+            total_capacity=50
         )
         db.add(default_cellar)
         db.commit()
