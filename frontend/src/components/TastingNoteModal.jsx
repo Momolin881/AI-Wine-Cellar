@@ -155,10 +155,10 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
             title={
                 <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 32, marginBottom: 8 }}>📝</div>
-                    <Title level={4} style={{ margin: 0, color: '#333' }}>
+                    <Title level={4} style={{ margin: 0, color: '#fff' }}>
                         留下品飲筆記和時光✨
                     </Title>
-                    <Text type="secondary">{wine?.name}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.65)' }}>{wine?.name}</Text>
                 </div>
             }
             open={visible}
@@ -170,15 +170,15 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
             width={400}
             centered
             styles={{
-                content: { background: '#f5f5f5', borderRadius: 16 },
-                header: { background: '#f5f5f5', borderBottom: 'none', paddingBottom: 0 },
-                body: { background: '#f5f5f5', paddingTop: 16 },
-                footer: { background: '#f5f5f5', borderTop: 'none' },
+                content: { background: '#1a1a2e', borderRadius: 16 },
+                header: { background: '#1a1a2e', borderBottom: 'none', paddingBottom: 0 },
+                body: { background: '#1a1a2e', paddingTop: 16 },
+                footer: { background: '#1a1a2e', borderTop: 'none' },
             }}
         >
             {/* 評分 */}
             <div style={{ marginBottom: 24 }}>
-                <Text strong style={{ display: 'block', marginBottom: 12, color: '#333' }}>
+                <Text strong style={{ display: 'block', marginBottom: 12, color: '#fff' }}>
                     ⭐ 評分
                 </Text>
                 <Rate
@@ -191,7 +191,7 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
 
             {/* 評價 */}
             <div style={{ marginBottom: 24 }}>
-                <Text strong style={{ display: 'block', marginBottom: 8, color: '#333' }}>
+                <Text strong style={{ display: 'block', marginBottom: 8, color: '#fff' }}>
                     💬 評價
                 </Text>
                 <TextArea
@@ -199,13 +199,13 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                     onChange={(e) => setReview(e.target.value)}
                     placeholder="對這支酒的整體評價..."
                     autoSize={{ minRows: 2, maxRows: 3 }}
-                    style={{ borderRadius: 8 }}
+                    style={{ borderRadius: 8, background: '#2d2d44', borderColor: '#3d3d5c', color: '#fff' }}
                 />
             </div>
 
             {/* 風味標籤 */}
             <div style={{ marginBottom: 24 }}>
-                <Text strong style={{ display: 'block', marginBottom: 12, color: '#333' }}>
+                <Text strong style={{ display: 'block', marginBottom: 12, color: '#fff' }}>
                     風味標籤
                 </Text>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -218,7 +218,9 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                                 cursor: 'pointer',
                                 borderRadius: 16,
                                 padding: '4px 12px',
-                                border: selectedTags.includes(option.value) ? 'none' : '1px solid #d9d9d9',
+                                border: selectedTags.includes(option.value) ? 'none' : '1px solid #3d3d5c',
+                                background: selectedTags.includes(option.value) ? undefined : '#2d2d44',
+                                color: '#fff',
                             }}
                         >
                             {option.label}
@@ -229,7 +231,7 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
 
             {/* 香氣 */}
             <div style={{ marginBottom: 16 }}>
-                <Text strong style={{ display: 'block', marginBottom: 8, color: '#333' }}>
+                <Text strong style={{ display: 'block', marginBottom: 8, color: '#fff' }}>
                     🌸 香氣
                 </Text>
                 <TextArea
@@ -237,13 +239,13 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                     onChange={(e) => setAroma(e.target.value)}
                     placeholder="描述聞到的香氣..."
                     autoSize={{ minRows: 2, maxRows: 3 }}
-                    style={{ borderRadius: 8 }}
+                    style={{ borderRadius: 8, background: '#2d2d44', borderColor: '#3d3d5c', color: '#fff' }}
                 />
             </div>
 
             {/* 口感 */}
             <div style={{ marginBottom: 16 }}>
-                <Text strong style={{ display: 'block', marginBottom: 8, color: '#333' }}>
+                <Text strong style={{ display: 'block', marginBottom: 8, color: '#fff' }}>
                     👅 口感
                 </Text>
                 <TextArea
@@ -251,13 +253,13 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                     onChange={(e) => setPalate(e.target.value)}
                     placeholder="描述入口的感受..."
                     autoSize={{ minRows: 2, maxRows: 3 }}
-                    style={{ borderRadius: 8 }}
+                    style={{ borderRadius: 8, background: '#2d2d44', borderColor: '#3d3d5c', color: '#fff' }}
                 />
             </div>
 
             {/* 餘韻 */}
             <div style={{ marginBottom: 8 }}>
-                <Text strong style={{ display: 'block', marginBottom: 8, color: '#333' }}>
+                <Text strong style={{ display: 'block', marginBottom: 8, color: '#fff' }}>
                     ✨ 餘韻
                 </Text>
                 <TextArea
@@ -265,18 +267,18 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                     onChange={(e) => setFinish(e.target.value)}
                     placeholder="描述吞嚥後的尾韻..."
                     autoSize={{ minRows: 2, maxRows: 3 }}
-                    style={{ borderRadius: 8 }}
+                    style={{ borderRadius: 8, background: '#2d2d44', borderColor: '#3d3d5c', color: '#fff' }}
                 />
             </div>
 
             {/* 進階風味分析 (Pro) - 折疊區塊 */}
             <Collapse
                 ghost
-                expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
+                expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} style={{ color: '#fff' }} />}
                 items={[
                     {
                         key: '1',
-                        label: <span style={{ fontWeight: 'bold', color: '#333' }}>📊 進階風味分析 (Pro)</span>,
+                        label: <span style={{ fontWeight: 'bold', color: '#fff' }}>📊 進階風味分析 (Pro)</span>,
                         children: (
                             <div>
                                 <Row gutter={24}>
@@ -296,7 +298,7 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                                         ].map(item => (
                                             <div key={item.key} style={{ marginBottom: 8 }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                    <Text style={{ fontSize: 12, color: '#666' }}>{item.label}</Text>
+                                                    <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>{item.label}</Text>
                                                     <Text style={{ fontSize: 12, color: '#c9a227' }}>{flavorData[item.key]}</Text>
                                                 </div>
                                                 <Slider
@@ -305,7 +307,7 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                                                     value={flavorData[item.key]}
                                                     onChange={(val) => setFlavorData(prev => ({ ...prev, [item.key]: val }))}
                                                     styles={{
-                                                        rail: { backgroundColor: '#ddd' },
+                                                        rail: { backgroundColor: '#3d3d5c' },
                                                         track: { backgroundColor: '#c9a227' },
                                                         handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
                                                     }}
