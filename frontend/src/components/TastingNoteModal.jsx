@@ -11,12 +11,16 @@ import apiClient from '../services/api';
 import FlavorRadar from './FlavorRadar';
 
 // 翻書音效
-const playPageFlipSound = () => {
+const playPageFlipSound = async () => {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
 
         const ctx = new AudioContext();
+        // 確保 AudioContext 已啟動 (行動裝置需要)
+        if (ctx.state === 'suspended') {
+            await ctx.resume();
+        }
         const t = ctx.currentTime;
 
         // 模擬紙張翻動的沙沙聲 - 使用白噪音 + 濾波
@@ -120,8 +124,6 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                 rating,
                 review,
                 flavor_tags: JSON.stringify(selectedTags),
-                aroma,
-                palate,
                 aroma,
                 palate,
                 finish,

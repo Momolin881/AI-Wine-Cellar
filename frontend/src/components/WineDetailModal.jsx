@@ -23,9 +23,13 @@ import '../styles/WineDetailModal.css';
 const { Title, Text } = Typography;
 
 // Play a simple "pop" sound using Web Audio API
-const playPopSound = () => {
+const playPopSound = async () => {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // 確保 AudioContext 已啟動 (行動裝置需要)
+        if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+        }
         const t = audioContext.currentTime;
 
         // 模擬軟木塞彈出的聲音：短促的噪聲 + 低頻衝擊
@@ -82,12 +86,16 @@ const createNoiseBuffer = (ctx) => {
 
 // Play a "clink" sound for finishing a bottle (glass toast)
 // Play a "Success Chord" sound (C Major Arpeggio)
-const playClinkSound = () => {
+const playClinkSound = async () => {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
 
         const ctx = new AudioContext();
+        // 確保 AudioContext 已啟動 (行動裝置需要)
+        if (ctx.state === 'suspended') {
+            await ctx.resume();
+        }
         const t = ctx.currentTime;
 
         // C Major Chord: C5, E5, G5, C6
