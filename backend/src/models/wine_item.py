@@ -75,7 +75,8 @@ class WineItem(Base):
 
     # 品飲筆記（喝完時填寫）
     tasting_notes = Column(String(1000), nullable=True)  # 舊欄位，保留相容
-    rating = Column(Integer, nullable=True)  # 評分 1-10
+    rating = Column(Float, nullable=True)  # 評分 (5星制，可半星)
+    review = Column(String(1000), nullable=True)  # 評價
     flavor_tags = Column(String(500), nullable=True)  # 風味標籤 JSON array
     aroma = Column(String(500), nullable=True)  # 香氣
     palate = Column(String(500), nullable=True)  # 口感

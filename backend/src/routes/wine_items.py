@@ -36,6 +36,7 @@ class HistoryMatch(BaseModel):
     purchase_date: Optional[date] = None
     tasting_notes: Optional[str] = None
     rating: Optional[float] = None
+    review: Optional[str] = None
     flavor_tags: Optional[str] = None
     aroma: Optional[str] = None
     palate: Optional[str] = None
@@ -162,6 +163,7 @@ class WineItemResponse(BaseModel):
     notes: Optional[str]
     tasting_notes: Optional[str]
     rating: Optional[float] = None
+    review: Optional[str] = None
     flavor_tags: Optional[str] = None
     aroma: Optional[str] = None
     palate: Optional[str] = None
@@ -290,6 +292,7 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
         notes=item.notes,
         tasting_notes=item.tasting_notes,
         rating=item.rating,
+        review=item.review,
         flavor_tags=item.flavor_tags,
         aroma=item.aroma,
         palate=item.palate,
