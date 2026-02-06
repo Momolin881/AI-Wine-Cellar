@@ -147,9 +147,10 @@ function WineHome() {
 
             // 取得酒窖名稱
             try {
-                const cellarRes = await apiClient.get('/wine-cellars');
-                if (cellarRes.data && cellarRes.data.length > 0) {
-                    setCellarName(cellarRes.data[0].name);
+                // apiClient 的 response interceptor 已經回傳 data
+                const cellars = await apiClient.get('/wine-cellars');
+                if (Array.isArray(cellars) && cellars.length > 0) {
+                    setCellarName(cellars[0].name);
                 }
             } catch (cellarErr) {
                 console.warn('取得酒窖名稱失敗:', cellarErr);
@@ -326,7 +327,7 @@ function WineHome() {
                                 title={<span style={{ color: theme.textSecondary, fontSize: 12 }}>總酒數</span>}
                                 value={stats.totalWines}
                                 suffix="瓶"
-                                valueStyle={{ color: theme.text, fontSize: 20 }}
+                                valueStyle={{ color: '#fff', fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.primary}` : 'none' }}
                             />
                         </Col>
                         <Col span={6}>
@@ -334,7 +335,7 @@ function WineHome() {
                                 title={<span style={{ color: theme.textSecondary, fontSize: 12 }}>未開封</span>}
                                 value={stats.unopened}
                                 suffix="瓶"
-                                valueStyle={{ color: theme.primary, fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.primary}` : 'none' }}
+                                valueStyle={{ color: '#fff', fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.primary}` : 'none' }}
                             />
                         </Col>
                         <Col span={6}>
@@ -342,7 +343,7 @@ function WineHome() {
                                 title={<span style={{ color: theme.textSecondary, fontSize: 12 }}>已開瓶</span>}
                                 value={stats.opened}
                                 suffix="瓶"
-                                valueStyle={{ color: isChill ? theme.accent : theme.text, fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.accent}` : 'none' }}
+                                valueStyle={{ color: '#fff', fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.accent}` : 'none' }}
                             />
                         </Col>
                         <Col span={6}>
@@ -351,7 +352,7 @@ function WineHome() {
                                 value={stats.totalValue}
                                 prefix="$"
                                 precision={0}
-                                valueStyle={{ color: isChill ? theme.success : theme.text, fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.success}` : 'none' }}
+                                valueStyle={{ color: '#fff', fontSize: 20, textShadow: isChill ? `0 0 10px ${theme.success}` : 'none' }}
                             />
                         </Col>
                     </Row>

@@ -333,7 +333,13 @@ def match_wine_history(
             vintage=m.vintage,
             purchase_price=m.purchase_price,
             purchase_date=m.purchase_date,
+            notes=m.notes,
             tasting_notes=m.tasting_notes,
+            rating=m.rating,
+            flavor_tags=m.flavor_tags,
+            aroma=m.aroma,
+            palate=m.palate,
+            finish=m.finish,
             image_url=m.image_url
         )
         for m in matches
@@ -436,7 +442,13 @@ async def create_wine_item(data: WineItemCreate, db: DBSession, user_id: Current
 
 
 @router.put("/wine-items/{id}", response_model=WineItemResponse)
-async def update_wine_item(id: int, data: WineItemUpdate, db: DBSession, user_id: CurrentUserId):
+async def update_wine_item(
+    id: int,
+    data: WineItemUpdate,
+    db: DBSession,
+    user_id: CurrentUserId,
+    sync_tasting_notes: bool = False  # 是否同步品飲筆記到同批次酒款
+):
     """更新酒款"""
     wine_item = (
         db.query(WineItem)
@@ -454,6 +466,44 @@ async def update_wine_item(id: int, data: WineItemUpdate, db: DBSession, user_id
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(wine_item, field, value)
+
+    # 品飲筆記欄位
+    tasting_note_fields = ['rating', 'review', 'aroma', 'palate', 'finish', 'flavor_tags']
+
+    # 如果要同步品飲筆記到同批次酒款
+    if sync_tasting_notes:
+        # 檢查是否有更新品飲筆記欄位
+        tasting_updates = {k: v for k, v in update_data.items() if k in tasting_note_fields}
+
+        if tasting_updates:
+            # 找出同批次的其他酒款
+            # 如果此酒款是主記錄 (split_from_id=NULL)，找所有 split_from_id = 此酒款id 的記錄
+            # 如果此酒款是拆分記錄，找主記錄和其他同 split_from_id 的記錄
+            batch_items = []
+
+            if wine_item.split_from_id is None:
+                # 此酒款是主記錄，找所有從它拆分出來的
+                batch_items = db.query(WineItem).filter(
+                    WineItem.split_from_id == wine_item.id,
+                    WineItem.id != wine_item.id
+                ).all()
+            else:
+                # 此酒款是拆分記錄，找主記錄和同批次的其他記錄
+                batch_items = db.query(WineItem).filter(
+                    db.or_(
+                        WineItem.id == wine_item.split_from_id,  # 主記錄
+                        WineItem.split_from_id == wine_item.split_from_id  # 同批次
+                    ),
+                    WineItem.id != wine_item.id  # 排除自己
+                ).all()
+
+            # 同步品飲筆記到同批次酒款
+            for item in batch_items:
+                for field, value in tasting_updates.items():
+                    setattr(item, field, value)
+
+            if batch_items:
+                logger.info(f"同步品飲筆記到 {len(batch_items)} 瓶同批次酒款")
 
     db.commit()
     db.refresh(wine_item)

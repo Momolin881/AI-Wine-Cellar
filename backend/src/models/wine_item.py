@@ -71,8 +71,15 @@ class WineItem(Base):
     split_from_id = Column(Integer, ForeignKey("wine_items.id", ondelete="SET NULL"), nullable=True)
 
     # 備註
-    notes = Column(String(1000), nullable=True)  # 備註（如：送禮對象、品酒筆記）
-    tasting_notes = Column(String(1000), nullable=True)  # 品酒筆記
+    notes = Column(String(1000), nullable=True)  # 備註（AI辨識結果、其他說明）
+
+    # 品飲筆記（喝完時填寫）
+    tasting_notes = Column(String(1000), nullable=True)  # 舊欄位，保留相容
+    rating = Column(Integer, nullable=True)  # 評分 1-10
+    flavor_tags = Column(String(500), nullable=True)  # 風味標籤 JSON array
+    aroma = Column(String(500), nullable=True)  # 香氣
+    palate = Column(String(500), nullable=True)  # 口感
+    finish = Column(String(500), nullable=True)  # 餘韻
 
     # 時間戳記
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

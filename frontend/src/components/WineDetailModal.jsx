@@ -15,6 +15,8 @@ import { Modal, Button, Tag, Typography, Slider, Row, Col, Divider, message, Sel
 import { CloseOutlined, CalendarOutlined, EditOutlined, ScissorOutlined } from '@ant-design/icons';
 import confetti from 'canvas-confetti';
 import apiClient, { splitWineItem, updateWineDisposition } from '../services/api';
+import { useMode } from '../contexts/ModeContext';
+import TastingNoteModal from './TastingNoteModal';
 import '../styles/WineDetailModal.css';
 
 const { Title, Text } = Typography;
@@ -141,8 +143,11 @@ const triggerFinishAnimation = () => {
 
 function WineDetailModal({ visible, wine, onClose, onUpdate }) {
     const navigate = useNavigate();
+    const { isPro } = useMode();
     const [loading, setLoading] = useState(false);
     const [tempRemaining, setTempRemaining] = useState(100);
+    const [tastingModalVisible, setTastingModalVisible] = useState(false);
+    const [consumedWine, setConsumedWine] = useState(null);
 
     // Sync slider state when wine changes
     useEffect(() => {
@@ -253,11 +258,17 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                         await apiClient.post(`/wine-items/${wine.id}/change-status?new_status=consumed`);
                         message.success('🍾 乾杯！已記錄為喝完');
 
-                        // Delay closing slightly
+                        // 3. Pro Mode: Show Tasting Note Modal / Chill Mode: Just close
                         setTimeout(() => {
-                            onClose();
-                            onUpdate({ ...wine, _deleted: true });
-                        }, 1500);
+                            if (isPro) {
+                                message.info('📝 請留下品飲筆記和時光✨');
+                                setConsumedWine(wine);
+                                setTastingModalVisible(true);
+                            } else {
+                                onClose();
+                                onUpdate({ ...wine, _deleted: true });
+                            }
+                        }, 2000);
 
                     } catch (error) {
                         console.error("Change status error:", error);
@@ -307,10 +318,24 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                     await apiClient.post(`/wine-items/${wine.id}/change-status?new_status=${newStatus}`);
                     message.success(`已標記為${labels[newStatus]}`);
 
-                    setTimeout(() => {
-                        onClose();
-                        onUpdate && onUpdate();
-                    }, newStatus === 'consumed' ? 2000 : 500);
+                    if (newStatus === 'consumed') {
+                        // Pro Mode: Show Tasting Note Modal / Chill Mode: Just close
+                        setTimeout(() => {
+                            if (isPro) {
+                                message.info('📝 請留下品飲筆記和時光✨');
+                                setConsumedWine(wine);
+                                setTastingModalVisible(true);
+                            } else {
+                                onClose();
+                                onUpdate({ ...wine, _deleted: true });
+                            }
+                        }, 2000);
+                    } else {
+                        setTimeout(() => {
+                            onClose();
+                            onUpdate && onUpdate();
+                        }, 500);
+                    }
                 } catch (error) {
                     console.error("Change status error:", error);
                     message.error('操作失敗');
@@ -334,6 +359,7 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
     const isOpened = wine.bottle_status === 'opened';
 
     return (
+        <>
         <Modal
             open={visible}
             onCancel={onClose}
@@ -590,6 +616,22 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                 </Space>
             </div>
         </Modal>
+
+        {/* 品飲筆記 Modal */}
+        <TastingNoteModal
+            visible={tastingModalVisible}
+            wine={consumedWine}
+            onClose={() => {
+                setTastingModalVisible(false);
+                setConsumedWine(null);
+                onClose();
+                onUpdate({ ...wine, _deleted: true });
+            }}
+            onSave={() => {
+                // onSave is called before onClose in the modal
+            }}
+        />
+        </>
     );
 }
 

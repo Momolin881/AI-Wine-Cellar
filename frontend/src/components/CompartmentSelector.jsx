@@ -49,11 +49,11 @@ const CompartmentSelector = ({
   const detailedOptions = customCompartments.length > 0
     ? customCompartments
     : [
-        // 預設細分選項（3 分區）
-        { value: '冷藏上層', label: '冷藏上層', parent: '冷藏' },
-        { value: '冷藏下層', label: '冷藏下層', parent: '冷藏' },
-        { value: '冷凍', label: '冷凍', parent: '冷凍' },
-      ];
+      // 預設細分選項（3 分區）
+      { value: '冷藏上層', label: '冷藏上層', parent: '冷藏' },
+      { value: '冷藏下層', label: '冷藏下層', parent: '冷藏' },
+      { value: '冷凍', label: '冷凍', parent: '冷凍' },
+    ];
 
   // 按父類別分組（冷藏 vs 冷凍）
   const groupedOptions = detailedOptions.reduce((acc, option) => {
@@ -73,7 +73,7 @@ const CompartmentSelector = ({
       value={value}
       onChange={onChange}
       disabled={disabled}
-      placeholder="選擇冰箱區域"
+      placeholder="選擇酒窖區域"
       style={{ width: '100%', ...style }}
       suffixIcon={<FolderOutlined />}
     >

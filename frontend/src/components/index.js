@@ -12,6 +12,7 @@ export { default as WineDetailModal } from './WineDetailModal';
 export { default as PhotoUploadButton } from './PhotoUploadButton';
 export { default as WineCardSquare } from './WineCardSquare';
 export { default as FloatAddButton } from './FloatAddButton';
+export { default as TastingNoteModal } from './TastingNoteModal';
 
 // 保留舊元件（向下相容）
 export { default as FoodItemCard } from './FoodItemCard';

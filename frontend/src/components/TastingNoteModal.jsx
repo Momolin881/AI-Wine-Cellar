@@ -105,7 +105,8 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
 
         try {
             setSaving(true);
-            await apiClient.put(`/wine-items/${wine.id}`, {
+            // sync_tasting_notes=true 會同步到同批次的其他瓶
+            await apiClient.put(`/wine-items/${wine.id}?sync_tasting_notes=true`, {
                 rating,
                 review,
                 flavor_tags: JSON.stringify(selectedTags),

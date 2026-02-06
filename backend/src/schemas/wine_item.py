@@ -31,7 +31,13 @@ class WineItemCreate(WineItemBase):
     cloudinary_public_id: Optional[str] = Field(None, description="Cloudinary public_id")
     recognized_by_ai: int = Field(0, description="是否由 AI 辨識（0: 手動, 1: AI）")
     notes: Optional[str] = Field(None, max_length=1000, description="備註")
-    tasting_notes: Optional[str] = Field(None, max_length=1000, description="品酒筆記")
+    # 品飲筆記欄位
+    tasting_notes: Optional[str] = Field(None, max_length=1000, description="品酒筆記（舊欄位）")
+    rating: Optional[int] = Field(None, ge=1, le=10, description="評分 1-10")
+    flavor_tags: Optional[str] = Field(None, description="風味標籤 JSON")
+    aroma: Optional[str] = Field(None, max_length=500, description="香氣")
+    palate: Optional[str] = Field(None, max_length=500, description="口感")
+    finish: Optional[str] = Field(None, max_length=500, description="餘韻")
 
 
 class WineItemUpdate(BaseModel):
@@ -50,7 +56,13 @@ class WineItemUpdate(BaseModel):
     bottle_status: Optional[str] = None
     remaining_amount: Optional[str] = None
     notes: Optional[str] = None
+    # 品飲筆記欄位
     tasting_notes: Optional[str] = None
+    rating: Optional[int] = Field(None, ge=1, le=10)
+    flavor_tags: Optional[str] = None
+    aroma: Optional[str] = None
+    palate: Optional[str] = None
+    finish: Optional[str] = None
 
 
 class WineItemResponse(WineItemBase):
@@ -66,7 +78,13 @@ class WineItemResponse(WineItemBase):
     status: str = 'active'
     split_from_id: Optional[int] = None
     notes: Optional[str] = None
+    # 品飲筆記欄位
     tasting_notes: Optional[str] = None
+    rating: Optional[int] = None
+    flavor_tags: Optional[str] = None
+    aroma: Optional[str] = None
+    palate: Optional[str] = None
+    finish: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -96,7 +114,14 @@ class HistoryMatch(BaseModel):
     vintage: Optional[int] = None
     purchase_price: Optional[float] = None
     purchase_date: Optional[date] = None
+    notes: Optional[str] = None  # 備註
+    # 品飲筆記欄位
     tasting_notes: Optional[str] = None
+    rating: Optional[int] = None
+    flavor_tags: Optional[str] = None
+    aroma: Optional[str] = None
+    palate: Optional[str] = None
+    finish: Optional[str] = None
     image_url: Optional[str] = None
 
 

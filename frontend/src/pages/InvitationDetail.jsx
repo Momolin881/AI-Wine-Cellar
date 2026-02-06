@@ -26,6 +26,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { joinInvitation } from '../services/api';
+import { useMode } from '../contexts/ModeContext';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -35,6 +36,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const InvitationDetail = () => {
     const { id } = useParams();
+    const { theme } = useMode();
     const [invitation, setInvitation] = useState(null);
     const [wines, setWines] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -186,18 +188,18 @@ const InvitationDetail = () => {
 
     if (loading) {
         return (
-            <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+            <Layout style={{ minHeight: '100vh', background: theme.background }}>
                 {/* Hero Skeleton */}
-                <div style={{ height: 240, background: '#2d2d2d', animation: 'pulse 1.5s infinite ease-in-out' }}>
+                <div style={{ height: 240, background: theme.card, animation: 'pulse 1.5s infinite ease-in-out' }}>
                     <Skeleton.Image active style={{ width: '100%', height: '100%' }} />
                 </div>
                 <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto', width: '100%' }}>
-                    <Card style={{ background: '#2d2d2d', border: 'none', borderRadius: 12, marginBottom: 24 }} styles={{ body: { padding: 20 } }}>
+                    <Card style={{ background: theme.card, border: 'none', borderRadius: 12, marginBottom: 24 }} styles={{ body: { padding: 20 } }}>
                         <Skeleton active paragraph={{ rows: 3 }} />
                     </Card>
                     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                         {[1, 2, 3].map(i => (
-                            <Card key={i} style={{ background: '#2d2d2d', border: 'none', borderRadius: 12 }} styles={{ body: { padding: 12 } }}>
+                            <Card key={i} style={{ background: theme.card, border: 'none', borderRadius: 12 }} styles={{ body: { padding: 12 } }}>
                                 <Skeleton active avatar paragraph={{ rows: 1 }} />
                             </Card>
                         ))}
@@ -209,7 +211,7 @@ const InvitationDetail = () => {
 
     if (error || !invitation) {
         return (
-            <div style={{ minHeight: '100vh', background: '#1a1a1a', padding: 40, textAlign: 'center', color: '#fff' }}>
+            <div style={{ minHeight: '100vh', background: theme.background, padding: 40, textAlign: 'center', color: '#fff' }}>
                 <Title level={4} style={{ color: '#ff4d4f' }}>{error || '無法讀取邀請函'}</Title>
             </div>
         );
@@ -218,7 +220,7 @@ const InvitationDetail = () => {
     const isEventEnded = dayjs(invitation.event_time).isBefore(dayjs());
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+        <Layout style={{ minHeight: '100vh', background: theme.background }}>
             {/* Event Ended Banner */}
             {isEventEnded && (
                 <div style={{ background: '#444', textAlign: 'center', padding: '10px 16px' }}>
@@ -237,7 +239,7 @@ const InvitationDetail = () => {
                 {isEventEnded && (
                     <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.3)' }} />
                 )}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '24px', background: 'linear-gradient(to top, #1a1a1a, transparent)' }}>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '24px', background: `linear-gradient(to top, ${theme.background}, transparent)` }}>
                     <Title level={2} style={{ color: '#c9a227', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                         {invitation.title}
                     </Title>
@@ -246,7 +248,7 @@ const InvitationDetail = () => {
 
             <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto', width: '100%' }}>
                 {/* Info Card */}
-                <Card style={{ background: '#2d2d2d', border: 'none', borderRadius: 12, marginBottom: 24 }} styles={{ body: { padding: 20 } }}>
+                <Card style={{ background: theme.card, border: 'none', borderRadius: 12, marginBottom: 24 }} styles={{ body: { padding: 20 } }}>
                     <Space direction="vertical" size="large" style={{ width: '100%' }}>
                         <div style={{ display: 'flex', gap: 12 }}>
                             <CalendarOutlined style={{ fontSize: 20, color: '#c9a227', marginTop: 4 }} />
@@ -282,7 +284,7 @@ const InvitationDetail = () => {
                 {/* Wine List */}
                 <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                     {wines.length > 0 ? wines.map(wine => (
-                        <Card key={wine.id} style={{ background: '#2d2d2d', border: 'none', borderRadius: 12 }} styles={{ body: { padding: 12 } }}>
+                        <Card key={wine.id} style={{ background: theme.card, border: 'none', borderRadius: 12 }} styles={{ body: { padding: 12 } }}>
                             <Row gutter={16} align="middle">
                                 <Col flex="80px">
                                     <div style={{ width: 80, height: 80, background: '#111', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -324,7 +326,7 @@ const InvitationDetail = () => {
                             <Avatar.Group
                                 maxCount={10}
                                 size="large"
-                                maxStyle={{ color: '#c9a227', backgroundColor: '#2d2d2d', border: '2px solid #c9a227' }}
+                                maxStyle={{ color: theme.primary, backgroundColor: theme.card, border: `2px solid ${theme.primary}` }}
                             >
                                 {attendees.map((att, index) => (
                                     <Avatar

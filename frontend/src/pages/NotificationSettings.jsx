@@ -30,6 +30,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getNotificationSettings, updateNotificationSettings, testExpiryNotification } from '../services/api';
+import { useMode } from '../contexts/ModeContext';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -46,6 +47,7 @@ const weekDays = [
 
 function NotificationSettings() {
   const navigate = useNavigate();
+  const { theme } = useMode();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -137,15 +139,15 @@ function NotificationSettings() {
         alignItems: 'center',
         minHeight: '100vh',
         padding: '20px',
-        background: '#1a1a1a',
+        background: theme.background,
       }}>
-        <Spin size="large" tip="載入中..." />
+        <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px', paddingBottom: '100px', backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+    <div style={{ padding: '20px', paddingBottom: '100px', backgroundColor: theme.background, minHeight: '100vh' }}>
       {/* 標題列 */}
       <div style={{ marginBottom: '20px' }}>
         <Button
@@ -156,7 +158,7 @@ function NotificationSettings() {
         >
           返回
         </Button>
-        <Title level={2} style={{ margin: 0, color: '#f5f5f5' }}>
+        <Title level={2} style={{ margin: 0, color: theme.text }}>
           <BellOutlined /> 通知設定
         </Title>
         <Paragraph style={{ marginTop: '8px', color: '#888' }}>
@@ -181,18 +183,18 @@ function NotificationSettings() {
           title={
             <Space>
               <AlertOutlined style={{ color: '#faad14' }} />
-              <span style={{ color: '#f5f5f5' }}>開瓶後提醒</span>
+              <span style={{ color: theme.text }}>開瓶後提醒</span>
             </Space>
           }
-          style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
+          style={{ marginBottom: '16px', background: theme.card, border: 'none' }}
           styles={{
-            header: { background: '#2d2d2d', borderBottom: '1px solid #404040' },
-            body: { background: '#2d2d2d' }
+            header: { background: theme.card, borderBottom: `1px solid ${theme.border}` },
+            body: { background: theme.card }
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
-              <Text strong style={{ color: '#f5f5f5' }}>啟用開瓶提醒</Text>
+              <Text strong style={{ color: theme.text }}>啟用開瓶提醒</Text>
               <br />
               <Text style={{ fontSize: '12px', color: '#888' }}>
                 酒款開瓶後自動提醒您盡快飲用
@@ -209,7 +211,7 @@ function NotificationSettings() {
 
           {/* 說明區塊 */}
           <Text style={{ color: '#888', fontSize: '13px' }}>
-            系統將根據 <Text strong style={{ color: '#f5f5f5' }}>酒款類型</Text> 自動計算最佳飲用期限。
+            系統將根據 <Text strong style={{ color: theme.text }}>酒款類型</Text> 自動計算最佳飲用期限。
           </Text>
           <div style={{ marginTop: 8 }}>
             <Text style={{ color: '#aaa', fontSize: '12px' }}>
@@ -231,18 +233,18 @@ function NotificationSettings() {
           title={
             <Space>
               <CalendarOutlined style={{ color: '#c9a227' }} />
-              <span style={{ color: '#f5f5f5' }}>適飲期提醒（每月檢查）</span>
+              <span style={{ color: theme.text }}>適飲期提醒（每月檢查）</span>
             </Space>
           }
-          style={{ marginBottom: '16px', background: '#2d2d2d', border: 'none' }}
+          style={{ marginBottom: '16px', background: theme.card, border: 'none' }}
           styles={{
-            header: { background: '#2d2d2d', borderBottom: '1px solid #404040' },
-            body: { background: '#2d2d2d' }
+            header: { background: theme.card, borderBottom: `1px solid ${theme.border}` },
+            body: { background: theme.card }
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <div>
-              <Text strong style={{ color: '#f5f5f5' }}>啟用適飲期提醒</Text>
+              <Text strong style={{ color: theme.text }}>啟用適飲期提醒</Text>
               <br />
               <Text style={{ fontSize: '12px', color: '#888' }}>
                 定期檢查酒窖中即將到達適飲期的酒款
@@ -266,7 +268,7 @@ function NotificationSettings() {
             {({ getFieldValue }) =>
               getFieldValue('expiry_warning_enabled') ? (
                 <>
-                  <Divider style={{ borderColor: '#404040', margin: '16px 0' }} />
+                  <Divider style={{ borderColor: theme.border, margin: '16px 0' }} />
 
                   <Form.Item
                     name="monthly_check_day"
@@ -314,13 +316,13 @@ function NotificationSettings() {
           title={
             <Space>
               <SendOutlined style={{ color: '#1890ff' }} />
-              <span style={{ color: '#f5f5f5' }}>測試通知</span>
+              <span style={{ color: theme.text }}>測試通知</span>
             </Space>
           }
-          style={{ marginBottom: '24px', background: '#2d2d2d', border: 'none' }}
+          style={{ marginBottom: '24px', background: theme.card, border: 'none' }}
           styles={{
-            header: { background: '#2d2d2d', borderBottom: '1px solid #404040' },
-            body: { background: '#2d2d2d' }
+            header: { background: theme.card, borderBottom: `1px solid ${theme.border}` },
+            body: { background: theme.card }
           }}
         >
           <Paragraph style={{ marginBottom: '16px', color: '#888' }}>
@@ -331,7 +333,7 @@ function NotificationSettings() {
             onClick={handleTestNotification}
             loading={testing}
             block
-            style={{ background: '#3d3d3d', borderColor: '#555', color: '#f5f5f5' }}
+            style={{ background: theme.cardHover, borderColor: theme.border, color: theme.text }}
           >
             發送測試通知
           </Button>
