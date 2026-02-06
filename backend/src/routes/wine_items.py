@@ -291,17 +291,17 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
         cloudinary_public_id=item.cloudinary_public_id,
         notes=item.notes,
         tasting_notes=item.tasting_notes,
-        rating=item.rating,
-        review=item.review,
-        flavor_tags=item.flavor_tags,
-        aroma=item.aroma,
-        palate=item.palate,
-        finish=item.finish,
-        acidity=item.acidity,
-        tannin=item.tannin,
-        body=item.body,
-        sweetness=item.sweetness,
-        alcohol_feel=item.alcohol_feel,
+        rating=getattr(item, 'rating', None),
+        review=getattr(item, 'review', None),
+        flavor_tags=getattr(item, 'flavor_tags', None),
+        aroma=getattr(item, 'aroma', None),
+        palate=getattr(item, 'palate', None),
+        finish=getattr(item, 'finish', None),
+        acidity=getattr(item, 'acidity', None),
+        tannin=getattr(item, 'tannin', None),
+        body=getattr(item, 'body', None),
+        sweetness=getattr(item, 'sweetness', None),
+        alcohol_feel=getattr(item, 'alcohol_feel', None),
         recognized_by_ai=item.recognized_by_ai,
         status=item.status or 'active',
         created_at=item.created_at,
@@ -347,8 +347,26 @@ async def list_wine_items(
     if bottle_status:
         query = query.filter(WineItem.bottle_status == bottle_status)
 
-    wine_items = query.all()
-    return [_build_wine_item_response(item) for item in wine_items]
+    try:
+        wine_items = query.all()
+        results = []
+        for item in wine_items:
+            try:
+                results.append(_build_wine_item_response(item))
+            except Exception as item_error:
+                logger.error(f"Error building response for wine item {item.id}: {item_error}")
+                logger.error(traceback.format_exc())
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error processing wine item {item.id}: {str(item_error)}"
+                )
+        return results
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error listing wine items: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @router.get("/wine-items/match-history", response_model=HistoryMatchResponse)
