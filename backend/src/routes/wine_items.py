@@ -259,6 +259,14 @@ def _calculate_open_bottle_expiry(wine_type: str, preservation_type: str, open_d
     return open_date + timedelta(days=expiry_days)
 
 
+def _safe_get(item, attr, default=None):
+    """安全取得屬性值，處理資料庫欄位不存在的情況"""
+    try:
+        return getattr(item, attr, default)
+    except Exception:
+        return default
+
+
 def _build_wine_item_response(item: WineItem) -> WineItemResponse:
     """將 WineItem ORM 物件轉換為 WineItemResponse"""
     return WineItemResponse(
@@ -278,8 +286,8 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
 
         preservation_type=item.preservation_type,
         remaining_amount=item.remaining_amount,
-        disposition=getattr(item, 'disposition', 'personal') or 'personal',
-        split_from_id=getattr(item, 'split_from_id', None),
+        disposition=_safe_get(item, 'disposition', 'personal') or 'personal',
+        split_from_id=_safe_get(item, 'split_from_id', None),
         purchase_price=item.purchase_price,
         retail_price=item.retail_price,
         purchase_date=str(item.purchase_date) if item.purchase_date else None,
@@ -291,17 +299,17 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
         cloudinary_public_id=item.cloudinary_public_id,
         notes=item.notes,
         tasting_notes=item.tasting_notes,
-        rating=getattr(item, 'rating', None),
-        review=getattr(item, 'review', None),
-        flavor_tags=getattr(item, 'flavor_tags', None),
-        aroma=getattr(item, 'aroma', None),
-        palate=getattr(item, 'palate', None),
-        finish=getattr(item, 'finish', None),
-        acidity=getattr(item, 'acidity', None),
-        tannin=getattr(item, 'tannin', None),
-        body=getattr(item, 'body', None),
-        sweetness=getattr(item, 'sweetness', None),
-        alcohol_feel=getattr(item, 'alcohol_feel', None),
+        rating=_safe_get(item, 'rating', None),
+        review=_safe_get(item, 'review', None),
+        flavor_tags=_safe_get(item, 'flavor_tags', None),
+        aroma=_safe_get(item, 'aroma', None),
+        palate=_safe_get(item, 'palate', None),
+        finish=_safe_get(item, 'finish', None),
+        acidity=_safe_get(item, 'acidity', None),
+        tannin=_safe_get(item, 'tannin', None),
+        body=_safe_get(item, 'body', None),
+        sweetness=_safe_get(item, 'sweetness', None),
+        alcohol_feel=_safe_get(item, 'alcohol_feel', None),
         recognized_by_ai=item.recognized_by_ai,
         status=item.status or 'active',
         created_at=item.created_at,

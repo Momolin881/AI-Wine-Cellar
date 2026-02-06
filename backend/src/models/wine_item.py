@@ -6,7 +6,7 @@ WineItem 模型
 
 from datetime import datetime, date
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, deferred
 
 from src.database import Base
 
@@ -75,19 +75,19 @@ class WineItem(Base):
 
     # 品飲筆記（喝完時填寫）
     tasting_notes = Column(String(1000), nullable=True)  # 舊欄位，保留相容
-    rating = Column(Integer, nullable=True)  # 評分 (1-10，前端顯示為5星半星制)
-    review = Column(String(1000), nullable=True)  # 評價
-    flavor_tags = Column(String(500), nullable=True)  # 風味標籤 JSON array
-    aroma = Column(String(500), nullable=True)  # 香氣
-    palate = Column(String(500), nullable=True)  # 口感
-    finish = Column(String(500), nullable=True)  # 餘韻
+    rating = deferred(Column(Integer, nullable=True))  # 評分 (1-10，前端顯示為5星半星制)
+    review = deferred(Column(String(1000), nullable=True))  # 評價
+    flavor_tags = deferred(Column(String(500), nullable=True))  # 風味標籤 JSON array
+    aroma = deferred(Column(String(500), nullable=True))  # 香氣
+    palate = deferred(Column(String(500), nullable=True))  # 口感
+    finish = deferred(Column(String(500), nullable=True))  # 餘韻
 
-    # 風味分析 (1-5分)
-    acidity = Column(Integer, nullable=True)  # 酸度
-    tannin = Column(Integer, nullable=True)  # 單寧
-    body = Column(Integer, nullable=True)  # 酒體
-    sweetness = Column(Integer, nullable=True)  # 甜度
-    alcohol_feel = Column(Integer, nullable=True)  # 酒感 (不同於 ABV，是主觀感受)
+    # 風味分析 (1-5分) - deferred 以相容舊資料庫
+    acidity = deferred(Column(Integer, nullable=True))  # 酸度
+    tannin = deferred(Column(Integer, nullable=True))  # 單寧
+    body = deferred(Column(Integer, nullable=True))  # 酒體
+    sweetness = deferred(Column(Integer, nullable=True))  # 甜度
+    alcohol_feel = deferred(Column(Integer, nullable=True))  # 酒感 (不同於 ABV，是主觀感受)
 
     # 時間戳記
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

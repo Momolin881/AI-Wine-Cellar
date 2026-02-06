@@ -25,26 +25,42 @@ def run_migrations():
 
     這是一個簡易的遷移方案，在啟動時檢查並新增缺少的欄位。
     """
+    print("🔄 開始執行資料庫遷移檢查...")
     try:
         inspector = inspect(engine)
+        table_names = inspector.get_table_names()
+        print(f"📋 資料庫現有表格: {table_names}")
 
         # 檢查 wine_items 表格是否存在
-        if 'wine_items' not in inspector.get_table_names():
+        if 'wine_items' not in table_names:
             print("⚠️ wine_items 表格尚未建立，跳過遷移")
             return
 
         # 取得 wine_items 表格現有欄位
         existing_columns = {col['name'] for col in inspector.get_columns('wine_items')}
+        print(f"📋 wine_items 現有欄位: {sorted(existing_columns)}")
 
         # 需要新增的欄位 (欄位名, 類型)
         new_columns = [
+            ('rating', 'INTEGER'),
             ('review', 'TEXT'),
+            ('flavor_tags', 'TEXT'),
+            ('aroma', 'TEXT'),
+            ('palate', 'TEXT'),
+            ('finish', 'TEXT'),
             ('acidity', 'INTEGER'),
             ('tannin', 'INTEGER'),
             ('body', 'INTEGER'),
             ('sweetness', 'INTEGER'),
             ('alcohol_feel', 'INTEGER'),
         ]
+
+        missing_columns = [col for col, _ in new_columns if col not in existing_columns]
+        print(f"📋 需要新增的欄位: {missing_columns}")
+
+        if not missing_columns:
+            print("✅ 所有欄位已存在，無需遷移")
+            return
 
         with engine.connect() as conn:
             for col_name, col_type in new_columns:
@@ -54,9 +70,12 @@ def run_migrations():
                         conn.commit()
                         print(f"✅ 已新增欄位: wine_items.{col_name}")
                     except Exception as e:
-                        print(f"⚠️ 新增欄位 {col_name} 失敗 (可能已存在): {e}")
+                        print(f"⚠️ 新增欄位 {col_name} 失敗: {e}")
+        print("🔄 資料庫遷移完成")
     except Exception as e:
-        print(f"⚠️ 資料庫遷移檢查失敗: {e}")
+        print(f"❌ 資料庫遷移檢查失敗: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 from src.services import scheduler
