@@ -1,6 +1,6 @@
 {
   "name": "ai-wine-cellar-frontend",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "description": "AI Wine Cellar - 數位酒窖管理系統前端 (LIFF 應用)",
