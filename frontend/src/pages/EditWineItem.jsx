@@ -57,6 +57,76 @@ const remainingLabels = {
     'empty': '空瓶',
 };
 
+// 翻書音效 (品飲筆記儲存用)
+const playPageFlipSound = async () => {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') {
+            await ctx.resume();
+        }
+        const t = ctx.currentTime;
+
+        // 紙張翻動的沙沙聲
+        const bufferSize = ctx.sampleRate * 0.2;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 1500;
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        noise.start(t);
+        noise.stop(t + 0.2);
+
+        // 輕柔的完成音
+        const osc = ctx.createOscillator();
+        const oscGain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1047, t + 0.15);
+
+        oscGain.gain.setValueAtTime(0, t + 0.15);
+        oscGain.gain.linearRampToValueAtTime(0.15, t + 0.18);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+
+        osc.connect(oscGain);
+        oscGain.connect(ctx.destination);
+
+        osc.start(t + 0.15);
+        osc.stop(t + 0.6);
+    } catch (e) {
+        console.warn('Audio play failed:', e);
+    }
+};
+
+// 微光動畫 CSS (品飲筆記儲存用)
+const shimmerStyle = `
+@keyframes pageGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(201, 162, 39, 0.6), 0 0 60px rgba(201, 162, 39, 0.3);
+    }
+}
+`;
+
 // 音效函式 - 改進版：成功和弦 (Success Chord)
 const playClinkSound = () => {
     try {
@@ -163,6 +233,7 @@ function EditWineItem() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [item, setItem] = useState(null);
+    const [showShimmer, setShowShimmer] = useState(false);
 
     // 消費月曆相關
     const [calendarVisible, setCalendarVisible] = useState(false);
@@ -422,8 +493,23 @@ function EditWineItem() {
 
             await apiClient.put(`/wine-items/${id}`, payload);
 
-            message.success('儲存成功！');
-            navigate('/');
+            // 檢查是否有填寫品飲筆記，若有則觸發儀式
+            const hasTastingNotes = values.rating || values.review || values.aroma || values.palate || values.finish;
+            if (hasTastingNotes) {
+                // 播放翻書音效
+                playPageFlipSound();
+                // 觸發微光動畫
+                setShowShimmer(true);
+                message.success('品飲筆記已收錄！✨');
+                // 延遲後導航
+                setTimeout(() => {
+                    setShowShimmer(false);
+                    navigate('/');
+                }, 800);
+            } else {
+                message.success('儲存成功！');
+                navigate('/');
+            }
         } catch (error) {
             message.error('儲存失敗');
         } finally {
@@ -475,8 +561,15 @@ function EditWineItem() {
     }
 
     return (
+        <>
+        <style>{shimmerStyle}</style>
         <Layout style={{ minHeight: '100vh', background: theme.background }}>
-            <Content style={{ padding: '16px', maxWidth: 480, margin: '0 auto' }}>
+            <Content style={{
+                padding: '16px',
+                maxWidth: 480,
+                margin: '0 auto',
+                animation: showShimmer ? 'pageGlow 0.8s ease-in-out' : 'none',
+            }}>
                 {/* 標題 */}
                 <div style={{ marginBottom: 16 }}>
                     <Button
@@ -866,6 +959,7 @@ function EditWineItem() {
                 </Modal>
             </Content>
         </Layout>
+        </>
     );
 }
 

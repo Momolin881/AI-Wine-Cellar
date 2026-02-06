@@ -17,18 +17,17 @@ const playPageFlipSound = async () => {
         if (!AudioContext) return;
 
         const ctx = new AudioContext();
-        // 確保 AudioContext 已啟動 (行動裝置需要)
         if (ctx.state === 'suspended') {
             await ctx.resume();
         }
         const t = ctx.currentTime;
 
-        // 模擬紙張翻動的沙沙聲 - 使用白噪音 + 濾波
-        const bufferSize = ctx.sampleRate * 0.15;
+        // 紙張翻動的沙沙聲
+        const bufferSize = ctx.sampleRate * 0.2;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
         }
 
         const noise = ctx.createBufferSource();
@@ -36,35 +35,34 @@ const playPageFlipSound = async () => {
 
         const filter = ctx.createBiquadFilter();
         filter.type = 'highpass';
-        filter.frequency.value = 2000;
+        filter.frequency.value = 1500;
 
         const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.3, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
 
         noise.connect(filter);
         filter.connect(gain);
         gain.connect(ctx.destination);
 
         noise.start(t);
-        noise.stop(t + 0.15);
+        noise.stop(t + 0.2);
 
-        // 第二層：輕柔的 "叮" 聲
+        // 輕柔的完成音
         const osc = ctx.createOscillator();
         const oscGain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(1200, t + 0.1);
-        osc.frequency.exponentialRampToValueAtTime(800, t + 0.3);
+        osc.frequency.setValueAtTime(1047, t + 0.15); // C6
 
-        oscGain.gain.setValueAtTime(0, t + 0.1);
-        oscGain.gain.linearRampToValueAtTime(0.15, t + 0.12);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        oscGain.gain.setValueAtTime(0, t + 0.15);
+        oscGain.gain.linearRampToValueAtTime(0.15, t + 0.18);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
 
         osc.connect(oscGain);
         oscGain.connect(ctx.destination);
 
-        osc.start(t + 0.1);
-        osc.stop(t + 0.4);
+        osc.start(t + 0.15);
+        osc.stop(t + 0.6);
     } catch (e) {
         console.warn('Audio play failed:', e);
     }
@@ -89,6 +87,26 @@ const FLAVOR_OPTIONS = [
     { label: '咖啡', value: 'coffee', color: '#6f4e37' },
 ];
 
+// 微光動畫 CSS
+const shimmerStyle = `
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(201, 162, 39, 0.6), 0 0 60px rgba(201, 162, 39, 0.3);
+    }
+}
+`;
+
 function TastingNoteModal({ visible, wine, onClose, onSave }) {
     const [rating, setRating] = useState(3);
     const [review, setReview] = useState('');
@@ -105,6 +123,7 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
         alcohol_feel: 3
     });
     const [saving, setSaving] = useState(false);
+    const [showShimmer, setShowShimmer] = useState(false);
 
     const handleTagClick = (value) => {
         if (selectedTags.includes(value)) {
@@ -130,13 +149,21 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                 ...flavorData,
             });
 
-            // 播放翻書音效
+            // 1. 播放翻書音效
             playPageFlipSound();
 
-            // 顯示完成訊息
+            // 2. 觸發微光動畫
+            setShowShimmer(true);
+
+            // 3. 顯示完成訊息
             message.success('Drink, Relax, Enjoy! 已收錄💫');
-            onSave?.();
-            onClose();
+
+            // 4. 延遲關閉讓用戶看到動畫
+            setTimeout(() => {
+                setShowShimmer(false);
+                onSave?.();
+                onClose();
+            }, 800);
         } catch (error) {
             console.error('儲存品飲筆記失敗:', error);
             message.error('儲存失敗');
@@ -151,31 +178,39 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
     };
 
     return (
-        <Modal
-            title={
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>📝</div>
-                    <Title level={4} style={{ margin: 0, color: '#fff' }}>
-                        留下品飲筆記和時光✨
-                    </Title>
-                    <Text style={{ color: 'rgba(255,255,255,0.65)' }}>{wine?.name}</Text>
-                </div>
-            }
-            open={visible}
-            onCancel={handleSkip}
-            okText="儲存"
-            cancelText="跳過"
-            onOk={handleSave}
-            confirmLoading={saving}
-            width={400}
-            centered
-            styles={{
-                content: { background: '#1a1a2e', borderRadius: 16 },
-                header: { background: '#1a1a2e', borderBottom: 'none', paddingBottom: 0 },
-                body: { background: '#1a1a2e', paddingTop: 16 },
-                footer: { background: '#1a1a2e', borderTop: 'none' },
-            }}
-        >
+        <>
+            <style>{shimmerStyle}</style>
+            <Modal
+                title={
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 32, marginBottom: 8 }}>📝</div>
+                        <Title level={4} style={{ margin: 0, color: '#fff' }}>
+                            留下品飲筆記和時光✨
+                        </Title>
+                        <Text style={{ color: 'rgba(255,255,255,0.65)' }}>{wine?.name}</Text>
+                    </div>
+                }
+                open={visible}
+                onCancel={handleSkip}
+                okText="儲存"
+                cancelText="跳過"
+                onOk={handleSave}
+                confirmLoading={saving}
+                width={400}
+                centered
+                styles={{
+                    content: {
+                        background: '#1a1a2e',
+                        borderRadius: 16,
+                        animation: showShimmer ? 'glow 0.8s ease-in-out' : 'none',
+                        position: 'relative',
+                        overflow: 'hidden',
+                    },
+                    header: { background: '#1a1a2e', borderBottom: 'none', paddingBottom: 0 },
+                    body: { background: '#1a1a2e', paddingTop: 16 },
+                    footer: { background: '#1a1a2e', borderTop: 'none' },
+                }}
+            >
             {/* 評分 */}
             <div style={{ marginBottom: 24 }}>
                 <Text strong style={{ display: 'block', marginBottom: 12, color: '#fff' }}>
@@ -322,6 +357,7 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                 ]}
             />
         </Modal>
+        </>
     );
 }
 
