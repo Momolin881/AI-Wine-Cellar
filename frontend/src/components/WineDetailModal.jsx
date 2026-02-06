@@ -16,7 +16,6 @@ import { CloseOutlined, CalendarOutlined, EditOutlined, ScissorOutlined } from '
 import confetti from 'canvas-confetti';
 import apiClient, { splitWineItem, updateWineDisposition } from '../services/api';
 import { useMode } from '../contexts/ModeContext';
-import { useMode } from '../contexts/ModeContext';
 import TastingNoteModal from './TastingNoteModal';
 import FlavorRadar from './FlavorRadar';
 import '../styles/WineDetailModal.css';
@@ -415,9 +414,7 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                         <Text style={{ color: '#f5f5f5' }}>
                             {wine.preservation_type === 'aging' ? '陳年型 (適合慢飲)' : '即飲型 (開瓶後盡快)'}
                         </Text>
-                        {wine.preservation_type === 'aging' ? '陳年型 (適合慢飲)' : '即飲型 (開瓶後盡快)'}
-                    </Text>
-                </div>
+                    </div>
 
                 {/* 風味雷達圖 (如果有資料) */}
                 {(wine.acidity || wine.tannin || wine.body || wine.sweetness || wine.alcohol_feel) && (
@@ -636,23 +633,22 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                     </Button>
                 </Space>
             </div>
-        </Modal >
+            </Modal>
 
-            {/* 品飲筆記 Modal */ }
-            < TastingNoteModal
-    visible = { tastingModalVisible }
-    wine = { consumedWine }
-    onClose = {() => {
-        setTastingModalVisible(false);
-        setConsumedWine(null);
-        onClose();
-        onUpdate({ ...wine, _deleted: true });
-    }
-}
-onSave = {() => {
-    // onSave is called before onClose in the modal
-}}
-        />
+            {/* 品飲筆記 Modal */}
+            <TastingNoteModal
+                visible={tastingModalVisible}
+                wine={consumedWine}
+                onClose={() => {
+                    setTastingModalVisible(false);
+                    setConsumedWine(null);
+                    onClose();
+                    onUpdate({ ...wine, _deleted: true });
+                }}
+                onSave={() => {
+                    // onSave is called before onClose in the modal
+                }}
+            />
         </>
     );
 }

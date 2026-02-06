@@ -266,59 +266,58 @@ function TastingNoteModal({ visible, wine, onClose, onSave }) {
                     style={{ borderRadius: 8 }}
                 />
             </div>
-        </div>
 
-            {/* 進階風味分析 (Pro) - 折疊區塊 */ }
-    <Collapse
-        ghost
-        expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
-        items={[
-            {
-                key: '1',
-                label: <span style={{ fontWeight: 'bold', color: '#333' }}>📊 進階風味分析 (Pro)</span>,
-                children: (
-                    <div>
-                        <Row gutter={24}>
-                            {/* 左側：雷達圖 */}
-                            <Col span={24} md={10} style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                                <FlavorRadar data={flavorData} />
-                            </Col>
+            {/* 進階風味分析 (Pro) - 折疊區塊 */}
+            <Collapse
+                ghost
+                expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
+                items={[
+                    {
+                        key: '1',
+                        label: <span style={{ fontWeight: 'bold', color: '#333' }}>📊 進階風味分析 (Pro)</span>,
+                        children: (
+                            <div>
+                                <Row gutter={24}>
+                                    {/* 左側：雷達圖 */}
+                                    <Col span={24} md={10} style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                                        <FlavorRadar data={flavorData} />
+                                    </Col>
 
-                            {/* 右側：滑桿 */}
-                            <Col span={24} md={14}>
-                                {[
-                                    { key: 'acidity', label: '酸度' },
-                                    { key: 'tannin', label: '單寧' },
-                                    { key: 'body', label: '酒體' },
-                                    { key: 'sweetness', label: '甜度' },
-                                    { key: 'alcohol_feel', label: '酒感' },
-                                ].map(item => (
-                                    <div key={item.key} style={{ marginBottom: 8 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <Text style={{ fontSize: 12, color: '#666' }}>{item.label}</Text>
-                                            <Text style={{ fontSize: 12, color: '#c9a227' }}>{flavorData[item.key]}</Text>
-                                        </div>
-                                        <Slider
-                                            min={1}
-                                            max={5}
-                                            value={flavorData[item.key]}
-                                            onChange={(val) => setFlavorData(prev => ({ ...prev, [item.key]: val }))}
-                                            styles={{
-                                                rail: { backgroundColor: '#ddd' },
-                                                track: { backgroundColor: '#c9a227' },
-                                                handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
-                                            }}
-                                        />
-                                    </div>
-                                ))}
-                            </Col>
-                        </Row>
-                    </div>
-                ),
-            }
-        ]}
-    />
-        </Modal >
+                                    {/* 右側：滑桿 */}
+                                    <Col span={24} md={14}>
+                                        {[
+                                            { key: 'acidity', label: '酸度' },
+                                            { key: 'tannin', label: '單寧' },
+                                            { key: 'body', label: '酒體' },
+                                            { key: 'sweetness', label: '甜度' },
+                                            { key: 'alcohol_feel', label: '酒感' },
+                                        ].map(item => (
+                                            <div key={item.key} style={{ marginBottom: 8 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <Text style={{ fontSize: 12, color: '#666' }}>{item.label}</Text>
+                                                    <Text style={{ fontSize: 12, color: '#c9a227' }}>{flavorData[item.key]}</Text>
+                                                </div>
+                                                <Slider
+                                                    min={1}
+                                                    max={5}
+                                                    value={flavorData[item.key]}
+                                                    onChange={(val) => setFlavorData(prev => ({ ...prev, [item.key]: val }))}
+                                                    styles={{
+                                                        rail: { backgroundColor: '#ddd' },
+                                                        track: { backgroundColor: '#c9a227' },
+                                                        handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                                                    }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </Col>
+                                </Row>
+                            </div>
+                        ),
+                    }
+                ]}
+            />
+        </Modal>
     );
 }
 
