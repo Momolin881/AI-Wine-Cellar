@@ -35,7 +35,7 @@ class HistoryMatch(BaseModel):
     purchase_price: Optional[float] = None
     purchase_date: Optional[date] = None
     tasting_notes: Optional[str] = None
-    rating: Optional[float] = None
+    rating: Optional[int] = None
     review: Optional[str] = None
     flavor_tags: Optional[str] = None
     aroma: Optional[str] = None
@@ -82,7 +82,7 @@ class WineItemCreate(BaseModel):
     cloudinary_public_id: Optional[str] = None
     notes: Optional[str] = None
     tasting_notes: Optional[str] = None
-    rating: Optional[float] = None
+    rating: Optional[int] = None
     review: Optional[str] = None
     flavor_tags: Optional[str] = None
     aroma: Optional[str] = None
@@ -118,7 +118,7 @@ class WineItemUpdate(BaseModel):
     storage_temp: Optional[str] = None
     notes: Optional[str] = None
     tasting_notes: Optional[str] = None
-    rating: Optional[float] = None
+    rating: Optional[int] = None
     review: Optional[str] = None
     flavor_tags: Optional[str] = None
     aroma: Optional[str] = None
@@ -162,7 +162,7 @@ class WineItemResponse(BaseModel):
     cloudinary_public_id: Optional[str]
     notes: Optional[str]
     tasting_notes: Optional[str]
-    rating: Optional[float] = None
+    rating: Optional[int] = None
     review: Optional[str] = None
     flavor_tags: Optional[str] = None
     aroma: Optional[str] = None
