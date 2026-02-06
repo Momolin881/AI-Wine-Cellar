@@ -187,6 +187,31 @@ body.chill-mode .ant-input-number-input::placeholder {
     color: #666 !important;
 }
 
+/* ===== Select Dropdown ===== */
+body.chill-mode .ant-select-dropdown {
+    background: #1D1D2F !important;
+    border: 1px solid rgba(0, 240, 255, 0.3) !important;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2) !important;
+}
+
+body.chill-mode .ant-select-item {
+    color: #e0e0e0 !important;
+}
+
+body.chill-mode .ant-select-item-option-active {
+    background: rgba(0, 240, 255, 0.1) !important;
+}
+
+body.chill-mode .ant-select-item-option-selected {
+    background: rgba(0, 240, 255, 0.2) !important;
+    color: #00f0ff !important;
+    font-weight: 600 !important;
+}
+
+body.chill-mode .ant-select-item-option-selected::after {
+    color: #00f0ff !important;
+}
+
 /* ===== Tags ===== */
 body.chill-mode .ant-tag {
     background: #252538 !important;

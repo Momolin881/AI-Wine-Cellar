@@ -16,9 +16,6 @@ import {
     Typography,
     Spin,
     Modal,
-    Statistic,
-    Row,
-    Col,
     Segmented,
 } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
@@ -31,7 +28,7 @@ const { TextArea } = Input;
 
 function CellarSettings() {
     const navigate = useNavigate();
-    const { mode, setMode } = useMode();
+    const { mode, setMode, theme } = useMode();
     const [loading, setLoading] = useState(true);
     const [cellars, setCellars] = useState([]);
     const [selectedCellar, setSelectedCellar] = useState(null);
@@ -127,7 +124,7 @@ function CellarSettings() {
 
     if (loading) {
         return (
-            <Layout style={{ minHeight: '100vh' }}>
+            <Layout style={{ minHeight: '100vh', background: theme.background }}>
                 <Content style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Spin size="large" />
                 </Content>
@@ -136,7 +133,7 @@ function CellarSettings() {
     }
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
+        <Layout style={{ minHeight: '100vh', background: theme.background }}>
             <Content style={{ padding: '16px', maxWidth: 480, margin: '0 auto' }}>
                 {/* 標題 */}
                 <div style={{ marginBottom: 16 }}>
@@ -147,7 +144,7 @@ function CellarSettings() {
                 </div>
 
                 {/* Mode 切換 */}
-                <Card style={{ marginBottom: 16 }}>
+                <Card style={{ marginBottom: 16, background: theme.card, border: 'none' }}>
                     <div style={{ marginBottom: 12 }}>
                         <Title level={5} style={{ margin: 0 }}>🎨 模式設定</Title>
                         <Text type="secondary" style={{ fontSize: 12 }}>
@@ -163,8 +160,8 @@ function CellarSettings() {
                                 label: (
                                     <div style={{ padding: '8px 0' }}>
                                         <div style={{ fontSize: 24 }}>🎮</div>
-                                        <div style={{ fontSize: 13, fontWeight: 600 }}>Chill</div>
-                                        <div style={{ fontSize: 10, opacity: 0.7 }}>玩家模式</div>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'chill' ? '#333' : undefined }}>Chill</div>
+                                        <div style={{ fontSize: 10, color: mode === 'chill' ? '#666' : undefined, opacity: mode === 'chill' ? 1 : 0.7 }}>玩家模式</div>
                                     </div>
                                 ),
                                 value: 'chill',
@@ -173,8 +170,8 @@ function CellarSettings() {
                                 label: (
                                     <div style={{ padding: '8px 0' }}>
                                         <div style={{ fontSize: 24 }}>🎯</div>
-                                        <div style={{ fontSize: 13, fontWeight: 600 }}>Pro</div>
-                                        <div style={{ fontSize: 10, opacity: 0.7 }}>達人模式</div>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'pro' ? '#333' : undefined }}>Pro</div>
+                                        <div style={{ fontSize: 10, color: mode === 'pro' ? '#666' : undefined, opacity: mode === 'pro' ? 1 : 0.7 }}>達人模式</div>
                                     </div>
                                 ),
                                 value: 'pro',
@@ -184,7 +181,7 @@ function CellarSettings() {
                 </Card>
 
                 {/* 我的酒窖 */}
-                <Card style={{ marginBottom: 16 }}>
+                <Card style={{ marginBottom: 16, background: theme.card, border: 'none' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Title level={5} style={{ margin: 0 }}>我的酒窖</Title>
                         <Button
@@ -205,19 +202,24 @@ function CellarSettings() {
 
                 {/* 統計（如果有選中酒窖） */}
                 {selectedCellar && (
-                    <Card className="neu-card">
+                    <Card style={{ background: theme.card, border: 'none' }}>
                         <Title level={5}>{selectedCellar.name} 統計</Title>
-                        <Row gutter={16}>
-                            <Col span={8}>
-                                <Statistic title="總酒數" value={selectedCellar.wine_count} suffix="瓶" />
-                            </Col>
-                            <Col span={8}>
-                                <Statistic title="已用容量" value={selectedCellar.used_capacity} suffix={`/ ${selectedCellar.total_capacity} 瓶`} />
-                            </Col>
-                            <Col span={8}>
-                                <Statistic title="總價值" value={selectedCellar.total_value} prefix="$" />
-                            </Col>
-                        </Row>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                            <div style={{ textAlign: 'center', flex: 1 }}>
+                                <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>總酒數</Text>
+                                <Text strong style={{ fontSize: 20, color: theme.primary }}>{selectedCellar.wine_count}</Text>
+                                <Text type="secondary" style={{ fontSize: 12 }}> 瓶</Text>
+                            </div>
+                            <div style={{ textAlign: 'center', flex: 1 }}>
+                                <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>已用容量</Text>
+                                <Text strong style={{ fontSize: 20, color: theme.primary }}>{selectedCellar.used_capacity}</Text>
+                                <Text type="secondary" style={{ fontSize: 12 }}> / {selectedCellar.total_capacity} 瓶</Text>
+                            </div>
+                            <div style={{ textAlign: 'center', flex: 1 }}>
+                                <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>總價值</Text>
+                                <Text strong style={{ fontSize: 20, color: theme.primary }}>$ {selectedCellar.total_value?.toLocaleString()}</Text>
+                            </div>
+                        </div>
                     </Card>
                 )}
 
@@ -227,6 +229,11 @@ function CellarSettings() {
                     open={editModalVisible}
                     onCancel={() => setEditModalVisible(false)}
                     footer={null}
+                    styles={{
+                        content: { background: theme.background, border: `1px solid ${theme.border}` },
+                        header: { background: theme.background, borderBottom: `1px solid ${theme.border}` },
+                        body: { background: theme.background },
+                    }}
                 >
                     <Form form={form} layout="vertical" onFinish={handleSaveEdit}>
                         <Form.Item

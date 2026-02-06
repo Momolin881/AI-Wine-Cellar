@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import liff from '@line/liff';
 
@@ -10,24 +10,21 @@ import {
     Input,
     DatePicker,
     Button,
-    Card,
     Row,
     Col,
-    Checkbox,
     message,
     Spin,
-    Upload, // Import Upload
+    Upload,
     Modal,
     Space
 } from 'antd';
 import {
-    CalendarOutlined,
     EnvironmentOutlined,
-    UserOutlined,
-    UploadOutlined // Import Icon
+    UploadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { getFoodItems, createInvitation, getInvitationFlex, uploadInvitationImage } from '../services/api';
+import { useMode } from '../contexts/ModeContext';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -35,6 +32,7 @@ const { TextArea } = Input;
 
 const CreateInvitation = () => {
     const navigate = useNavigate();
+    const { theme } = useMode();
     const [form] = Form.useForm();
     const [availableWines, setAvailableWines] = useState([]);
     const [selectedWines, setSelectedWines] = useState([]);
@@ -79,12 +77,40 @@ const CreateInvitation = () => {
         fetchWines();
     }, []);
 
-    const handleWineToggle = (wineId) => {
-        setSelectedWines(prev => {
-            if (prev.includes(wineId)) {
-                return prev.filter(id => id !== wineId);
+    // 群組酒款（按 brand + name + vintage）
+    const groupedWines = useMemo(() => {
+        const groups = {};
+        availableWines.forEach(wine => {
+            const key = `${wine.brand || 'unknown'}_${wine.name}_${wine.vintage || 'no-vintage'}`;
+            if (!groups[key]) {
+                groups[key] = {
+                    ...wine,
+                    ids: [wine.id],
+                    count: 1
+                };
             } else {
-                return [...prev, wineId];
+                groups[key].ids.push(wine.id);
+                groups[key].count += 1;
+            }
+        });
+        return Object.values(groups);
+    }, [availableWines]);
+
+    // 檢查群組是否被選中（只要有一個 id 被選中就算選中）
+    const isGroupSelected = (group) => {
+        return group.ids.some(id => selectedWines.includes(id));
+    };
+
+    // 切換群組選擇（選中/取消該群組的所有酒款）
+    const handleWineToggle = (group) => {
+        setSelectedWines(prev => {
+            const isSelected = isGroupSelected(group);
+            if (isSelected) {
+                // 取消選擇：移除該群組的所有 id
+                return prev.filter(id => !group.ids.includes(id));
+            } else {
+                // 選擇：加入該群組的所有 id
+                return [...prev, ...group.ids];
             }
         });
     };
@@ -108,13 +134,13 @@ const CreateInvitation = () => {
     const handlePreview = async () => {
         try {
             const values = await form.validateFields();
-            // 取得選中酒款的名稱
-            const selectedWineNames = availableWines
-                .filter(wine => selectedWines.includes(wine.id))
-                .map(wine => wine.name);
+            // 取得選中酒款的名稱（去重複，按群組）
+            const selectedWineNames = groupedWines
+                .filter(group => isGroupSelected(group))
+                .map(group => group.name);
             setPreviewData({
                 ...values,
-                wineCount: selectedWines.length,
+                wineCount: selectedWineNames.length,
                 wineNames: selectedWineNames,
                 theme_image_url: customImageUrl || 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
             });
@@ -259,7 +285,7 @@ const CreateInvitation = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#1a1a1a' }}>
+        <Layout style={{ minHeight: '100vh', background: theme.background }}>
             <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto' }}>
                 <Title level={3} style={{ color: '#c9a227', marginBottom: 24, textAlign: 'center' }}>
                     發起品飲聚會 🥂
@@ -279,7 +305,7 @@ const CreateInvitation = () => {
                     >
                         <Input
                             placeholder="例如：週末品酒會"
-                            style={{ background: '#2d2d2d', border: '1px solid #444', color: '#fff' }}
+                            style={{ background: theme.card, border: '1px solid #444', color: '#fff' }}
                         />
                     </Form.Item>
 
@@ -291,8 +317,8 @@ const CreateInvitation = () => {
                         <DatePicker
                             showTime={{ format: 'HH:mm', minuteStep: 15 }}
                             format="YYYY-MM-DD HH:mm"
-                            style={{ width: '100%', background: '#2d2d2d', border: '1px solid #444', color: '#fff' }}
-                            styles={{ popup: { background: '#2d2d2d' } }}
+                            style={{ width: '100%', background: theme.card, border: '1px solid #444', color: '#fff' }}
+                            styles={{ popup: { background: theme.card } }}
                             placeholder="選擇聚會時間"
                         />
                     </Form.Item>
@@ -304,7 +330,7 @@ const CreateInvitation = () => {
                         <Input
                             prefix={<EnvironmentOutlined style={{ color: '#888' }} />}
                             placeholder="輸入地點"
-                            style={{ background: '#2d2d2d', border: '1px solid #444', color: '#fff' }}
+                            style={{ background: theme.card, border: '1px solid #444', color: '#fff' }}
                         />
                     </Form.Item>
 
@@ -315,40 +341,43 @@ const CreateInvitation = () => {
                         <TextArea
                             rows={3}
                             placeholder="有什麼想對朋友說的..."
-                            style={{ background: '#2d2d2d', border: '1px solid #444', color: '#fff' }}
+                            style={{ background: theme.card, border: '1px solid #444', color: '#fff' }}
                         />
                     </Form.Item>
 
                     <Typography.Text strong style={{ color: '#c9a227', display: 'block', margin: '24px 0 12px' }}>
-                        選擇今日酒單 ({selectedWines.length})
+                        選擇今日酒單 ({groupedWines.filter(g => isGroupSelected(g)).length} 款)
                     </Typography.Text>
 
                     {loading ? <Spin /> : (
                         <Row gutter={[16, 16]}>
-                            {availableWines.length > 0 ? availableWines.map(wine => (
-                                <Col span={12} key={wine.id}>
+                            {groupedWines.length > 0 ? groupedWines.map(group => (
+                                <Col span={12} key={`${group.brand}_${group.name}_${group.vintage}`}>
                                     <div
-                                        onClick={() => handleWineToggle(wine.id)}
+                                        onClick={() => handleWineToggle(group)}
                                         style={{
                                             position: 'relative',
                                             cursor: 'pointer',
                                             borderRadius: 8,
                                             overflow: 'hidden',
-                                            border: selectedWines.includes(wine.id) ? '2px solid #c9a227' : '2px solid transparent'
+                                            border: isGroupSelected(group) ? '2px solid #c9a227' : '2px solid transparent'
                                         }}
                                     >
-                                        <div style={{ height: 120, background: '#2d2d2d', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div style={{ height: 120, background: theme.card, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <img
-                                                src={wine.image_url || 'https://via.placeholder.com/100'}
-                                                alt={wine.name}
+                                                src={group.image_url || 'https://via.placeholder.com/100'}
+                                                alt={group.name}
                                                 style={{ maxHeight: '90%', maxWidth: '90%', objectFit: 'contain' }}
                                                 loading="lazy"
                                             />
                                         </div>
                                         <div style={{ padding: 8, background: '#333' }}>
-                                            <Text ellipsis style={{ color: '#fff', width: '100%', display: 'block' }}>{wine.name}</Text>
+                                            <Text ellipsis style={{ color: '#fff', width: '100%', display: 'block' }}>{group.name}</Text>
+                                            {group.count > 1 && (
+                                                <Text style={{ color: '#888', fontSize: 12 }}>共 {group.count} 瓶</Text>
+                                            )}
                                         </div>
-                                        {selectedWines.includes(wine.id) && (
+                                        {isGroupSelected(group) && (
                                             <div style={{ position: 'absolute', top: 5, right: 5, background: '#c9a227', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 ✓
                                             </div>
@@ -357,7 +386,7 @@ const CreateInvitation = () => {
                                 </Col>
                             )) : (
                                 <Col span={24}>
-                                    <div style={{ padding: 20, textAlign: 'center', color: '#666', background: '#2d2d2d', borderRadius: 8 }}>
+                                    <div style={{ padding: 20, textAlign: 'center', color: '#666', background: theme.card, borderRadius: 8 }}>
                                         您的酒窖目前沒有在庫酒款
                                     </div>
                                 </Col>
@@ -376,7 +405,7 @@ const CreateInvitation = () => {
                         >
                             <Button
                                 icon={uploadingImage ? <Spin /> : <UploadOutlined />}
-                                style={{ background: '#2d2d2d', borderColor: '#444', color: '#ccc', width: '100%' }}
+                                style={{ background: theme.card, borderColor: '#444', color: '#ccc', width: '100%' }}
                             >
                                 {uploadingImage ? "上傳中..." : "上傳照片"}
                             </Button>
