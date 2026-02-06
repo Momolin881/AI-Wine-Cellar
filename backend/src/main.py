@@ -25,30 +25,40 @@ def run_migrations():
 
     這是一個簡易的遷移方案，在啟動時檢查並新增缺少的欄位。
     """
-    inspector = inspect(engine)
+    try:
+        inspector = inspect(engine)
 
-    # 取得 wine_items 表格現有欄位
-    existing_columns = {col['name'] for col in inspector.get_columns('wine_items')}
+        # 檢查 wine_items 表格是否存在
+        if 'wine_items' not in inspector.get_table_names():
+            print("⚠️ wine_items 表格尚未建立，跳過遷移")
+            return
 
-    # 需要新增的欄位 (欄位名, 類型)
-    new_columns = [
-        ('review', 'TEXT'),
-        ('acidity', 'INTEGER'),
-        ('tannin', 'INTEGER'),
-        ('body', 'INTEGER'),
-        ('sweetness', 'INTEGER'),
-        ('alcohol_feel', 'INTEGER'),
-    ]
+        # 取得 wine_items 表格現有欄位
+        existing_columns = {col['name'] for col in inspector.get_columns('wine_items')}
 
-    with engine.connect() as conn:
-        for col_name, col_type in new_columns:
-            if col_name not in existing_columns:
-                try:
-                    conn.execute(text(f'ALTER TABLE wine_items ADD COLUMN {col_name} {col_type}'))
-                    conn.commit()
-                    print(f"✅ 已新增欄位: wine_items.{col_name}")
-                except Exception as e:
-                    print(f"⚠️ 新增欄位 {col_name} 失敗 (可能已存在): {e}")
+        # 需要新增的欄位 (欄位名, 類型)
+        new_columns = [
+            ('review', 'TEXT'),
+            ('acidity', 'INTEGER'),
+            ('tannin', 'INTEGER'),
+            ('body', 'INTEGER'),
+            ('sweetness', 'INTEGER'),
+            ('alcohol_feel', 'INTEGER'),
+        ]
+
+        with engine.connect() as conn:
+            for col_name, col_type in new_columns:
+                if col_name not in existing_columns:
+                    try:
+                        conn.execute(text(f'ALTER TABLE wine_items ADD COLUMN {col_name} {col_type}'))
+                        conn.commit()
+                        print(f"✅ 已新增欄位: wine_items.{col_name}")
+                    except Exception as e:
+                        print(f"⚠️ 新增欄位 {col_name} 失敗 (可能已存在): {e}")
+    except Exception as e:
+        print(f"⚠️ 資料庫遷移檢查失敗: {e}")
+
+
 from src.services import scheduler
 # 酒窖路由
 from src.routes import wine_items, wine_cellars
