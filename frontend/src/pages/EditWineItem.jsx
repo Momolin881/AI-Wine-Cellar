@@ -347,10 +347,12 @@ function EditWineItem() {
     const handleOpenCalendar = () => {
         const currentPurchaseDate = form.getFieldValue('purchase_date');
         if (currentPurchaseDate) {
-            setCalendarMonth(currentPurchaseDate);
-            setSelectedDate(currentPurchaseDate);
+            // 確保是 dayjs 物件
+            const dateObj = dayjs.isDayjs(currentPurchaseDate) ? currentPurchaseDate : dayjs(currentPurchaseDate);
+            setCalendarMonth(dateObj);
+            setSelectedDate(dateObj);
             // 載入該日期的消費明細
-            const dateKey = currentPurchaseDate.format('YYYY-MM-DD');
+            const dateKey = dateObj.format('YYYY-MM-DD');
             const items = wineItems.filter(
                 (item) => dayjs(item.purchase_date).format('YYYY-MM-DD') === dateKey
             );
@@ -906,6 +908,7 @@ function EditWineItem() {
 
                     <Calendar
                         fullscreen={false}
+                        value={calendarMonth}
                         cellRender={dateCellRender}
                         onSelect={handleDateSelect}
                         onPanelChange={handlePanelChange}
