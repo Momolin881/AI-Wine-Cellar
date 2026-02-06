@@ -160,8 +160,8 @@ function CellarSettings() {
                                 label: (
                                     <div style={{ padding: '8px 0' }}>
                                         <div style={{ fontSize: 24 }}>🎮</div>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'chill' ? '#333' : undefined }}>Chill</div>
-                                        <div style={{ fontSize: 10, color: mode === 'chill' ? '#666' : undefined, opacity: mode === 'chill' ? 1 : 0.7 }}>玩家模式</div>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'chill' ? '#fff' : '#aaa' }}>Chill</div>
+                                        <div style={{ fontSize: 10, color: mode === 'chill' ? '#ddd' : '#888' }}>玩家模式</div>
                                     </div>
                                 ),
                                 value: 'chill',
@@ -170,8 +170,8 @@ function CellarSettings() {
                                 label: (
                                     <div style={{ padding: '8px 0' }}>
                                         <div style={{ fontSize: 24 }}>🎯</div>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'pro' ? '#333' : undefined }}>Pro</div>
-                                        <div style={{ fontSize: 10, color: mode === 'pro' ? '#666' : undefined, opacity: mode === 'pro' ? 1 : 0.7 }}>達人模式</div>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'pro' ? '#fff' : '#aaa' }}>Pro</div>
+                                        <div style={{ fontSize: 10, color: mode === 'pro' ? '#ddd' : '#888' }}>達人模式</div>
                                     </div>
                                 ),
                                 value: 'pro',

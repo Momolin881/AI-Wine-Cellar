@@ -27,6 +27,8 @@ import {
     Badge,
     List,
     Tag,
+    Rate,
+    Divider,
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -593,6 +595,35 @@ function AddWineItem() {
                     <Form.Item label="備註" name="notes">
                         <TextArea rows={3} placeholder="品酒筆記、特殊說明..." />
                     </Form.Item>
+
+                    {/* Pro Mode: 品飲筆記欄位 */}
+                    {isPro && (
+                        <>
+                            <Divider style={{ borderColor: '#404040' }}>
+                                <span style={{ color: '#c9a227', fontSize: 14 }}>📝 品飲筆記 (Pro)</span>
+                            </Divider>
+
+                            <Form.Item label="⭐ 評分" name="rating">
+                                <Rate allowHalf style={{ color: '#c9a227', fontSize: 28 }} />
+                            </Form.Item>
+
+                            <Form.Item label="💬 評價" name="review">
+                                <TextArea rows={2} placeholder="對這支酒的整體評價..." />
+                            </Form.Item>
+
+                            <Form.Item label="🌸 香氣" name="aroma">
+                                <TextArea rows={2} placeholder="描述聞到的香氣..." />
+                            </Form.Item>
+
+                            <Form.Item label="👅 口感" name="palate">
+                                <TextArea rows={2} placeholder="描述入口的感受..." />
+                            </Form.Item>
+
+                            <Form.Item label="✨ 餘韻" name="finish">
+                                <TextArea rows={2} placeholder="描述吞嚥後的尾韻..." />
+                            </Form.Item>
+                        </>
+                    )}
 
                     {/* 提交按鈕 */}
                     <Form.Item>
