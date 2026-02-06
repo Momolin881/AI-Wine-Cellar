@@ -29,6 +29,8 @@ import {
     Tag,
     Rate,
     Divider,
+    Collapse,
+    Slider,
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -623,18 +625,16 @@ function AddWineItem() {
                             <Form.Item label="✨ 餘韻" name="finish">
                                 <TextArea rows={2} placeholder="描述吞嚥後的尾韻..." />
                             </Form.Item>
-                            <Form.Item label="✨ 餘韻" name="finish">
-                                <TextArea rows={2} placeholder="描述吞嚥後的尾韻..." />
-                            </Form.Item>
 
                             {/* 進階風味分析 (Pro) - 折疊區塊 */}
-                            <Divider style={{ borderColor: '#404040', margin: '24px 0' }} />
-                            <div style={{ marginBottom: 24 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                                    <Text strong style={{ color: '#c9a227' }}>📊 進階風味分析</Text>
-                                </div>
-
-                                <Form.Item noStyle shouldUpdate>
+                            <Collapse
+                                ghost
+                                style={{ marginTop: 16 }}
+                                items={[{
+                                    key: 'flavor-analysis',
+                                    label: <Text strong style={{ color: '#c9a227' }}>📊 進階風味分析</Text>,
+                                    children: (
+                                        <Form.Item noStyle shouldUpdate>
                                     {({ getFieldsValue, setFieldsValue }) => {
                                         const values = getFieldsValue(['acidity', 'tannin', 'body', 'sweetness', 'alcohol_feel']);
                                         // 確保有預設值
@@ -688,7 +688,9 @@ function AddWineItem() {
                                         );
                                     }}
                                 </Form.Item>
-                            </div>
+                                    )
+                                }]}
+                            />
                         </>
                     )}
 

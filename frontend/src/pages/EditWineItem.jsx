@@ -28,6 +28,7 @@ import {
     Tag,
     Slider,
     Rate,
+    Collapse,
 } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -39,6 +40,7 @@ import dayjs from 'dayjs';
 import confetti from 'canvas-confetti';
 import apiClient, { getFoodItems, getBudgetSettings } from '../services/api';
 import { useMode } from '../contexts/ModeContext';
+import FlavorRadar from '../components/FlavorRadar';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -666,6 +668,70 @@ function EditWineItem() {
                             <Form.Item label={<span style={{ color: '#888' }}>✨ 餘韻</span>} name="finish">
                                 <TextArea rows={2} placeholder="描述吞嚥後的尾韻..." />
                             </Form.Item>
+
+                            {/* 進階風味分析 (Pro) - 折疊區塊 */}
+                            <Collapse
+                                ghost
+                                style={{ marginTop: 16 }}
+                                items={[{
+                                    key: 'flavor-analysis',
+                                    label: <Text strong style={{ color: '#c9a227' }}>📊 進階風味分析</Text>,
+                                    children: (
+                                        <Form.Item noStyle shouldUpdate>
+                                            {({ getFieldsValue, setFieldsValue }) => {
+                                                const values = getFieldsValue(['acidity', 'tannin', 'body', 'sweetness', 'alcohol_feel']);
+                                                const radarData = {
+                                                    acidity: values.acidity || 3,
+                                                    tannin: values.tannin || 3,
+                                                    body: values.body || 3,
+                                                    sweetness: values.sweetness || 3,
+                                                    alcohol_feel: values.alcohol_feel || 3
+                                                };
+
+                                                return (
+                                                    <div style={{ background: '#252538', padding: '16px', borderRadius: 12 }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                                                            <FlavorRadar data={radarData} isChill={false} />
+                                                        </div>
+
+                                                        {[
+                                                            { key: 'acidity', label: '酸度' },
+                                                            { key: 'tannin', label: '單寧' },
+                                                            { key: 'body', label: '酒體' },
+                                                            { key: 'sweetness', label: '甜度' },
+                                                            { key: 'alcohol_feel', label: '酒感' },
+                                                        ].map(item => (
+                                                            <Form.Item
+                                                                key={item.key}
+                                                                name={item.key}
+                                                                initialValue={3}
+                                                                style={{ marginBottom: 12 }}
+                                                            >
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                                                    <Text style={{ fontSize: 12, color: '#888' }}>{item.label}</Text>
+                                                                    <Text style={{ fontSize: 12, color: '#c9a227' }}>{radarData[item.key]}</Text>
+                                                                </div>
+                                                                <Slider
+                                                                    min={1}
+                                                                    max={5}
+                                                                    onChange={(val) => {
+                                                                        setFieldsValue({ [item.key]: val });
+                                                                    }}
+                                                                    styles={{
+                                                                        rail: { backgroundColor: '#444' },
+                                                                        track: { backgroundColor: '#c9a227' },
+                                                                        handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                                                                    }}
+                                                                />
+                                                            </Form.Item>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            }}
+                                        </Form.Item>
+                                    )
+                                }]}
+                            />
                         </>
                     )}
 
