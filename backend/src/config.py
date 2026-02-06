@@ -36,7 +36,7 @@ class Settings(BaseSettings):
 
     # 應用設定
     APP_NAME: str = "AI Wine Cellar"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
 
     # CORS 設定
