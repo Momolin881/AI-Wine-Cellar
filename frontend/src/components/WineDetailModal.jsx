@@ -16,7 +16,9 @@ import { CloseOutlined, CalendarOutlined, EditOutlined, ScissorOutlined } from '
 import confetti from 'canvas-confetti';
 import apiClient, { splitWineItem, updateWineDisposition } from '../services/api';
 import { useMode } from '../contexts/ModeContext';
+import { useMode } from '../contexts/ModeContext';
 import TastingNoteModal from './TastingNoteModal';
+import FlavorRadar from './FlavorRadar';
 import '../styles/WineDetailModal.css';
 
 const { Title, Text } = Typography;
@@ -360,60 +362,79 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
 
     return (
         <>
-        <Modal
-            open={visible}
-            onCancel={onClose}
-            footer={null}
-            closable={false}
-            centered
-            width={360}
-            styles={{
-                body: { padding: 0, borderRadius: 16, overflow: 'hidden', background: '#2d2d2d' },
-                mask: { backdropFilter: 'blur(5px)' }
-            }}
-        >
-            {/* Header Image */}
-            <div style={{ position: 'relative', height: 280, width: '100%', background: '#000' }}>
-                <img
-                    src={wine.image_url}
-                    alt={wine.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }}
-                    loading="lazy"
-                />
-                <Button
-                    type="text"
-                    icon={<CloseOutlined style={{ color: '#fff', fontSize: 20 }} />}
-                    style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}
-                    onClick={onClose}
-                />
-                <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    background: 'linear-gradient(to top, #2d2d2d, transparent)',
-                    height: 80
-                }} />
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: '0 24px 24px 24px' }}>
-                <Title level={3} style={{ color: '#fff', margin: 0 }}>{wine.name}</Title>
-                <div style={{ marginTop: 8, marginBottom: 16 }}>
-                    <Tag color="gold">{wine.wine_type}</Tag>
-                    {wine.vintage && <Tag color="default">{wine.vintage}</Tag>}
-                    {wine.region && <Text style={{ color: '#888', marginLeft: 8 }}>{wine.region}</Text>}
+            <Modal
+                open={visible}
+                onCancel={onClose}
+                footer={null}
+                closable={false}
+                centered
+                width={360}
+                styles={{
+                    body: { padding: 0, borderRadius: 16, overflow: 'hidden', background: '#2d2d2d' },
+                    mask: { backdropFilter: 'blur(5px)' }
+                }}
+            >
+                {/* Header Image */}
+                <div style={{ position: 'relative', height: 280, width: '100%', background: '#000' }}>
+                    <img
+                        src={wine.image_url}
+                        alt={wine.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }}
+                        loading="lazy"
+                    />
+                    <Button
+                        type="text"
+                        icon={<CloseOutlined style={{ color: '#fff', fontSize: 20 }} />}
+                        style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}
+                        onClick={onClose}
+                    />
+                    <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: 'linear-gradient(to top, #2d2d2d, transparent)',
+                        height: 80
+                    }} />
                 </div>
 
-                <Divider style={{ borderColor: '#444' }} />
+                {/* Content */}
+                <div style={{ padding: '0 24px 24px 24px' }}>
+                    <Title level={3} style={{ color: '#fff', margin: 0 }}>{wine.name}</Title>
+                    <div style={{ marginTop: 8, marginBottom: 16 }}>
+                        <Tag color="gold">{wine.wine_type}</Tag>
+                        {wine.vintage && <Tag color="default">{wine.vintage}</Tag>}
+                        {wine.region && <Text style={{ color: '#888', marginLeft: 8 }}>{wine.region}</Text>}
+                    </div>
 
-                {/* Preservation Type Info */}
-                <div style={{ marginBottom: 16 }}>
-                    <Text style={{ color: '#888' }}>類型：</Text>
-                    <Text style={{ color: '#f5f5f5' }}>
+                    <Divider style={{ borderColor: '#444' }} />
+
+                    {/* Preservation Type Info */}
+                    <div style={{ marginBottom: 16 }}>
+                        <Text style={{ color: '#888' }}>類型：</Text>
+                        <Text style={{ color: '#f5f5f5' }}>
+                            {wine.preservation_type === 'aging' ? '陳年型 (適合慢飲)' : '即飲型 (開瓶後盡快)'}
+                        </Text>
                         {wine.preservation_type === 'aging' ? '陳年型 (適合慢飲)' : '即飲型 (開瓶後盡快)'}
                     </Text>
                 </div>
+
+                {/* 風味雷達圖 (如果有資料) */}
+                {(wine.acidity || wine.tannin || wine.body || wine.sweetness || wine.alcohol_feel) && (
+                    <div style={{ marginBottom: 24, textAlign: 'center' }}>
+                        <Divider style={{ borderColor: '#444', fontSize: 14, color: '#888' }}>風味分析</Divider>
+                        <FlavorRadar
+                            data={{
+                                acidity: wine.acidity,
+                                tannin: wine.tannin,
+                                body: wine.body,
+                                sweetness: wine.sweetness,
+                                alcohol_feel: wine.alcohol_feel
+                            }}
+                            isChill={false} // Detail 頁面保持金色系
+                        />
+                    </div>
+                )}
 
                 {/* Open/Status Section */}
                 {!isOpened ? (
@@ -615,21 +636,22 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                     </Button>
                 </Space>
             </div>
-        </Modal>
+        </Modal >
 
-        {/* 品飲筆記 Modal */}
-        <TastingNoteModal
-            visible={tastingModalVisible}
-            wine={consumedWine}
-            onClose={() => {
-                setTastingModalVisible(false);
-                setConsumedWine(null);
-                onClose();
-                onUpdate({ ...wine, _deleted: true });
-            }}
-            onSave={() => {
-                // onSave is called before onClose in the modal
-            }}
+            {/* 品飲筆記 Modal */ }
+            < TastingNoteModal
+    visible = { tastingModalVisible }
+    wine = { consumedWine }
+    onClose = {() => {
+        setTastingModalVisible(false);
+        setConsumedWine(null);
+        onClose();
+        onUpdate({ ...wine, _deleted: true });
+    }
+}
+onSave = {() => {
+    // onSave is called before onClose in the modal
+}}
         />
         </>
     );

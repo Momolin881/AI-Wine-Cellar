@@ -41,6 +41,7 @@ import dayjs from 'dayjs';
 
 import apiClient, { getFoodItems, getBudgetSettings, matchWineHistory } from '../services/api';
 import { useMode } from '../contexts/ModeContext';
+import FlavorRadar from '../components/FlavorRadar';
 import '../styles/BlobCard.css';
 
 const { Content } = Layout;
@@ -622,6 +623,72 @@ function AddWineItem() {
                             <Form.Item label="✨ 餘韻" name="finish">
                                 <TextArea rows={2} placeholder="描述吞嚥後的尾韻..." />
                             </Form.Item>
+                            <Form.Item label="✨ 餘韻" name="finish">
+                                <TextArea rows={2} placeholder="描述吞嚥後的尾韻..." />
+                            </Form.Item>
+
+                            {/* 進階風味分析 (Pro) - 折疊區塊 */}
+                            <Divider style={{ borderColor: '#404040', margin: '24px 0' }} />
+                            <div style={{ marginBottom: 24 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                                    <Text strong style={{ color: '#c9a227' }}>📊 進階風味分析</Text>
+                                </div>
+
+                                <Form.Item noStyle shouldUpdate>
+                                    {({ getFieldsValue, setFieldsValue }) => {
+                                        const values = getFieldsValue(['acidity', 'tannin', 'body', 'sweetness', 'alcohol_feel']);
+                                        // 確保有預設值
+                                        const radarData = {
+                                            acidity: values.acidity || 3,
+                                            tannin: values.tannin || 3,
+                                            body: values.body || 3,
+                                            sweetness: values.sweetness || 3,
+                                            alcohol_feel: values.alcohol_feel || 3
+                                        };
+
+                                        return (
+                                            <div style={{ background: '#252538', padding: '16px', borderRadius: 12 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                                                    <FlavorRadar data={radarData} isChill={false} />
+                                                </div>
+
+                                                {[
+                                                    { key: 'acidity', label: '酸度' },
+                                                    { key: 'tannin', label: '單寧' },
+                                                    { key: 'body', label: '酒體' },
+                                                    { key: 'sweetness', label: '甜度' },
+                                                    { key: 'alcohol_feel', label: '酒感' },
+                                                ].map(item => (
+                                                    <Form.Item
+                                                        key={item.key}
+                                                        name={item.key}
+                                                        initialValue={3}
+                                                        style={{ marginBottom: 12 }}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                                            <Text style={{ fontSize: 12, color: '#888' }}>{item.label}</Text>
+                                                            <Text style={{ fontSize: 12, color: '#c9a227' }}>{radarData[item.key]}</Text>
+                                                        </div>
+                                                        <Slider
+                                                            min={1}
+                                                            max={5}
+                                                            onChange={(val) => {
+                                                                // 強制更新 render 以重繪雷達
+                                                                setFieldsValue({ [item.key]: val });
+                                                            }}
+                                                            styles={{
+                                                                rail: { backgroundColor: '#444' },
+                                                                track: { backgroundColor: '#c9a227' },
+                                                                handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                                                            }}
+                                                        />
+                                                    </Form.Item>
+                                                ))}
+                                            </div>
+                                        );
+                                    }}
+                                </Form.Item>
+                            </div>
                         </>
                     )}
 

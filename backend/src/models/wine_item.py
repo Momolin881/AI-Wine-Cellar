@@ -81,6 +81,13 @@ class WineItem(Base):
     palate = Column(String(500), nullable=True)  # 口感
     finish = Column(String(500), nullable=True)  # 餘韻
 
+    # 風味分析 (1-5分)
+    acidity = Column(Integer, nullable=True)  # 酸度
+    tannin = Column(Integer, nullable=True)  # 單寧
+    body = Column(Integer, nullable=True)  # 酒體
+    sweetness = Column(Integer, nullable=True)  # 甜度
+    alcohol_feel = Column(Integer, nullable=True)  # 酒感 (不同於 ABV，是主觀感受)
+
     # 時間戳記
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

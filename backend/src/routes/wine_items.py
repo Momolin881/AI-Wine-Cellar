@@ -11,6 +11,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from pydantic import BaseModel
 
 from src.models.wine_item import WineItem
@@ -34,6 +35,16 @@ class HistoryMatch(BaseModel):
     purchase_price: Optional[float] = None
     purchase_date: Optional[date] = None
     tasting_notes: Optional[str] = None
+    rating: Optional[float] = None
+    flavor_tags: Optional[str] = None
+    aroma: Optional[str] = None
+    palate: Optional[str] = None
+    finish: Optional[str] = None
+    acidity: Optional[int] = None
+    tannin: Optional[int] = None
+    body: Optional[int] = None
+    sweetness: Optional[int] = None
+    alcohol_feel: Optional[int] = None
     image_url: Optional[str] = None
 
 class HistoryMatchResponse(BaseModel):
@@ -70,6 +81,17 @@ class WineItemCreate(BaseModel):
     cloudinary_public_id: Optional[str] = None
     notes: Optional[str] = None
     tasting_notes: Optional[str] = None
+    rating: Optional[float] = None
+    review: Optional[str] = None
+    flavor_tags: Optional[str] = None
+    aroma: Optional[str] = None
+    palate: Optional[str] = None
+    finish: Optional[str] = None
+    acidity: Optional[int] = 3
+    tannin: Optional[int] = 3
+    body: Optional[int] = 3
+    sweetness: Optional[int] = 3
+    alcohol_feel: Optional[int] = 3
     recognized_by_ai: int = 0
 
 
@@ -95,6 +117,17 @@ class WineItemUpdate(BaseModel):
     storage_temp: Optional[str] = None
     notes: Optional[str] = None
     tasting_notes: Optional[str] = None
+    rating: Optional[float] = None
+    review: Optional[str] = None
+    flavor_tags: Optional[str] = None
+    aroma: Optional[str] = None
+    palate: Optional[str] = None
+    finish: Optional[str] = None
+    acidity: Optional[int] = None
+    tannin: Optional[int] = None
+    body: Optional[int] = None
+    sweetness: Optional[int] = None
+    alcohol_feel: Optional[int] = None
 
 
 class WineItemResponse(BaseModel):
@@ -128,6 +161,16 @@ class WineItemResponse(BaseModel):
     cloudinary_public_id: Optional[str]
     notes: Optional[str]
     tasting_notes: Optional[str]
+    rating: Optional[float] = None
+    flavor_tags: Optional[str] = None
+    aroma: Optional[str] = None
+    palate: Optional[str] = None
+    finish: Optional[str] = None
+    acidity: Optional[int] = None
+    tannin: Optional[int] = None
+    body: Optional[int] = None
+    sweetness: Optional[int] = None
+    alcohol_feel: Optional[int] = None
     recognized_by_ai: int
     status: str
     created_at: datetime
@@ -246,6 +289,16 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
         cloudinary_public_id=item.cloudinary_public_id,
         notes=item.notes,
         tasting_notes=item.tasting_notes,
+        rating=item.rating,
+        flavor_tags=item.flavor_tags,
+        aroma=item.aroma,
+        palate=item.palate,
+        finish=item.finish,
+        acidity=item.acidity,
+        tannin=item.tannin,
+        body=item.body,
+        sweetness=item.sweetness,
+        alcohol_feel=item.alcohol_feel,
         recognized_by_ai=item.recognized_by_ai,
         status=item.status or 'active',
         created_at=item.created_at,
@@ -340,6 +393,11 @@ def match_wine_history(
             aroma=m.aroma,
             palate=m.palate,
             finish=m.finish,
+            acidity=m.acidity,
+            tannin=m.tannin,
+            body=m.body,
+            sweetness=m.sweetness,
+            alcohol_feel=m.alcohol_feel,
             image_url=m.image_url
         )
         for m in matches
@@ -468,7 +526,7 @@ async def update_wine_item(
         setattr(wine_item, field, value)
 
     # 品飲筆記欄位
-    tasting_note_fields = ['rating', 'review', 'aroma', 'palate', 'finish', 'flavor_tags']
+    tasting_note_fields = ['rating', 'review', 'aroma', 'palate', 'finish', 'flavor_tags', 'acidity', 'tannin', 'body', 'sweetness', 'alcohol_feel']
 
     # 如果要同步品飲筆記到同批次酒款
     if sync_tasting_notes:
@@ -490,7 +548,7 @@ async def update_wine_item(
             else:
                 # 此酒款是拆分記錄，找主記錄和同批次的其他記錄
                 batch_items = db.query(WineItem).filter(
-                    db.or_(
+                    or_(
                         WineItem.id == wine_item.split_from_id,  # 主記錄
                         WineItem.split_from_id == wine_item.split_from_id  # 同批次
                     ),
