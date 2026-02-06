@@ -254,14 +254,36 @@ function EditWineItem() {
             const data = await apiClient.get(`/wine-items/${id}`);
             setItem(data);
 
-            // 填入表單 - 排除日期欄位後再設定，避免字串覆蓋 dayjs 物件
-            const { purchase_date, optimal_drinking_start, optimal_drinking_end, ...restData } = data;
+            // 填入表單 - 只設定表單需要的欄位，避免額外欄位造成問題
             form.setFieldsValue({
-                ...restData,
+                name: data.name,
+                wine_type: data.wine_type,
+                brand: data.brand,
+                vintage: data.vintage,
+                region: data.region,
+                country: data.country,
+                abv: data.abv,
+                quantity: data.quantity,
+                preservation_type: data.preservation_type,
+                remaining_amount: data.remaining_amount,
                 price: data.purchase_price,
-                purchase_date: purchase_date ? dayjs(purchase_date) : null,
-                optimal_drinking_start: optimal_drinking_start ? dayjs(optimal_drinking_start) : null,
-                optimal_drinking_end: optimal_drinking_end ? dayjs(optimal_drinking_end) : null,
+                purchase_date: data.purchase_date ? dayjs(data.purchase_date) : null,
+                optimal_drinking_start: data.optimal_drinking_start ? dayjs(data.optimal_drinking_start) : null,
+                optimal_drinking_end: data.optimal_drinking_end ? dayjs(data.optimal_drinking_end) : null,
+                storage_location: data.storage_location,
+                notes: data.notes,
+                // 品飲筆記欄位
+                rating: data.rating,
+                review: data.review,
+                aroma: data.aroma,
+                palate: data.palate,
+                finish: data.finish,
+                // 風味分析欄位
+                acidity: data.acidity ?? 3,
+                tannin: data.tannin ?? 3,
+                body: data.body ?? 3,
+                sweetness: data.sweetness ?? 3,
+                alcohol_feel: data.alcohol_feel ?? 3,
             });
         } catch (error) {
             console.error('載入酒款失敗:', error);
