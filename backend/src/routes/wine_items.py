@@ -98,6 +98,8 @@ class WineItemCreate(BaseModel):
 
 class WineItemUpdate(BaseModel):
     """更新酒款的請求資料"""
+    model_config = {"extra": "ignore"}  # 忽略未知欄位，避免 422 錯誤
+
     name: Optional[str] = None
     wine_type: Optional[str] = None
     brand: Optional[str] = None
@@ -112,8 +114,12 @@ class WineItemUpdate(BaseModel):
 
     preservation_type: Optional[str] = None
     remaining_amount: Optional[str] = None
+    disposition: Optional[str] = None
     purchase_price: Optional[float] = None
     retail_price: Optional[float] = None
+    purchase_date: Optional[str] = None
+    optimal_drinking_start: Optional[str] = None
+    optimal_drinking_end: Optional[str] = None
     storage_location: Optional[str] = None
     storage_temp: Optional[str] = None
     notes: Optional[str] = None
