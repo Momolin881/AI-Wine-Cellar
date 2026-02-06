@@ -254,13 +254,14 @@ function EditWineItem() {
             const data = await apiClient.get(`/wine-items/${id}`);
             setItem(data);
 
-            // 填入表單
+            // 填入表單 - 排除日期欄位後再設定，避免字串覆蓋 dayjs 物件
+            const { purchase_date, optimal_drinking_start, optimal_drinking_end, ...restData } = data;
             form.setFieldsValue({
-                ...data,
+                ...restData,
                 price: data.purchase_price,
-                purchase_date: data.purchase_date ? dayjs(data.purchase_date) : null,
-                optimal_drinking_start: data.optimal_drinking_start ? dayjs(data.optimal_drinking_start) : null,
-                optimal_drinking_end: data.optimal_drinking_end ? dayjs(data.optimal_drinking_end) : null,
+                purchase_date: purchase_date ? dayjs(purchase_date) : null,
+                optimal_drinking_start: optimal_drinking_start ? dayjs(optimal_drinking_start) : null,
+                optimal_drinking_end: optimal_drinking_end ? dayjs(optimal_drinking_end) : null,
             });
         } catch (error) {
             console.error('載入酒款失敗:', error);
