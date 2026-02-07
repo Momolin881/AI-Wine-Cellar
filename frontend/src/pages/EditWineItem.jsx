@@ -412,7 +412,10 @@ function EditWineItem() {
 
             const data = await apiClient.post(`/wine-items/${id}/open`);
             setItem(data);
-            form.setFieldsValue(data);
+            // 只更新必要的欄位，避免日期字串造成 DatePicker 錯誤
+            form.setFieldsValue({
+                remaining_amount: data.remaining_amount,
+            });
             message.success('🍾 蹦！已成功開瓶！');
         } catch (error) {
             message.error('操作失敗');
@@ -457,7 +460,10 @@ function EditWineItem() {
         try {
             const data = await apiClient.post(`/wine-items/${id}/update-remaining?remaining=${remaining}`);
             setItem(data);
-            form.setFieldsValue(data);
+            // 只更新必要的欄位，避免日期字串造成 DatePicker 錯誤
+            form.setFieldsValue({
+                remaining_amount: data.remaining_amount,
+            });
             message.success('已更新剩餘量');
         } catch (error) {
             message.error('操作失敗');
