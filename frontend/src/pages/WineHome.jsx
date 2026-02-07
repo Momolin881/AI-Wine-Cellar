@@ -69,6 +69,10 @@ function WineHome() {
     });
 
     const wineTypes = ['紅酒', '白酒', '氣泡酒', '香檳', '威士忌', '白蘭地', '清酒', '啤酒', '其他'];
+    const dispositionFilters = [
+        { key: 'gift', label: '🎁 送禮', color: '#f06595' },
+        { key: 'collection', label: '📦 收藏', color: '#fab005' },
+    ];
 
     // 下拉刷新處理
     const handleTouchStart = useCallback((e) => {
@@ -129,11 +133,23 @@ function WineHome() {
 
             // 取得酒款列表（只取在庫的）
             const params = { status: 'active' };
-            if (wineTypeFilter !== 'all') {
+
+            // 判斷是用途篩選還是酒類篩選
+            if (wineTypeFilter === 'gift' || wineTypeFilter === 'collection') {
+                // 用途篩選：前端過濾
+                // API 不支援 disposition 參數，所以先取全部再過濾
+            } else if (wineTypeFilter !== 'all') {
                 params.wine_type = wineTypeFilter;
             }
 
-            const itemsData = await getFoodItems(params);
+            let itemsData = await getFoodItems(params);
+
+            // 前端過濾用途
+            if (wineTypeFilter === 'gift') {
+                itemsData = itemsData.filter(item => item.disposition === 'gift');
+            } else if (wineTypeFilter === 'collection') {
+                itemsData = itemsData.filter(item => item.disposition === 'collection');
+            }
 
             if (!Array.isArray(itemsData)) {
                 console.error('API Error: Response is not an array', itemsData);
@@ -369,8 +385,9 @@ function WineHome() {
                     />
                 </div>
 
-                {/* 酒類篩選標籤 */}
+                {/* 篩選標籤 */}
                 <div style={{ marginBottom: 16, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {/* 全部 */}
                     <Tag
                         onClick={() => setWineTypeFilter('all')}
                         style={{
@@ -384,6 +401,32 @@ function WineHome() {
                     >
                         全部
                     </Tag>
+
+                    {/* 用途篩選：送禮、收藏 */}
+                    {dispositionFilters.map(({ key, label, color }) => {
+                        const isActive = wineTypeFilter === key;
+                        const hasItems = wineItems.some(item => item.disposition === key);
+                        return (
+                            <Tag
+                                key={key}
+                                onClick={() => setWineTypeFilter(key)}
+                                style={{
+                                    cursor: 'pointer',
+                                    borderRadius: 16,
+                                    background: isActive ? color : theme.card,
+                                    color: isActive ? '#fff' : theme.text,
+                                    border: `1px solid ${isActive ? color : theme.border}`,
+                                    boxShadow: hasItems && isChill
+                                        ? `0 0 8px 2px ${isActive ? color : color}40`
+                                        : hasItems ? `0 0 8px 2px ${color}60` : 'none',
+                                }}
+                            >
+                                {label}
+                            </Tag>
+                        );
+                    })}
+
+                    {/* 酒類篩選 */}
                     {wineTypes.map(type => {
                         const hasWines = availableWineTypes.has(type);
                         const isActive = wineTypeFilter === type;

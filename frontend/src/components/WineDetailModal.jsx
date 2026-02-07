@@ -167,6 +167,22 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
 
     if (!wine) return null;
 
+    // 標記為已送出
+    const handleMarkAsGifted = async () => {
+        try {
+            setLoading(true);
+            const updatedWine = await apiClient.post(`/wine-items/${wine.id}/change-status?new_status=gifted`);
+            message.success('🎁 已標記為送出！');
+            onUpdate(updatedWine);
+            onClose();
+        } catch (error) {
+            console.error('Mark as gifted error:', error);
+            message.error('操作失敗');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleOpenBottle = async () => {
         try {
             setLoading(true);
@@ -441,31 +457,84 @@ function WineDetailModal({ visible, wine, onClose, onUpdate }) {
                     </div>
                 )}
 
-                {/* Open/Status Section */}
+                {/* Open/Status Section - 根據用途顯示不同按鈕 */}
                 {!isOpened ? (
                     <div style={{ textAlign: 'center', marginTop: 32, marginBottom: 16 }}>
-                        <Button
-                            type="primary"
-                            size="large"
-                            loading={loading}
-                            onClick={handleOpenBottle}
-                            style={{
-                                background: 'linear-gradient(45deg, #c9a227, #eebf38)',
-                                border: 'none',
-                                height: 56,
-                                width: '100%',
-                                borderRadius: 28,
-                                fontSize: 18,
-                                fontWeight: 'bold',
-                                color: '#000',
-                                boxShadow: '0 4px 15px rgba(201, 162, 39, 0.4)'
-                            }}
-                        >
-                            🍾 開瓶慶祝
-                        </Button>
-                        <Text style={{ display: 'block', marginTop: 12, color: '#666', fontSize: 12 }}>
-                            點擊即刻享受，並開始適飲期計時
-                        </Text>
+                        {/* 送禮：顯示已送出按鈕 */}
+                        {wine.disposition === 'gift' ? (
+                            <>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    loading={loading}
+                                    onClick={handleMarkAsGifted}
+                                    style={{
+                                        background: 'linear-gradient(45deg, #f06595, #e64980)',
+                                        border: 'none',
+                                        height: 56,
+                                        width: '100%',
+                                        borderRadius: 28,
+                                        fontSize: 18,
+                                        fontWeight: 'bold',
+                                        color: '#fff',
+                                        boxShadow: '0 4px 15px rgba(240, 101, 149, 0.4)'
+                                    }}
+                                >
+                                    🎁 標記已送出
+                                </Button>
+                                <Text style={{ display: 'block', marginTop: 12, color: '#666', fontSize: 12 }}>
+                                    送出後將從庫存中移除
+                                </Text>
+                            </>
+                        ) : wine.disposition === 'collection' ? (
+                            /* 收藏：無按鈕，顯示提示 */
+                            <div style={{
+                                background: 'rgba(250, 176, 5, 0.1)',
+                                borderRadius: 12,
+                                padding: 20,
+                                border: '1px solid rgba(250, 176, 5, 0.3)'
+                            }}>
+                                <Text style={{ color: '#fab005', fontSize: 14 }}>
+                                    📦 此酒款為收藏用途
+                                </Text>
+                                <Text style={{ display: 'block', marginTop: 8, color: '#888', fontSize: 12 }}>
+                                    如需開瓶，請先至編輯頁面將用途改為「自飲」
+                                </Text>
+                                <Button
+                                    type="link"
+                                    onClick={() => navigate(`/wine/${wine.id}/edit`)}
+                                    style={{ color: '#fab005', padding: 0, marginTop: 8 }}
+                                >
+                                    前往編輯 →
+                                </Button>
+                            </div>
+                        ) : (
+                            /* 自飲（或其他）：顯示開瓶按鈕 */
+                            <>
+                                <Button
+                                    type="primary"
+                                    size="large"
+                                    loading={loading}
+                                    onClick={handleOpenBottle}
+                                    style={{
+                                        background: 'linear-gradient(45deg, #c9a227, #eebf38)',
+                                        border: 'none',
+                                        height: 56,
+                                        width: '100%',
+                                        borderRadius: 28,
+                                        fontSize: 18,
+                                        fontWeight: 'bold',
+                                        color: '#000',
+                                        boxShadow: '0 4px 15px rgba(201, 162, 39, 0.4)'
+                                    }}
+                                >
+                                    🍾 開瓶慶祝
+                                </Button>
+                                <Text style={{ display: 'block', marginTop: 12, color: '#666', fontSize: 12 }}>
+                                    點擊即刻享受，並開始適飲期計時
+                                </Text>
+                            </>
+                        )}
                     </div>
                 ) : (
                     <div style={{ marginTop: 20 }}>
