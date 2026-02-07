@@ -273,6 +273,16 @@ def _safe_get(item, attr, default=None):
         return default
 
 
+def _safe_int(value):
+    """安全轉換為整數，處理浮點數轉換"""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+
 def _build_wine_item_response(item: WineItem) -> WineItemResponse:
     """將 WineItem ORM 物件轉換為 WineItemResponse"""
     return WineItemResponse(
@@ -305,17 +315,17 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
         cloudinary_public_id=item.cloudinary_public_id,
         notes=item.notes,
         tasting_notes=item.tasting_notes,
-        rating=_safe_get(item, 'rating', None),
+        rating=_safe_int(_safe_get(item, 'rating', None)),
         review=_safe_get(item, 'review', None),
         flavor_tags=_safe_get(item, 'flavor_tags', None),
         aroma=_safe_get(item, 'aroma', None),
         palate=_safe_get(item, 'palate', None),
         finish=_safe_get(item, 'finish', None),
-        acidity=_safe_get(item, 'acidity', None),
-        tannin=_safe_get(item, 'tannin', None),
-        body=_safe_get(item, 'body', None),
-        sweetness=_safe_get(item, 'sweetness', None),
-        alcohol_feel=_safe_get(item, 'alcohol_feel', None),
+        acidity=_safe_int(_safe_get(item, 'acidity', None)),
+        tannin=_safe_int(_safe_get(item, 'tannin', None)),
+        body=_safe_int(_safe_get(item, 'body', None)),
+        sweetness=_safe_int(_safe_get(item, 'sweetness', None)),
+        alcohol_feel=_safe_int(_safe_get(item, 'alcohol_feel', None)),
         recognized_by_ai=item.recognized_by_ai,
         status=item.status or 'active',
         created_at=item.created_at,
