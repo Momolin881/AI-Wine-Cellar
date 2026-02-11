@@ -199,6 +199,7 @@ const CreateInvitation = () => {
             // 呼叫真實後端 API - 不使用 fallback，確保創建真實邀請
             console.log("Payload being sent:", payload);
             invitationData = await createInvitation(payload);
+            console.log("API 回應數據:", invitationData);
             invitationId = invitationData.id;
             console.log("3. 後端創建成功，邀請 ID:", invitationId);
             
