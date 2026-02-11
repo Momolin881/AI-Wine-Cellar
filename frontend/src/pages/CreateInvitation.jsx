@@ -196,25 +196,15 @@ const CreateInvitation = () => {
             let invitationId;
             let invitationData;
             
-            try {
-                // 先嘗試呼叫真實後端 API
-                console.log("Payload being sent:", payload);
-                invitationData = await createInvitation(payload);
-                invitationId = invitationData.id;
-                console.log("3. 後端創建成功，邀請 ID:", invitationId);
-            } catch (apiError) {
-                console.error("4. 後端 API 失敗詳細錯誤:", {
-                    message: apiError.message,
-                    status: apiError.response?.status,
-                    statusText: apiError.response?.statusText,
-                    data: apiError.response?.data,
-                    config: apiError.config
-                });
-                
-                // Fallback: 確保在 LINE App 中發送功能可用
-                const mockData = { id: Date.now() };
-                invitationId = mockData.id;
-                console.log("5. 使用模擬邀請 ID:", invitationId);
+            // 呼叫真實後端 API - 不使用 fallback，確保創建真實邀請
+            console.log("Payload being sent:", payload);
+            invitationData = await createInvitation(payload);
+            invitationId = invitationData.id;
+            console.log("3. 後端創建成功，邀請 ID:", invitationId);
+            
+            // 驗證 ID 是真實的（不是時間戳）
+            if (!invitationId || invitationId.toString().length > 10) {
+                throw new Error("Failed to create real invitation ID");
             }
 
             // 3. 使用後端相同的 Flex Message 設計（從 flex_message.py 複製）
@@ -512,8 +502,20 @@ const CreateInvitation = () => {
             }
 
         } catch (err) {
-            console.error(err);
-            message.error(err.message || "建立失敗，請稍後再試");
+            console.error("=== 創建邀請失敗 ===", {
+                error: err,
+                message: err.message,
+                response: err.response,
+                status: err.response?.status,
+                statusText: err.response?.statusText
+            });
+            
+            // 顯示具體的錯誤信息給用戶
+            const errorMessage = err.response?.data?.detail 
+                || err.message 
+                || "建立失敗，請稍後再試";
+            
+            message.error(`創建邀請失敗: ${errorMessage}`);
         } finally {
             setSubmitting(false);
         }
