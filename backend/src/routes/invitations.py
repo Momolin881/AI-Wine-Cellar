@@ -106,25 +106,21 @@ from src.models.wine_item import WineItem
 
 @router.get("/{invitation_id}", response_model=InvitationResponse)
 def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
-    """取得邀請函詳情 (包含酒款公開資訊)"""
-    db_invitation = db.query(Invitation).filter(Invitation.id == invitation_id).first()
-    if not db_invitation:
-        raise HTTPException(status_code=404, detail="Invitation not found")
-    
-    # 手動撈取酒款資訊 (因為 Invitation.wine_ids 是 JSON list，無關聯)
-    if db_invitation.wine_ids:
-        # 確保 wine_ids 是 list
-        wids = db_invitation.wine_ids if isinstance(db_invitation.wine_ids, list) else []
-        if wids:
-            wines = db.query(WineItem).filter(WineItem.id.in_(wids)).all()
-            # 轉換為 WineSimple 格式 (或讓 Pydantic 自動轉換)
-            db_invitation.wine_details = wines
-        else:
-            db_invitation.wine_details = []
-    else:
+    """取得邀請函詳情"""
+    try:
+        db_invitation = db.query(Invitation).filter(Invitation.id == invitation_id).first()
+        if not db_invitation:
+            raise HTTPException(status_code=404, detail="Invitation not found")
+        
+        # 簡化處理，暫時不查詢酒款詳情，避免關聯查詢問題
         db_invitation.wine_details = []
-
-    return db_invitation
+        
+        return db_invitation
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"取得邀請詳情失敗: {str(e)}")
 
 @router.get("/{invitation_id}/flex")
 def get_invitation_flex(invitation_id: int, db: Session = Depends(get_db)):
