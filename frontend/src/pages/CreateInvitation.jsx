@@ -259,11 +259,39 @@ const CreateInvitation = () => {
                         stack: pickerError.stack
                     });
 
-                    // Show explicit error to user for debugging
-                    alert(`發送失敗: ${pickerError.code || pickerError.message}\n請確認 LINE App 為最新版本，且已允許傳訊權限。`);
+                    // 更詳細的錯誤處理和用戶提示
+                    let errorMessage = "發送失敗";
+                    let solution = "請稍後再試";
 
-                    // Fallback
-                    message.success("建立成功！請手動複製連結分享");
+                    if (pickerError.message?.includes('network') || pickerError.code === 'NETWORK_ERROR') {
+                        errorMessage = "網路連線錯誤";
+                        solution = "請檢查網路連線後重試，或使用手動複製連結分享";
+                    } else if (pickerError.code === 'FORBIDDEN' || pickerError.code === 'UNAUTHORIZED') {
+                        errorMessage = "權限不足";
+                        solution = "請確認 LINE App 為最新版本，且已允許傳訊權限";
+                    } else if (pickerError.code === 'INVALID_MESSAGE') {
+                        errorMessage = "訊息格式錯誤";
+                        solution = "請嘗試使用測試模式發送 (URL加上?test=1)";
+                    }
+
+                    alert(`${errorMessage}: ${pickerError.code || pickerError.message}\n\n${solution}`);
+
+                    // Provide manual sharing option
+                    const invitationLink = `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/invitation/${invitationId}`;
+                    const manualShare = window.confirm(
+                        "是否要複製邀請連結，手動分享給朋友？"
+                    );
+                    
+                    if (manualShare) {
+                        try {
+                            await navigator.clipboard.writeText(invitationLink);
+                            message.success("連結已複製到剪貼簿！請貼上分享給朋友");
+                        } catch (clipboardErr) {
+                            prompt("請複製以下連結分享:", invitationLink);
+                        }
+                    } else {
+                        message.info("建立成功！您可稍後手動分享邀請");
+                    }
                 }
             } else {
                 // Fallback: Copy link

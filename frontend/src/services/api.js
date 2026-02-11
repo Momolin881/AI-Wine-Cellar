@@ -18,6 +18,13 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
+  // 修復 HTTPS 請求問題
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  },
+  // 確保跨域請求正確處理
+  withCredentials: false
 });
 
 // 請求攔截器：自動設置 Content-Type（FormData 除外）
@@ -64,9 +71,25 @@ apiClient.interceptors.response.use(
         window.location.href = '/';
       }
     } else if (error.request) {
-      // 請求已發送但無回應
-      console.error('Network Error:', error.request);
-      console.error('Error details:', error.message, error.code);
+      // 請求已發送但無回應 (網路錯誤)
+      console.error('Network Error - Request sent but no response:', error.request);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        timeout: error.timeout,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL
+        }
+      });
+      
+      // 給用戶更友好的錯誤訊息
+      if (error.code === 'ENOTFOUND' || error.code === 'NETWORK_ERROR') {
+        error.message = '網路連線失敗，請檢查網路連線';
+      } else if (error.code === 'ECONNABORTED') {
+        error.message = '請求超時，請稍後再試';
+      }
     } else {
       // 其他錯誤
       console.error('Error:', error.message);
