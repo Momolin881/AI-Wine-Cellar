@@ -200,12 +200,23 @@ const CreateInvitation = () => {
             console.log("Payload being sent:", payload);
             invitationData = await createInvitation(payload);
             console.log("API 回應數據:", invitationData);
+            
+            // 檢查 API 回應是否有效
+            if (!invitationData) {
+                throw new Error("API 返回空數據");
+            }
+            
+            if (!invitationData.id) {
+                console.error("API 回應缺少 id 字段:", invitationData);
+                throw new Error("API 返回數據缺少邀請 ID");
+            }
+            
             invitationId = invitationData.id;
             console.log("3. 後端創建成功，邀請 ID:", invitationId);
             
             // 驗證 ID 是真實的（不是時間戳）
-            if (!invitationId || invitationId.toString().length > 10) {
-                throw new Error("Failed to create real invitation ID");
+            if (invitationId.toString().length > 10) {
+                throw new Error("獲取到的不是真實邀請 ID");
             }
 
             // 3. 使用後端相同的 Flex Message 設計（從 flex_message.py 複製）
