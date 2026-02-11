@@ -198,11 +198,19 @@ const CreateInvitation = () => {
             
             try {
                 // 先嘗試呼叫真實後端 API
+                console.log("Payload being sent:", payload);
                 invitationData = await createInvitation(payload);
                 invitationId = invitationData.id;
                 console.log("3. 後端創建成功，邀請 ID:", invitationId);
             } catch (apiError) {
-                console.warn("4. 後端 API 失敗 (LINE App 限制)，使用模擬資料:", apiError.message);
+                console.error("4. 後端 API 失敗詳細錯誤:", {
+                    message: apiError.message,
+                    status: apiError.response?.status,
+                    statusText: apiError.response?.statusText,
+                    data: apiError.response?.data,
+                    config: apiError.config
+                });
+                
                 // Fallback: 確保在 LINE App 中發送功能可用
                 const mockData = { id: Date.now() };
                 invitationId = mockData.id;
