@@ -84,7 +84,7 @@ from src.routes import wine_items, wine_cellars
 # 功能路由
 
 # 功能路由
-from src.routes import line_webhook, notifications, budget, recipes, fridge_members, fridge_export, invitations
+from src.routes import line_webhook, notifications, budget, recipes, fridge_members, fridge_export, invitations, admin
 
 
 logger = logging.getLogger(__name__)
@@ -183,3 +183,4 @@ app.include_router(recipes.router, prefix="/api/v1", tags=["Recipes"])
 # app.include_router(fridge_members.router, prefix="/api/v1", tags=["Cellar Members"])  # 暫時停用
 # app.include_router(fridge_export.router, prefix="/api/v1", tags=["Cellar Export"])  # 暫時停用
 app.include_router(invitations.router, prefix="/api/v1", tags=["Invitations"])
+app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
