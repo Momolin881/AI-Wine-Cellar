@@ -202,8 +202,22 @@ const CreateInvitation = () => {
                                 type: "text", 
                                 text: `📍 ${previewData.location || "地點待定"}`,
                                 size: "sm",
-                                color: "#666666"
-                            }
+                                color: "#666666",
+                                action: previewData.location ? {
+                                    type: "uri",
+                                    uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(previewData.location)}`
+                                } : undefined
+                            },
+                            ...(previewData.location ? [{
+                                type: "button",
+                                action: {
+                                    type: "uri",
+                                    label: "🗺️ 開啟地圖",
+                                    uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(previewData.location)}`
+                                },
+                                style: "secondary",
+                                height: "sm"
+                            }] : [])
                         ]
                     }
                 }
