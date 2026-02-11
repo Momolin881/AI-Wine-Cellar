@@ -33,6 +33,17 @@ const { TextArea } = Input;
 const CreateInvitation = () => {
     const navigate = useNavigate();
     const { theme } = useMode();
+    
+    // 生成行事曆 URL 的函數
+    const generateCalendarUrl = (eventData) => {
+        const startDate = eventData.event_time.format('YYYYMMDDTHHmmss');
+        const endDate = eventData.event_time.add(3, 'hour').format('YYYYMMDDTHHmmss'); // 預設 3 小時活動
+        const title = encodeURIComponent(eventData.title);
+        const location = encodeURIComponent(eventData.location || '');
+        const description = encodeURIComponent(eventData.description || '來次美好的品酒聚會！');
+        
+        return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&location=${location}&details=${description}`;
+    };
     const [form] = Form.useForm();
     const [availableWines, setAvailableWines] = useState([]);
     const [selectedWines, setSelectedWines] = useState([]);
@@ -170,7 +181,7 @@ const CreateInvitation = () => {
 
             console.log("因 LINE App 限制，使用模擬邀請 ID:", invitationId);
 
-            // 2. 建立簡化的 Flex Message（本地生成）
+            // 2. 建立 Flex Message（按照原始設計）
             const flexMessage = {
                 type: "flex",
                 altText: `🍷 ${previewData.title}`,
@@ -185,39 +196,162 @@ const CreateInvitation = () => {
                     body: {
                         type: "box",
                         layout: "vertical",
+                        spacing: "md",
                         contents: [
                             {
                                 type: "text",
                                 text: previewData.title,
                                 weight: "bold",
-                                size: "xl"
+                                size: "xl",
+                                color: "#ffffff"
+                            },
+                            {
+                                type: "box",
+                                layout: "vertical",
+                                spacing: "sm",
+                                contents: [
+                                    {
+                                        type: "box",
+                                        layout: "baseline",
+                                        spacing: "sm",
+                                        contents: [
+                                            {
+                                                type: "icon",
+                                                url: "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png",
+                                                size: "sm"
+                                            },
+                                            {
+                                                type: "text",
+                                                text: `${previewData.event_time.format('YYYY年MM月DD日 (dddd)')}`,
+                                                size: "sm",
+                                                color: "#999999"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: "text",
+                                        text: previewData.event_time.format('HH:mm'),
+                                        size: "sm",
+                                        color: "#999999"
+                                    },
+                                    ...(previewData.location ? [{
+                                        type: "box",
+                                        layout: "baseline",
+                                        spacing: "sm",
+                                        contents: [
+                                            {
+                                                type: "icon",
+                                                url: "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png",
+                                                size: "sm"
+                                            },
+                                            {
+                                                type: "text",
+                                                text: previewData.location,
+                                                size: "sm",
+                                                color: "#999999",
+                                                action: {
+                                                    type: "uri",
+                                                    uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(previewData.location)}`
+                                                }
+                                            }
+                                        ]
+                                    }] : [])
+                                ]
                             },
                             {
                                 type: "text",
-                                text: `📅 ${previewData.event_time.format('YYYY-MM-DD HH:mm')}`,
-                                size: "sm",
-                                color: "#666666"
+                                text: "今日酒單",
+                                size: "md",
+                                color: "#c9a227",
+                                weight: "bold",
+                                margin: "lg"
                             },
                             {
-                                type: "text", 
-                                text: `📍 ${previewData.location || "地點待定"}`,
+                                type: "text",
+                                text: previewData.description || "來次美好的品酒聚會吧！",
                                 size: "sm",
-                                color: "#666666",
-                                action: previewData.location ? {
-                                    type: "uri",
-                                    uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(previewData.location)}`
-                                } : undefined
+                                color: "#999999",
+                                wrap: true
                             },
-                            ...(previewData.location ? [{
+                            {
+                                type: "separator",
+                                margin: "lg"
+                            },
+                            {
+                                type: "box",
+                                layout: "vertical",
+                                spacing: "sm",
+                                margin: "lg",
+                                contents: [
+                                    {
+                                        type: "text",
+                                        text: "參加者",
+                                        size: "sm",
+                                        color: "#c9a227",
+                                        weight: "bold"
+                                    },
+                                    {
+                                        type: "box",
+                                        layout: "horizontal",
+                                        spacing: "xs",
+                                        contents: [
+                                            // 這裡會顯示參加者的頭像
+                                            // 目前先顯示一個預設的參加者圖示
+                                            {
+                                                type: "box",
+                                                layout: "vertical",
+                                                contents: [
+                                                    {
+                                                        type: "image",
+                                                        url: "https://via.placeholder.com/40x40/c9a227/ffffff?text=%F0%9F%91%A4",
+                                                        size: "sm",
+                                                        aspectRatio: "1:1",
+                                                        aspectMode: "cover",
+                                                        cornerRadius: "50px"
+                                                    }
+                                                ],
+                                                width: "40px",
+                                                height: "40px"
+                                            },
+                                            {
+                                                type: "text",
+                                                text: "還沒有人報名\n成為第一個參加者！",
+                                                size: "xs",
+                                                color: "#999999",
+                                                flex: 1,
+                                                gravity: "center"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    footer: {
+                        type: "box",
+                        layout: "horizontal",
+                        spacing: "sm",
+                        contents: [
+                            {
                                 type: "button",
                                 action: {
                                     type: "uri",
-                                    label: "🗺️ 開啟地圖",
-                                    uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(previewData.location)}`
+                                    label: "📅 加入行事曆",
+                                    uri: generateCalendarUrl(previewData)
                                 },
                                 style: "secondary",
-                                height: "sm"
-                            }] : [])
+                                color: "#666666"
+                            },
+                            {
+                                type: "button", 
+                                action: {
+                                    type: "uri",
+                                    label: "✅ 我會參加",
+                                    uri: `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/invitation/${invitationId}?action=join`
+                                },
+                                style: "primary",
+                                color: "#c9a227"
+                            }
                         ]
                     }
                 }
