@@ -43,6 +43,20 @@ def create_invitation(invitation: InvitationCreate, db: Session = Depends(get_db
     db.add(db_invitation)
     db.commit()
     db.refresh(db_invitation)
+    
+    # 確保 attendees 是 list 格式，避免序列化錯誤
+    if isinstance(db_invitation.attendees, str):
+        import json
+        try:
+            db_invitation.attendees = json.loads(db_invitation.attendees)
+        except:
+            db_invitation.attendees = []
+    elif db_invitation.attendees is None:
+        db_invitation.attendees = []
+        
+    # 確保 wine_details 存在
+    db_invitation.wine_details = []
+    
     return db_invitation
 
 @router.get("/create-via-get", response_model=InvitationResponse, status_code=status.HTTP_201_CREATED)
@@ -81,6 +95,20 @@ def create_invitation_via_get(
         db.add(db_invitation)
         db.commit()
         db.refresh(db_invitation)
+        
+        # 確保 attendees 是 list 格式，避免序列化錯誤
+        if isinstance(db_invitation.attendees, str):
+            import json
+            try:
+                db_invitation.attendees = json.loads(db_invitation.attendees)
+            except:
+                db_invitation.attendees = []
+        elif db_invitation.attendees is None:
+            db_invitation.attendees = []
+            
+        # 確保 wine_details 存在
+        db_invitation.wine_details = []
+        
         return db_invitation
         
     except json.JSONDecodeError:
