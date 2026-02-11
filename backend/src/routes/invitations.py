@@ -115,6 +115,16 @@ def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
         # 簡化處理，暫時不查詢酒款詳情，避免關聯查詢問題
         db_invitation.wine_details = []
         
+        # 確保 attendees 是 list 格式，避免 JSON 轉換問題
+        if isinstance(db_invitation.attendees, str):
+            import json
+            try:
+                db_invitation.attendees = json.loads(db_invitation.attendees)
+            except:
+                db_invitation.attendees = []
+        elif db_invitation.attendees is None:
+            db_invitation.attendees = []
+        
         return db_invitation
         
     except HTTPException:
