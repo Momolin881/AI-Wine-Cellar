@@ -491,9 +491,16 @@ export const createInvitation = (data) => {
   params.append('theme_image_url', data.theme_image_url || '');
   
   console.log("API: 嘗試 GET 請求創建邀請");
-  return apiClient.get(`/invitations/create-via-get?${params.toString()}`)
+  console.log("API: 請求 URL:", `${API_BASE_URL}/invitations/create-via-get?${params.toString()}`);
+  
+  return apiClient.get(`/invitations/create-via-get?${params.toString()}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
     .then(response => {
-      console.log("API: GET 請求成功");
+      console.log("API: GET 請求成功", response.data);
       return response.data;
     })
     .catch(error => {

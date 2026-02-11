@@ -25,6 +25,7 @@ import {
 import dayjs from 'dayjs';
 import { getFoodItems, createInvitation, uploadInvitationImage } from '../services/api';
 import { useMode } from '../contexts/ModeContext';
+import PlacesAutocomplete from '../components/PlacesAutocomplete';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -553,10 +554,18 @@ const CreateInvitation = () => {
                         label={<span style={{ color: '#aaa' }}>地點</span>}
                         name="location"
                     >
-                        <Input
-                            prefix={<EnvironmentOutlined style={{ color: '#888' }} />}
-                            placeholder="輸入地點"
+                        <PlacesAutocomplete
+                            placeholder="輸入地點 (自動搜尋建議)"
                             style={{ background: theme.card, border: '1px solid #444', color: '#fff' }}
+                            theme={theme}
+                            onPlaceSelect={(placeData) => {
+                                console.log('選擇的地點:', placeData);
+                                // 可以儲存更多地點資訊，如座標等
+                                setFormData(prev => ({
+                                    ...prev,
+                                    locationDetails: placeData
+                                }));
+                            }}
                         />
                     </Form.Item>
 
