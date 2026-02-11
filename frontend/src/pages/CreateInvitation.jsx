@@ -23,7 +23,7 @@ import {
     UploadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { getFoodItems, createInvitation, getInvitationFlex, uploadInvitationImage } from '../services/api';
+import { getFoodItems, createInvitation, uploadInvitationImage } from '../services/api';
 import { useMode } from '../contexts/ModeContext';
 
 const { Content } = Layout;
@@ -179,7 +179,7 @@ const CreateInvitation = () => {
         setSubmitting(true);
         try {
             console.log("1. 開始處理邀請資料...");
-            // 1. Call Backend API to create invitation
+            // 1. 準備邀請資料
             const payload = {
                 title: previewData.title,
                 event_time: previewData.event_time.toISOString(), // Antd DatePicker returns dayjs object
@@ -190,18 +190,29 @@ const CreateInvitation = () => {
                 theme_image_url: previewData.theme_image_url
             };
 
-            // 由於 LINE App 限制，使用模擬資料，但套用後端的 Flex Message 設計
-            console.log("2. 建立模擬邀請資料...");
-            const mockData = { id: Date.now() }; // 使用時間戳作為臨時 ID
-            const invitationId = mockData.id;
+            // 2. 呼叫後端 API 創建真實邀請
+            console.log("2. 呼叫後端 API 創建邀請...");
+            let invitationId;
+            let invitationData;
+            
+            try {
+                // 嘗試呼叫後端 API
+                invitationData = await createInvitation(payload);
+                invitationId = invitationData.id;
+                console.log("3. 後端創建成功，邀請 ID:", invitationId);
+            } catch (apiError) {
+                console.warn("4. 後端 API 失敗，使用模擬資料:", apiError.message);
+                // Fallback: 如果後端失敗，仍使用模擬資料確保發送功能可用
+                const mockData = { id: Date.now() };
+                invitationId = mockData.id;
+                console.log("5. 模擬邀請 ID:", invitationId);
+            }
 
-            console.log("3. 模擬邀請 ID:", invitationId);
-
-            // 2. 使用後端相同的 Flex Message 設計（從 flex_message.py 複製）
-            console.log("4. 準備建立 Flex Message...");
+            // 3. 使用後端相同的 Flex Message 設計（從 flex_message.py 複製）
+            console.log("6. 準備建立 Flex Message...");
             const timeStr = previewData.event_time.format('YYYY/MM/DD HH:mm');
             const detailUrl = `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/invitation/${invitationId}`;
-            console.log("5. detailUrl:", detailUrl);
+            console.log("7. detailUrl:", detailUrl);
             
             const flexMessage = {
                 type: "flex",
