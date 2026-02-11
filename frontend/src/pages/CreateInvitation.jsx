@@ -34,6 +34,19 @@ const CreateInvitation = () => {
     const navigate = useNavigate();
     const { theme } = useMode();
     
+    // 開發環境加入 vConsole
+    useEffect(() => {
+        if (window.location.search.includes('test=1') && !window.VConsole) {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/vconsole@3.15.0/dist/vconsole.min.js';
+            script.onload = () => {
+                window.vConsole = new window.VConsole();
+                console.log("vConsole 已載入");
+            };
+            document.head.appendChild(script);
+        }
+    }, []);
+    
     // 生成行事曆 URL 的函數
     const generateCalendarUrl = (eventData) => {
         const startDate = eventData.event_time.format('YYYYMMDDTHHmmss');
@@ -162,8 +175,10 @@ const CreateInvitation = () => {
     };
 
     const handleRealShare = async () => {
+        console.log("=== handleRealShare 開始執行 ===");
         setSubmitting(true);
         try {
+            console.log("1. 開始處理邀請資料...");
             // 1. Call Backend API to create invitation
             const payload = {
                 title: previewData.title,
@@ -175,184 +190,169 @@ const CreateInvitation = () => {
                 theme_image_url: previewData.theme_image_url
             };
 
-            // 由於 LINE App 限制，暫時跳過後端建立邀請
+            // 由於 LINE App 限制，使用模擬資料，但套用後端的 Flex Message 設計
+            console.log("2. 建立模擬邀請資料...");
             const mockData = { id: Date.now() }; // 使用時間戳作為臨時 ID
             const invitationId = mockData.id;
 
-            console.log("因 LINE App 限制，使用模擬邀請 ID:", invitationId);
+            console.log("3. 模擬邀請 ID:", invitationId);
 
-            // 2. 建立 Flex Message（按照原始設計）
+            // 2. 使用後端相同的 Flex Message 設計（從 flex_message.py 複製）
+            console.log("4. 準備建立 Flex Message...");
+            const timeStr = previewData.event_time.format('YYYY/MM/DD HH:mm');
+            const detailUrl = `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/invitation/${invitationId}`;
+            console.log("5. detailUrl:", detailUrl);
+            
             const flexMessage = {
                 type: "flex",
-                altText: `🍷 ${previewData.title}`,
+                altText: `🍷 ${previewData.title} — 品酒邀請`,
                 contents: {
                     type: "bubble",
+                    size: "mega",
                     hero: {
                         type: "image",
                         url: previewData.theme_image_url,
                         size: "full",
-                        aspectRatio: "20:13"
+                        aspectRatio: "20:13",
+                        aspectMode: "cover",
+                        action: {
+                            type: "uri",
+                            uri: detailUrl
+                        }
                     },
                     body: {
                         type: "box",
                         layout: "vertical",
-                        spacing: "md",
+                        backgroundColor: "#2d2d2d",
+                        paddingAll: "20px",
                         contents: [
+                            {
+                                type: "text",
+                                text: "🍷 品酒邀請",
+                                size: "xs",
+                                color: "#aaaaaa"
+                            },
                             {
                                 type: "text",
                                 text: previewData.title,
                                 weight: "bold",
                                 size: "xl",
-                                color: "#ffffff"
-                            },
-                            {
-                                type: "box",
-                                layout: "vertical",
-                                spacing: "sm",
-                                contents: [
-                                    {
-                                        type: "box",
-                                        layout: "baseline",
-                                        spacing: "sm",
-                                        contents: [
-                                            {
-                                                type: "icon",
-                                                url: "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png",
-                                                size: "sm"
-                                            },
-                                            {
-                                                type: "text",
-                                                text: `${previewData.event_time.format('YYYY年MM月DD日 (dddd)')}`,
-                                                size: "sm",
-                                                color: "#999999"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: "text",
-                                        text: previewData.event_time.format('HH:mm'),
-                                        size: "sm",
-                                        color: "#999999"
-                                    },
-                                    ...(previewData.location ? [{
-                                        type: "box",
-                                        layout: "baseline",
-                                        spacing: "sm",
-                                        contents: [
-                                            {
-                                                type: "icon",
-                                                url: "https://scdn.line-apps.com/n/channel_devcenter/img/fx/review_gold_star_28.png",
-                                                size: "sm"
-                                            },
-                                            {
-                                                type: "text",
-                                                text: previewData.location,
-                                                size: "sm",
-                                                color: "#999999",
-                                                action: {
-                                                    type: "uri",
-                                                    uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(previewData.location)}`
-                                                }
-                                            }
-                                        ]
-                                    }] : [])
-                                ]
-                            },
-                            {
-                                type: "text",
-                                text: "今日酒單",
-                                size: "md",
-                                color: "#c9a227",
-                                weight: "bold",
-                                margin: "lg"
-                            },
-                            {
-                                type: "text",
-                                text: previewData.description || "來次美好的品酒聚會吧！",
-                                size: "sm",
-                                color: "#999999",
-                                wrap: true
+                                color: theme.primary,
+                                wrap: true,
+                                margin: "md"
                             },
                             {
                                 type: "separator",
-                                margin: "lg"
+                                margin: "lg",
+                                color: "#444444"
                             },
                             {
                                 type: "box",
                                 layout: "vertical",
-                                spacing: "sm",
                                 margin: "lg",
+                                spacing: "sm",
                                 contents: [
                                     {
-                                        type: "text",
-                                        text: "參加者",
-                                        size: "sm",
-                                        color: "#c9a227",
-                                        weight: "bold"
-                                    },
-                                    {
                                         type: "box",
-                                        layout: "horizontal",
-                                        spacing: "xs",
+                                        layout: "baseline",
+                                        spacing: "sm",
                                         contents: [
-                                            // 這裡會顯示參加者的頭像
-                                            // 目前先顯示一個預設的參加者圖示
                                             {
-                                                type: "box",
-                                                layout: "vertical",
-                                                contents: [
-                                                    {
-                                                        type: "image",
-                                                        url: "https://via.placeholder.com/40x40/c9a227/ffffff?text=%F0%9F%91%A4",
-                                                        size: "sm",
-                                                        aspectRatio: "1:1",
-                                                        aspectMode: "cover",
-                                                        cornerRadius: "50px"
-                                                    }
-                                                ],
-                                                width: "40px",
-                                                height: "40px"
+                                                type: "text",
+                                                text: "📅",
+                                                size: "sm",
+                                                flex: 0
                                             },
                                             {
                                                 type: "text",
-                                                text: "還沒有人報名\n成為第一個參加者！",
-                                                size: "xs",
-                                                color: "#999999",
-                                                flex: 1,
-                                                gravity: "center"
+                                                text: timeStr,
+                                                wrap: true,
+                                                color: "#eeeeee",
+                                                size: "sm",
+                                                flex: 5
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        type: "box",
+                                        layout: "baseline",
+                                        spacing: "sm",
+                                        contents: [
+                                            {
+                                                type: "text",
+                                                text: "📍",
+                                                size: "sm",
+                                                flex: 0
+                                            },
+                                            {
+                                                type: "text",
+                                                text: previewData.location || "待定",
+                                                wrap: true,
+                                                color: "#eeeeee",
+                                                size: "sm",
+                                                flex: 5,
+                                                action: previewData.location ? {
+                                                    type: "uri",
+                                                    uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(previewData.location)}`
+                                                } : undefined
                                             }
                                         ]
                                     }
                                 ]
-                            }
+                            },
+                            {
+                                type: "separator",
+                                margin: "lg",
+                                color: "#444444"
+                            },
+                            {
+                                type: "text",
+                                text: "即將品飲",
+                                weight: "bold",
+                                size: "sm",
+                                color: theme.primary,
+                                margin: "lg"
+                            },
+                            ...selectedWines.slice(0, 3).map(wineId => {
+                                const wine = availableWines.find(w => w.id === wineId);
+                                return wine ? {
+                                    type: "text",
+                                    text: `🍷 ${wine.name}`,
+                                    size: "sm",
+                                    color: "#eeeeee",
+                                    wrap: true,
+                                    margin: "sm"
+                                } : null;
+                            }).filter(Boolean),
+                            ...(selectedWines.length > 3 ? [{
+                                type: "text",
+                                text: `...還有其他 ${selectedWines.length - 3} 款好酒`,
+                                size: "xs",
+                                color: "#aaaaaa",
+                                margin: "sm",
+                                align: "end"
+                            }] : [])
                         ]
                     },
                     footer: {
                         type: "box",
-                        layout: "horizontal",
+                        layout: "vertical",
                         spacing: "sm",
+                        backgroundColor: "#2d2d2d",
                         contents: [
                             {
                                 type: "button",
-                                action: {
-                                    type: "uri",
-                                    label: "📅 加入行事曆",
-                                    uri: generateCalendarUrl(previewData)
-                                },
-                                style: "secondary",
-                                color: "#666666"
-                            },
-                            {
-                                type: "button", 
-                                action: {
-                                    type: "uri",
-                                    label: "✅ 我會參加",
-                                    uri: `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/invitation/${invitationId}?action=join`
-                                },
                                 style: "primary",
-                                color: "#c9a227"
+                                height: "sm",
+                                action: {
+                                    type: "uri",
+                                    label: "查看詳情 / 我要參加",
+                                    uri: detailUrl
+                                },
+                                color: theme.primary
                             }
-                        ]
+                        ],
+                        flex: 0
                     }
                 }
             };
@@ -405,12 +405,12 @@ const CreateInvitation = () => {
                     let messageToSend;
 
                     if (testMode) {
-                        // 簡單文字消息測試
+                        // Layer 1: 最簡單文字測試
                         messageToSend = [{
                             type: "text",
-                            text: `🍷 品酒邀請測試\n\n${previewData.title}\n📅 ${previewData.event_time.format('YYYY-MM-DD HH:mm')}\n📍 ${previewData.location || '待定'}`
+                            text: "Hello World - 測試訊息"
                         }];
-                        console.log("使用測試模式：發送純文字消息");
+                        console.log("Layer 1 測試：最簡單文字訊息");
                     } else {
                         messageToSend = [flexMessage];
                     }
@@ -502,7 +502,7 @@ const CreateInvitation = () => {
     return (
         <Layout style={{ minHeight: '100vh', background: theme.background }}>
             <Content style={{ padding: '24px', maxWidth: 600, margin: '0 auto' }}>
-                <Title level={3} style={{ color: '#c9a227', marginBottom: 24, textAlign: 'center' }}>
+                <Title level={3} style={{ color: theme.primary, marginBottom: 24, textAlign: 'center' }}>
                     發起品飲聚會 🥂
                 </Title>
 
@@ -560,7 +560,7 @@ const CreateInvitation = () => {
                         />
                     </Form.Item>
 
-                    <Typography.Text strong style={{ color: '#c9a227', display: 'block', margin: '24px 0 12px' }}>
+                    <Typography.Text strong style={{ color: theme.primary, display: 'block', margin: '24px 0 12px' }}>
                         選擇今日酒單 ({groupedWines.filter(g => isGroupSelected(g)).length} 款)
                     </Typography.Text>
 
@@ -575,7 +575,7 @@ const CreateInvitation = () => {
                                             cursor: 'pointer',
                                             borderRadius: 8,
                                             overflow: 'hidden',
-                                            border: isGroupSelected(group) ? '2px solid #c9a227' : '2px solid transparent'
+                                            border: isGroupSelected(group) ? `2px solid ${theme.primary}` : '2px solid transparent'
                                         }}
                                     >
                                         <div style={{ height: 120, background: theme.card, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -586,14 +586,14 @@ const CreateInvitation = () => {
                                                 loading="lazy"
                                             />
                                         </div>
-                                        <div style={{ padding: 8, background: '#333' }}>
+                                        <div style={{ padding: 8, background: theme.cardHover }}>
                                             <Text ellipsis style={{ color: '#fff', width: '100%', display: 'block' }}>{group.name}</Text>
                                             {group.count > 1 && (
                                                 <Text style={{ color: '#888', fontSize: 12 }}>共 {group.count} 瓶</Text>
                                             )}
                                         </div>
                                         {isGroupSelected(group) && (
-                                            <div style={{ position: 'absolute', top: 5, right: 5, background: '#c9a227', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <div style={{ position: 'absolute', top: 5, right: 5, background: theme.primary, borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 ✓
                                             </div>
                                         )}
@@ -610,7 +610,7 @@ const CreateInvitation = () => {
                     )}
 
                     <div style={{ margin: '24px 0' }}>
-                        <Typography.Text strong style={{ color: '#c9a227', display: 'block', marginBottom: 12 }}>
+                        <Typography.Text strong style={{ color: theme.primary, display: 'block', marginBottom: 12 }}>
                             自訂邀請卡封面 (選填)
                         </Typography.Text>
                         <Upload
@@ -647,7 +647,7 @@ const CreateInvitation = () => {
                         onClick={handlePreview} // Changed from htmlType="submit" to onClick
                         block
                         size="large"
-                        style={{ marginTop: 40, height: 50, borderRadius: 25, background: '#c9a227', borderColor: '#c9a227', color: '#000', fontWeight: 'bold' }}
+                        style={{ marginTop: 40, height: 50, borderRadius: 25, background: theme.primary, borderColor: theme.primary, color: '#000', fontWeight: 'bold' }}
                     >
                         預覽邀請卡
                     </Button>
