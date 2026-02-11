@@ -44,6 +44,7 @@ class Settings(BaseSettings):
         "*",  # 允許所有來源
         "https://liff.line.me",
         "https://ai-wine-cellar.zeabur.app",
+        "https://ai-wine-cellar-backend.zeabur.app", 
         "http://localhost:5173",
         "http://localhost:5174"
     ]
