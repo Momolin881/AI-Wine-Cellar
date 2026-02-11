@@ -262,12 +262,40 @@ const InvitationDetail = () => {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: 12 }}>
+                        <div 
+                            style={{ 
+                                display: 'flex', 
+                                gap: 12, 
+                                cursor: invitation.location ? 'pointer' : 'default',
+                                padding: '8px',
+                                borderRadius: '8px',
+                                transition: 'background-color 0.2s'
+                            }}
+                            onClick={invitation.location ? () => {
+                                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(invitation.location)}`;
+                                window.open(mapsUrl, '_blank');
+                            } : undefined}
+                            onMouseEnter={(e) => invitation.location && (e.target.style.backgroundColor = '#444')}
+                            onMouseLeave={(e) => invitation.location && (e.target.style.backgroundColor = 'transparent')}
+                        >
                             <EnvironmentOutlined style={{ fontSize: 20, color: '#c9a227', marginTop: 4 }} />
                             <div>
-                                <Text strong style={{ color: '#fff', fontSize: 16, display: 'block' }}>
+                                <Text 
+                                    strong 
+                                    style={{ 
+                                        color: '#fff', 
+                                        fontSize: 16, 
+                                        display: 'block',
+                                        textDecoration: invitation.location ? 'underline' : 'none'
+                                    }}
+                                >
                                     {invitation.location || "地點待定"}
                                 </Text>
+                                {invitation.location && (
+                                    <Text style={{ color: '#888', fontSize: 12 }}>
+                                        點擊開啟 Google Maps
+                                    </Text>
+                                )}
                             </div>
                         </div>
 
