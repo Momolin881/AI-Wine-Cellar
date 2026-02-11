@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from 'antd';
 import { EnvironmentOutlined } from '@ant-design/icons';
-import { Loader } from '@googlemaps/js-api-loader';
 
 const PlacesAutocomplete = ({ 
     value, 
@@ -16,17 +15,30 @@ const PlacesAutocomplete = ({
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        const loader = new Loader({
-            apiKey: import.meta.env.VITE_GOOGLE_PLACES_API_KEY,
-            version: 'weekly',
-            libraries: ['places']
-        });
+        const loadGoogleMaps = async () => {
+            try {
+                // 使用動態 script 標籤載入 Google Maps API
+                if (!window.google) {
+                    const script = document.createElement('script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY}&libraries=places&callback=initGoogleMaps`;
+                    script.async = true;
+                    script.defer = true;
+                    
+                    // 創建全域回調函數
+                    window.initGoogleMaps = () => {
+                        setIsLoaded(true);
+                    };
+                    
+                    document.head.appendChild(script);
+                } else {
+                    setIsLoaded(true);
+                }
+            } catch (err) {
+                console.error('Google Maps API failed to load:', err);
+            }
+        };
 
-        loader.load().then(() => {
-            setIsLoaded(true);
-        }).catch(err => {
-            console.error('Google Maps API failed to load:', err);
-        });
+        loadGoogleMaps();
     }, []);
 
     useEffect(() => {
