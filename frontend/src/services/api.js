@@ -481,7 +481,7 @@ export const importFridge = (fridgeId, data, clearExisting = false) => {
  * @returns {Promise<Object>} 建立的邀請函
  */
 export const createInvitation = (data) => {
-  // 嘗試直接使用 GET 請求避免 POST 限制
+  // 優先使用 GET 請求避免 LINE App 的 POST 限制
   const params = new URLSearchParams();
   params.append('title', data.title);
   params.append('event_time', data.event_time);
@@ -490,8 +490,26 @@ export const createInvitation = (data) => {
   params.append('wine_ids', JSON.stringify(data.wine_ids || []));
   params.append('theme_image_url', data.theme_image_url || '');
   
-  // 使用 URLSearchParams 避免 URL 長度問題
-  return apiClient.get(`/invitations/create-via-get?${params.toString()}`);
+  console.log("API: 嘗試 GET 請求創建邀請");
+  return apiClient.get(`/invitations/create-via-get?${params.toString()}`)
+    .then(response => {
+      console.log("API: GET 請求成功");
+      return response.data;
+    })
+    .catch(error => {
+      console.warn('API: GET 請求失敗，嘗試 POST:', error.message);
+      
+      // 如果 GET 失敗，嘗試 POST（在非 LINE 環境可能成功）
+      return apiClient.post('/invitations', data)
+        .then(response => {
+          console.log("API: POST 請求成功");
+          return response.data;
+        })
+        .catch(postError => {
+          console.error('API: POST 也失敗:', postError.message);
+          throw postError;
+        });
+    });
 };
 
 /**

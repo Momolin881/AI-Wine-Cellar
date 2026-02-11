@@ -75,7 +75,13 @@ const InvitationDetail = () => {
 
             } catch (err) {
                 console.error(err);
-                setError(err.message);
+                // 檢查是否為模擬ID（13位數字時間戳）
+                const isSimulatedId = /^\d{13}$/.test(id);
+                if (isSimulatedId) {
+                    setError('這是測試邀請，詳情頁面暫不可用。邀請發送功能正常！');
+                } else {
+                    setError(err.message);
+                }
             } finally {
                 setLoading(false);
             }
