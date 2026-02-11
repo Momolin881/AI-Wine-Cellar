@@ -75,7 +75,8 @@ def create_invitation_via_get(
             location=location,
             description=description,
             wine_ids=wine_ids_list,
-            theme_image_url=theme_image_url or "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+            theme_image_url=theme_image_url or "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+            host_id=None  # 明確設為 None，因為沒有用戶認證
         )
         db.add(db_invitation)
         db.commit()
@@ -91,6 +92,11 @@ def create_invitation_via_get(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"日期格式錯誤: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"建立邀請失敗: {str(e)}"
         )
 
 
