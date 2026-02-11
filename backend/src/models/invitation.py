@@ -12,7 +12,8 @@ class Invitation(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     # 假設目前系統尚無完整登入或是 User ID 為 Integer，先保留欄位但設為 nullable
-    host_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    # 暫時移除外鍵約束，避免users表不存在導致錯誤
+    host_id = Column(Integer, nullable=True)
     
     title = Column(String(100), nullable=False, comment="聚會標題")
     description = Column(Text, nullable=True, comment="聚會描述")
