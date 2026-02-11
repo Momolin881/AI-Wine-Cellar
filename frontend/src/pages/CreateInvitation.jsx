@@ -195,18 +195,10 @@ const CreateInvitation = () => {
             let invitationId;
             let invitationData;
             
-            try {
-                // 嘗試呼叫後端 API
-                invitationData = await createInvitation(payload);
-                invitationId = invitationData.id;
-                console.log("3. 後端創建成功，邀請 ID:", invitationId);
-            } catch (apiError) {
-                console.warn("4. 後端 API 失敗，使用模擬資料:", apiError.message);
-                // Fallback: 如果後端失敗，仍使用模擬資料確保發送功能可用
-                const mockData = { id: Date.now() };
-                invitationId = mockData.id;
-                console.log("5. 模擬邀請 ID:", invitationId);
-            }
+            // 直接呼叫後端 API，不使用模擬資料
+            invitationData = await createInvitation(payload);
+            invitationId = invitationData.id;
+            console.log("3. 後端創建成功，邀請 ID:", invitationId);
 
             // 3. 使用後端相同的 Flex Message 設計（從 flex_message.py 複製）
             console.log("6. 準備建立 Flex Message...");
