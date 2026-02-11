@@ -124,13 +124,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# 設定 CORS middleware
-# 設定 CORS middleware
+# 設定 CORS middleware - 強制允許所有來源
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],  # 直接設定而不依賴 settings
+    allow_credentials=False,  # 設為 False 因為使用 "*"
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
