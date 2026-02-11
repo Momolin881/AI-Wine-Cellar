@@ -77,3 +77,4 @@ backend/migrations/versions/*.pyc
 # OS
 Thumbs.db
 backend/.env
+frontend/.env

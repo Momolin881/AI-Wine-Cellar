@@ -41,12 +41,15 @@ class Settings(BaseSettings):
 
     # CORS 設定
     CORS_ORIGINS: list[str] = [
-        "*",  # 允許所有來源
         "https://liff.line.me",
         "https://ai-wine-cellar.zeabur.app",
         "https://ai-wine-cellar-backend.zeabur.app", 
         "http://localhost:5173",
-        "http://localhost:5174"
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174"
     ]
     #     "http://localhost:5174",
     #     "http://localhost:5175",
