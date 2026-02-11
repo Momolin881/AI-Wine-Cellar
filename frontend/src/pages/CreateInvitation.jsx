@@ -164,11 +164,50 @@ const CreateInvitation = () => {
                 theme_image_url: previewData.theme_image_url
             };
 
-            const data = await createInvitation(payload);
-            const invitationId = data.id;
+            // 由於 LINE App 限制，暫時跳過後端建立邀請
+            const mockData = { id: Date.now() }; // 使用時間戳作為臨時 ID
+            const invitationId = mockData.id;
 
-            // 2. Fetch generated Flex Message
-            const flexMessage = await getInvitationFlex(invitationId);
+            console.log("因 LINE App 限制，使用模擬邀請 ID:", invitationId);
+
+            // 2. 建立簡化的 Flex Message（本地生成）
+            const flexMessage = {
+                type: "flex",
+                altText: `🍷 ${previewData.title}`,
+                contents: {
+                    type: "bubble",
+                    hero: {
+                        type: "image",
+                        url: previewData.theme_image_url,
+                        size: "full",
+                        aspectRatio: "20:13"
+                    },
+                    body: {
+                        type: "box",
+                        layout: "vertical",
+                        contents: [
+                            {
+                                type: "text",
+                                text: previewData.title,
+                                weight: "bold",
+                                size: "xl"
+                            },
+                            {
+                                type: "text",
+                                text: `📅 ${previewData.event_time.format('YYYY-MM-DD HH:mm')}`,
+                                size: "sm",
+                                color: "#666666"
+                            },
+                            {
+                                type: "text", 
+                                text: `📍 ${previewData.location || "地點待定"}`,
+                                size: "sm",
+                                color: "#666666"
+                            }
+                        ]
+                    }
+                }
+            };
 
             // 3. Use LIFF shareTargetPicker to send message
             console.log("Checking shareTargetPicker support...");
