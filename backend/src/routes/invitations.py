@@ -45,6 +45,54 @@ def create_invitation(invitation: InvitationCreate, db: Session = Depends(get_db
     db.refresh(db_invitation)
     return db_invitation
 
+@router.get("/create-via-get", response_model=InvitationResponse, status_code=status.HTTP_201_CREATED)
+def create_invitation_via_get(
+    title: str,
+    event_time: str,
+    location: str = "",
+    description: str = "",
+    wine_ids: str = "[]",  # JSON 字符串
+    theme_image_url: str = "",
+    db: Session = Depends(get_db)
+):
+    """
+    透過 GET 請求建立邀請函 (解決 LINE App POST 請求限制)
+    wine_ids 格式: "[1,2,3]" (JSON 字符串)
+    """
+    import json
+    from datetime import datetime
+    
+    try:
+        # 解析 wine_ids JSON 字符串
+        wine_ids_list = json.loads(wine_ids) if wine_ids else []
+        
+        # 解析 event_time
+        event_datetime = datetime.fromisoformat(event_time.replace('Z', '+00:00'))
+        
+        db_invitation = Invitation(
+            title=title,
+            event_time=event_datetime,
+            location=location,
+            description=description,
+            wine_ids=wine_ids_list,
+            theme_image_url=theme_image_url or "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80"
+        )
+        db.add(db_invitation)
+        db.commit()
+        db.refresh(db_invitation)
+        return db_invitation
+        
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="wine_ids 必須是有效的 JSON 陣列字符串"
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"日期格式錯誤: {str(e)}"
+        )
+
 
 from src.models.wine_item import WineItem
 

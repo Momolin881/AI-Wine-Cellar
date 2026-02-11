@@ -481,7 +481,22 @@ export const importFridge = (fridgeId, data, clearExisting = false) => {
  * @returns {Promise<Object>} 建立的邀請函
  */
 export const createInvitation = (data) => {
-  return apiClient.post('/invitations', data);
+  // 優先嘗試 POST 請求
+  return apiClient.post('/invitations', data).catch(error => {
+    // 如果 POST 失敗 (如 LINE App 限制)，改用 GET 請求
+    console.log('POST 請求失敗，嘗試 GET 請求...', error);
+    
+    const params = {
+      title: data.title,
+      event_time: data.event_time,
+      location: data.location || '',
+      description: data.description || '',
+      wine_ids: JSON.stringify(data.wine_ids || []),
+      theme_image_url: data.theme_image_url || ''
+    };
+    
+    return apiClient.get('/invitations/create-via-get', { params });
+  });
 };
 
 /**
