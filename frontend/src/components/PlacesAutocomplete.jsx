@@ -20,7 +20,19 @@ const PlacesAutocomplete = ({
                 // 使用動態 script 標籤載入 Google Maps API (with loading=async)
                 if (!window.google) {
                     const script = document.createElement('script');
-                    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY}&libraries=places&loading=async&callback=initGoogleMaps`;
+                    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+                    console.log('Google Maps API Key check:', {
+                        placesKey: import.meta.env.VITE_GOOGLE_PLACES_API_KEY ? 'SET' : 'MISSING',
+                        mapsKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? 'SET' : 'MISSING',
+                        usingKey: apiKey ? apiKey.substring(0, 20) + '...' : 'NONE'
+                    });
+                    
+                    if (!apiKey) {
+                        console.error('Google Maps API Key not found in environment variables');
+                        setIsLoaded(false);
+                        return;
+                    }
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async&callback=initGoogleMaps`;
                     script.async = true;
                     script.defer = true;
                     
