@@ -192,6 +192,47 @@ const InvitationDetail = () => {
         window.open(calendarUrl, '_blank');
     };
 
+    const handleNavigateToLocation = () => {
+        if (!invitation.location) return;
+
+        // 優先使用用戶當前位置進行導航
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // 有用戶位置 - 使用導航模式
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    const destination = encodeURIComponent(invitation.location);
+                    
+                    // 使用 Google Maps 導航 URL 格式
+                    const navigationUrl = `https://www.google.com/maps/dir/${userLat},${userLng}/${destination}`;
+                    window.open(navigationUrl, '_blank');
+                    
+                    message.success('正在開啟 Google Maps 導航...');
+                },
+                (error) => {
+                    // 無法獲取用戶位置 - fallback 到搜尋模式
+                    console.warn('無法獲取用戶位置:', error);
+                    const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(invitation.location)}`;
+                    window.open(searchUrl, '_blank');
+                    
+                    message.info('正在開啟 Google Maps 搜尋...');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 300000 // 5分鐘
+                }
+            );
+        } else {
+            // 瀏覽器不支援地理位置 - 使用搜尋模式
+            const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(invitation.location)}`;
+            window.open(searchUrl, '_blank');
+            
+            message.info('正在開啟 Google Maps 搜尋...');
+        }
+    };
+
     if (loading) {
         return (
             <Layout style={{ minHeight: '100vh', background: theme.background }}>
@@ -277,10 +318,7 @@ const InvitationDetail = () => {
                                 borderRadius: '8px',
                                 transition: 'background-color 0.2s'
                             }}
-                            onClick={invitation.location ? () => {
-                                const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(invitation.location)}`;
-                                window.open(mapsUrl, '_blank');
-                            } : undefined}
+                            onClick={invitation.location ? () => handleNavigateToLocation() : undefined}
                             onMouseEnter={(e) => invitation.location && (e.target.style.backgroundColor = '#444')}
                             onMouseLeave={(e) => invitation.location && (e.target.style.backgroundColor = 'transparent')}
                         >
