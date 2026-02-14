@@ -23,7 +23,8 @@ import {
     EnvironmentOutlined,
     CheckCircleFilled,
     GoogleOutlined,
-    ShareAltOutlined
+    ShareAltOutlined,
+    AppstoreOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { joinInvitation } from '../services/api';
@@ -448,30 +449,7 @@ const InvitationDetail = () => {
                 )}
 
                 {/* Actions */}
-                {(invitation.allow_forwarding !== false) && ( // 預設為 true，只有明確設為 false 才隱藏
-                    <Row gutter={16} style={{ marginTop: 40 }}>
-                        <Col span={24}>
-                            <Button
-                                block
-                                size="large"
-                                icon={<ShareAltOutlined />}
-                                style={{ 
-                                    height: 50, 
-                                    borderRadius: 25, 
-                                    background: theme === 'chill' ? '#1a4b3a' : '#f0f0f0',
-                                    borderColor: theme === 'chill' ? '#2d7a5f' : '#d9d9d9',
-                                    color: theme === 'chill' ? '#64ffaa' : '#595959',
-                                    marginBottom: 16,
-                                    fontWeight: 'bold'
-                                }}
-                                onClick={handleShareFlexMessage}
-                            >
-                                🍷 轉發邀請卡
-                            </Button>
-                        </Col>
-                    </Row>
-                )}
-                <Row gutter={16} style={{ marginTop: (invitation.allow_forwarding !== false) ? 0 : 40 }}>
+                <Row gutter={16} style={{ marginTop: 40 }}>
                     <Col span={12}>
                         <Button
                             block
@@ -502,6 +480,48 @@ const InvitationDetail = () => {
                             onClick={(isEventEnded || hasRSVPd) ? undefined : handleRSVP}
                         >
                             {isEventEnded ? '聚會已結束' : hasRSVPd ? '✓ 已報名' : '我會參加'}
+                        </Button>
+                    </Col>
+                </Row>
+
+                {/* Additional Action Buttons */}
+                <Row gutter={16} style={{ marginTop: 16 }}>
+                    {invitation.allow_forwarding !== false && (
+                        <Col span={12}>
+                            <Button
+                                block
+                                size="large"
+                                icon={<ShareAltOutlined />}
+                                style={{ 
+                                    height: 50, 
+                                    borderRadius: 25, 
+                                    background: theme === 'chill' ? '#1a4b3a' : '#f0f0f0',
+                                    borderColor: theme === 'chill' ? '#2d7a5f' : '#d9d9d9',
+                                    color: theme === 'chill' ? '#64ffaa' : '#595959',
+                                    fontWeight: 'bold'
+                                }}
+                                onClick={handleShareFlexMessage}
+                            >
+                                轉發邀請卡
+                            </Button>
+                        </Col>
+                    )}
+                    <Col span={invitation.allow_forwarding !== false ? 12 : 24}>
+                        <Button
+                            block
+                            size="large"
+                            icon={<AppstoreOutlined />}
+                            style={{ 
+                                height: 50, 
+                                borderRadius: 25, 
+                                background: theme === 'chill' ? '#2a1810' : '#fff7e6',
+                                borderColor: theme === 'chill' ? '#8b4513' : '#ffa940',
+                                color: theme === 'chill' ? '#ffa940' : '#d46b08',
+                                fontWeight: 'bold'
+                            }}
+                            onClick={() => window.open('https://liff.line.me/2008946239-5U8c7ry2', '_blank')}
+                        >
+                            查看/創建我的酒窖
                         </Button>
                     </Col>
                 </Row>
