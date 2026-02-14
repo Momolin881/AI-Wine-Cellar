@@ -27,6 +27,9 @@ import {
     AppstoreOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 import { joinInvitation } from '../services/api';
 import apiClient from '../services/api';
 import { useMode } from '../contexts/ModeContext';
