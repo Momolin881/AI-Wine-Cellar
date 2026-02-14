@@ -140,8 +140,27 @@ def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
         if not db_invitation:
             raise HTTPException(status_code=404, detail="Invitation not found")
         
-        # 簡化處理，暫時不查詢酒款詳情，避免關聯查詢問題
-        db_invitation.wine_details = []
+        # 查詢關聯的酒款詳情
+        wine_details = []
+        if db_invitation.wine_ids:
+            try:
+                wines = db.query(WineItem).filter(WineItem.id.in_(db_invitation.wine_ids)).all()
+                wine_details = [
+                    {
+                        "id": wine.id,
+                        "name": wine.name,
+                        "vintage": wine.vintage,
+                        "region": wine.region,
+                        "wine_type": wine.wine_type,
+                        "image_url": wine.image_url
+                    }
+                    for wine in wines
+                ]
+            except Exception as e:
+                print(f"Error fetching wine details: {e}")
+                wine_details = []
+        
+        db_invitation.wine_details = wine_details
         
         # 確保 attendees 是 list 格式，避免 JSON 轉換問題
         if isinstance(db_invitation.attendees, str):
