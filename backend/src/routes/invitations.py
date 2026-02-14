@@ -176,7 +176,7 @@ def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
         response_data = {
             "id": db_invitation.id,
             "title": db_invitation.title,
-            "event_time": db_invitation.event_time,
+            "event_time": db_invitation.event_time.isoformat() + 'Z' if db_invitation.event_time else None,
             "location": db_invitation.location or "",
             "description": db_invitation.description or "",
             "latitude": db_invitation.latitude,

@@ -216,8 +216,8 @@ const InvitationDetail = () => {
         if (!invitation) return;
 
         // Construct Google Calendar Link
-        const startTime = dayjs(invitation.event_time).format('YYYYMMDDTHHmmss');
-        const endTime = dayjs(invitation.event_time).add(3, 'hour').format('YYYYMMDDTHHmmss'); // Assume 3 hours duration
+        const startTime = dayjs.utc(invitation.event_time).local().format('YYYYMMDDTHHmmss');
+        const endTime = dayjs.utc(invitation.event_time).local().add(3, 'hour').format('YYYYMMDDTHHmmss'); // Assume 3 hours duration
         const details = `酒單：\n${wines.map(w => `- ${w.name}`).join('\n')}\n\n備註：${invitation.description || ''}`;
 
         const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(invitation.title)}&dates=${startTime}/${endTime}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(invitation.location || '')}`;
@@ -297,7 +297,7 @@ const InvitationDetail = () => {
         );
     }
 
-    const isEventEnded = dayjs(invitation.event_time).isBefore(dayjs());
+    const isEventEnded = dayjs.utc(invitation.event_time).local().isBefore(dayjs());
 
     return (
         <Layout style={{ minHeight: '100vh', background: theme.background }}>
@@ -334,10 +334,10 @@ const InvitationDetail = () => {
                             <CalendarOutlined style={{ fontSize: 20, color: '#c9a227', marginTop: 4 }} />
                             <div>
                                 <Text strong style={{ color: '#fff', fontSize: 16, display: 'block' }}>
-                                    {dayjs(invitation.event_time).format('YYYY年MM月DD日 (dddd)')}
+                                    {dayjs.utc(invitation.event_time).local().format('YYYY年MM月DD日 (dddd)')}
                                 </Text>
                                 <Text style={{ color: '#888' }}>
-                                    {dayjs(invitation.event_time).format('HH:mm')}
+                                    {dayjs.utc(invitation.event_time).local().format('HH:mm')}
                                 </Text>
                             </div>
                         </div>
