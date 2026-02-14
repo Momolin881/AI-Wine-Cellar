@@ -214,9 +214,9 @@ const CreateInvitation = () => {
             invitationId = invitationData.id;
             console.log("3. 後端創建成功，邀請 ID:", invitationId);
             
-            // 驗證 ID 是真實的（不是時間戳）
-            if (invitationId.toString().length > 10) {
-                throw new Error("獲取到的不是真實邀請 ID");
+            // 驗證 ID 是數字且有效
+            if (!invitationId || isNaN(invitationId)) {
+                throw new Error("獲取到無效的邀請 ID");
             }
 
             // 3. 使用後端相同的 Flex Message 設計（從 flex_message.py 複製）

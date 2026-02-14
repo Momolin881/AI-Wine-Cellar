@@ -24,7 +24,7 @@ const apiClient = axios.create({
     'Content-Type': 'application/json'
   },
   // 確保跨域請求正確處理
-  withCredentials: false
+  withCredentials: true
 });
 
 // 請求攔截器：自動設置 Content-Type（FormData 除外）
@@ -501,6 +501,8 @@ export const createInvitation = (data) => {
     })
     .then(response => {
       console.log("API: GET 請求成功", response.data);
+      console.log("API: Response status:", response.status);
+      console.log("API: Response headers:", response.headers);
       return response.data;
     })
     .catch(error => {

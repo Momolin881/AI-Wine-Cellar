@@ -26,13 +26,13 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { joinInvitation } from '../services/api';
+import apiClient from '../services/api';
 import { useMode } from '../contexts/ModeContext';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
 
-// API Base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// API Base URL - 現在使用統一的 apiClient
 
 const InvitationDetail = () => {
     const { id } = useParams();
@@ -50,11 +50,13 @@ const InvitationDetail = () => {
             try {
                 // Fetch invitation details
                 // Use fetch directly to bypass auth token requirement for guests
-                const response = await fetch(`${API_BASE_URL}/api/v1/invitations/${id}`);
-                if (!response.ok) {
-                    throw new Error('找不到此邀請函');
+                // apiClient 的攔截器已經返回 response.data
+                const data = await apiClient.get(`/invitations/${id}`);
+                
+                if (!data) {
+                    throw new Error('API 返回空數據');
                 }
-                const data = await response.json();
+                
                 setInvitation(data);
 
                 if (data.wine_details && data.wine_details.length > 0) {
