@@ -202,6 +202,18 @@ MIT License
 
 ---
 
+## 📋 系統維護記錄
+
+### Debug Summary
+詳細的 bug 修復記錄和系統問題解決方案請參考：[DEBUG_SUMMARY.md](./DEBUG_SUMMARY.md)
+
+**近期重要修復**：
+- ✅ 邀請傳送失敗問題 (2026-02-14) - Schema 不同步導致 500 錯誤
+- ✅ 通知時間錯誤問題 (2026-02-14) - 時區處理和延遲通知修復
+- ✅ 邀請時間顯示時差 (2026-02-14) - dayjs 時區轉換修復
+
+---
+
 ## 🐛 常見問題排錯 (Troubleshooting)
 
 ### PostgreSQL 連線失敗：`password authentication failed`
