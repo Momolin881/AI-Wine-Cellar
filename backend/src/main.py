@@ -58,19 +58,45 @@ def run_migrations():
         missing_columns = [col for col, _ in new_columns if col not in existing_columns]
         print(f"📋 需要新增的欄位: {missing_columns}")
 
-        if not missing_columns:
-            print("✅ 所有欄位已存在，無需遷移")
-            return
+        # 檢查 invitations 表格的 allow_forwarding 欄位
+        invitation_columns = {}
+        if 'invitations' in table_names:
+            invitation_columns = {col['name'] for col in inspector.get_columns('invitations')}
+            print(f"📋 invitations 現有欄位: {sorted(invitation_columns)}")
 
         with engine.connect() as conn:
-            for col_name, col_type in new_columns:
-                if col_name not in existing_columns:
-                    try:
-                        conn.execute(text(f'ALTER TABLE wine_items ADD COLUMN {col_name} {col_type}'))
-                        conn.commit()
-                        print(f"✅ 已新增欄位: wine_items.{col_name}")
-                    except Exception as e:
-                        print(f"⚠️ 新增欄位 {col_name} 失敗: {e}")
+            # 處理 wine_items 表格遷移
+            if missing_columns:
+                for col_name, col_type in new_columns:
+                    if col_name not in existing_columns:
+                        try:
+                            conn.execute(text(f'ALTER TABLE wine_items ADD COLUMN {col_name} {col_type}'))
+                            conn.commit()
+                            print(f"✅ 已新增欄位: wine_items.{col_name}")
+                        except Exception as e:
+                            print(f"⚠️ 新增欄位 {col_name} 失敗: {e}")
+            
+            # 處理 invitations 表格的 allow_forwarding 欄位
+            if 'invitations' in table_names and 'allow_forwarding' not in invitation_columns:
+                try:
+                    conn.execute(text('ALTER TABLE invitations ADD COLUMN allow_forwarding BOOLEAN DEFAULT TRUE'))
+                    conn.commit()
+                    print("✅ 已新增欄位: invitations.allow_forwarding")
+                except Exception as e:
+                    print(f"⚠️ 新增 allow_forwarding 欄位失敗: {e}")
+            
+            # 修復 NULL 值
+            if 'invitations' in table_names:
+                try:
+                    result = conn.execute(text('UPDATE invitations SET allow_forwarding = TRUE WHERE allow_forwarding IS NULL'))
+                    conn.commit()
+                    print(f"✅ 修復了 {result.rowcount} 筆 allow_forwarding NULL 值")
+                except Exception as e:
+                    print(f"⚠️ 修復 allow_forwarding NULL 值失敗: {e}")
+
+        if not missing_columns and 'allow_forwarding' in invitation_columns:
+            print("✅ 所有欄位已存在，無需遷移")
+            
         print("🔄 資料庫遷移完成")
     except Exception as e:
         print(f"❌ 資料庫遷移檢查失敗: {e}")
