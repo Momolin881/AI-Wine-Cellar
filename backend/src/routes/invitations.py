@@ -162,6 +162,10 @@ def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
         
         db_invitation.wine_details = wine_details
         
+        # 確保 allow_forwarding 欄位存在（向後相容處理）
+        if not hasattr(db_invitation, 'allow_forwarding') or db_invitation.allow_forwarding is None:
+            db_invitation.allow_forwarding = True  # 舊邀請預設允許轉發
+        
         # 確保 attendees 是 list 格式，避免 JSON 轉換問題
         if isinstance(db_invitation.attendees, str):
             import json

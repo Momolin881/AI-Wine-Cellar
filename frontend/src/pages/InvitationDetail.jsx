@@ -448,7 +448,7 @@ const InvitationDetail = () => {
                 )}
 
                 {/* Actions */}
-                {invitation.allow_forwarding && (
+                {(invitation.allow_forwarding !== false) && ( // 預設為 true，只有明確設為 false 才隱藏
                     <Row gutter={16} style={{ marginTop: 40 }}>
                         <Col span={24}>
                             <Button
@@ -471,7 +471,7 @@ const InvitationDetail = () => {
                         </Col>
                     </Row>
                 )}
-                <Row gutter={16} style={{ marginTop: invitation.allow_forwarding ? 0 : 40 }}>
+                <Row gutter={16} style={{ marginTop: (invitation.allow_forwarding !== false) ? 0 : 40 }}>
                     <Col span={12}>
                         <Button
                             block
