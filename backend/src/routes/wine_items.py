@@ -675,6 +675,14 @@ async def open_wine_bottle(id: int, db: DBSession, user_id: CurrentUserId):
     db.commit()
     db.refresh(wine_item)
 
+    # 設置開瓶後提醒任務
+    from src.services.scheduler import schedule_bottle_opened_reminder
+    try:
+        schedule_bottle_opened_reminder(wine_item, user_id)
+        logger.info(f"已設置開瓶提醒: {wine_item.name}")
+    except Exception as e:
+        logger.warning(f"設置開瓶提醒失敗: {e}")
+
     logger.info(f"使用者 {user_id} 開瓶: {wine_item.name} (ID: {wine_item.id})")
 
     return _build_wine_item_response(wine_item)

@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.date import DateTrigger
 from sqlalchemy import func
 
 from src.database import SessionLocal
@@ -35,12 +36,12 @@ def start_scheduler():
         return
 
     try:
-        # 註冊每週任務：檢查適飲期提醒（每週五 18:00 執行）
+        # 註冊每日任務：檢查適飲期提醒（每天早上 9:00 執行，以用戶設定時間發送）
         scheduler.add_job(
             check_drinking_period,
-            trigger=CronTrigger(day_of_week='fri', hour=18, minute=0),
+            trigger=CronTrigger(hour=9, minute=0),
             id="check_drinking_period",
-            name="每週五適飲期提醒",
+            name="每日適飲期提醒檢查",
             replace_existing=True
         )
 
@@ -80,12 +81,12 @@ def stop_scheduler():
 
 def check_drinking_period():
     """
-    檢查所有使用者的適飲期提醒並發送通知
+    檢查所有使用者的適飲期提醒並在用戶設定時間發送通知
     
     對象：已開瓶 (opened) 且接近最佳飲用期結束 (optimal_drinking_end) 的酒款
-    時間：每週五 18:00
+    時間：每日 9:00 檢查，根據用戶設定時間發送
     """
-    logger.info("開始執行：每週五適飲期提醒")
+    logger.info("開始執行：適飲期提醒檢查")
     db = SessionLocal()
 
     try:
@@ -98,7 +99,17 @@ def check_drinking_period():
 
         for settings in settings_list:
             try:
-                today = datetime.now(TAIWAN_TZ).date()
+                now = datetime.now(TAIWAN_TZ)
+                today = now.date()
+                current_time = now.time()
+                
+                # 檢查是否為該用戶的通知時間（允許 ±15 分鐘誤差）
+                user_notification_time = settings.notification_time
+                time_diff = abs((current_time.hour * 60 + current_time.minute) - 
+                              (user_notification_time.hour * 60 + user_notification_time.minute))
+                
+                if time_diff > 15:  # 如果不在用戶設定時間範圍內，跳過
+                    continue
                 
                 # 查詢該使用者的所有酒款
                 # 條件 1: 已開瓶 (bottle_status == 'opened')
@@ -212,3 +223,109 @@ def check_space_usage():
 
     finally:
         db.close()
+
+
+def schedule_bottle_opened_reminder(wine_item, user_id):
+    """
+    為單一酒款設置開瓶後提醒任務
+    
+    Args:
+        wine_item: 酒款物件，包含 opened_at 和 optimal_drinking_end
+        user_id: 用戶ID
+    """
+    if not wine_item.opened_at or not wine_item.optimal_drinking_end:
+        logger.warning(f"酒款 {wine_item.id} 缺少開瓶時間或最佳飲用期，跳過提醒設置")
+        return
+    
+    try:
+        # 獲取用戶通知設定
+        db = SessionLocal()
+        settings = db.query(NotificationSettings).filter(
+            NotificationSettings.user_id == user_id
+        ).first()
+        
+        if not settings or not settings.opened_reminder_enabled:
+            logger.info(f"用戶 {user_id} 未啟用開瓶提醒，跳過")
+            db.close()
+            return
+            
+        # 計算提醒時間：最佳飲用期前 3 天的用戶設定時間
+        reminder_date = wine_item.optimal_drinking_end - timedelta(days=3)
+        user_time = settings.notification_time
+        
+        # 組合日期和時間，使用台灣時區
+        reminder_datetime = datetime.combine(reminder_date, user_time, tzinfo=TAIWAN_TZ)
+        
+        # 如果提醒時間已過，設為明天的用戶設定時間
+        now = datetime.now(TAIWAN_TZ)
+        if reminder_datetime <= now:
+            tomorrow = now.date() + timedelta(days=1)
+            reminder_datetime = datetime.combine(tomorrow, user_time, tzinfo=TAIWAN_TZ)
+            logger.info(f"酒款 {wine_item.name} 已過最佳提醒期，改為明天提醒")
+        
+        # 設置任務
+        job_id = f"bottle_reminder_{wine_item.id}_{user_id}"
+        
+        scheduler.add_job(
+            send_bottle_opened_reminder,
+            trigger=DateTrigger(run_date=reminder_datetime),
+            args=[user_id, wine_item.id, wine_item.name, wine_item.optimal_drinking_end],
+            id=job_id,
+            name=f"開瓶提醒: {wine_item.name}",
+            replace_existing=True
+        )
+        
+        logger.info(f"已設置開瓶提醒任務: {wine_item.name} 於 {reminder_datetime.strftime('%Y-%m-%d %H:%M')} (台灣時間)")
+        
+    except Exception as e:
+        logger.error(f"設置開瓶提醒任務失敗: {e}")
+    finally:
+        if 'db' in locals():
+            db.close()
+
+
+def send_bottle_opened_reminder(user_id, wine_item_id, wine_name, expiry_date):
+    """
+    發送單一酒款的開瓶提醒
+    
+    Args:
+        user_id: 用戶ID
+        wine_item_id: 酒款ID 
+        wine_name: 酒款名稱
+        expiry_date: 最佳飲用期截止日期
+    """
+    try:
+        db = SessionLocal()
+        
+        # 獲取用戶LINE ID
+        from src.models.user import User
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user or not user.line_user_id:
+            logger.warning(f"找不到用戶 {user_id} 的LINE ID")
+            return
+            
+        # 計算剩餘天數
+        today = datetime.now(TAIWAN_TZ).date()
+        days_remaining = (expiry_date - today).days
+        
+        # 準備通知資料
+        items = [{
+            "name": wine_name,
+            "expiry_date": expiry_date.isoformat(),
+            "days_remaining": days_remaining,
+            "type": "opened_bottle"
+        }]
+        
+        # 發送通知
+        success = send_expiry_notification(user.line_user_id, items)
+        
+        if success:
+            logger.info(f"已發送開瓶提醒給用戶 {user_id}: {wine_name}")
+        else:
+            logger.error(f"發送開瓶提醒失敗: {wine_name}")
+            
+    except Exception as e:
+        logger.error(f"發送開瓶提醒時發生錯誤: {e}")
+    finally:
+        if 'db' in locals():
+            db.close()
