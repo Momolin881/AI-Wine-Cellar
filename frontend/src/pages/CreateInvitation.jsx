@@ -16,7 +16,8 @@ import {
     Spin,
     Upload,
     Modal,
-    Space
+    Space,
+    Switch
 } from 'antd';
 import {
     EnvironmentOutlined,
@@ -187,8 +188,8 @@ const CreateInvitation = () => {
                 location: previewData.location,
                 description: previewData.description,
                 wine_ids: selectedWines,
-                // TODO: Allow user to upload theme image or select from presets
-                theme_image_url: previewData.theme_image_url
+                theme_image_url: previewData.theme_image_url,
+                allow_forwarding: previewData.allow_forwarding ?? true // 預設開啟
             };
 
             // 2. 呼叫後端 API 創建真實邀請
@@ -600,6 +601,17 @@ const CreateInvitation = () => {
                             placeholder="有什麼想對朋友說的..."
                             style={{ background: theme.card, border: '1px solid #444', color: '#fff' }}
                         />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="allow_forwarding"
+                        valuePropName="checked"
+                        initialValue={true}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Switch defaultChecked />
+                            <span style={{ color: '#aaa' }}>允許受邀者轉發此邀請</span>
+                        </div>
                     </Form.Item>
 
                     <Typography.Text strong style={{ color: theme.primary, display: 'block', margin: '24px 0 12px' }}>

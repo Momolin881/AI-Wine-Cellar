@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import JSON
 from src.database import Base
@@ -32,6 +32,9 @@ class Invitation(Base):
     
     # 報名者列表 [{line_user_id, name, avatar_url}]
     attendees = Column(JSON, default=list, comment="報名者列表")
+    
+    # 是否允許受邀者轉發此邀請（預設開啟，用戶可手動關閉）
+    allow_forwarding = Column(Boolean, default=True, comment="允許轉發")
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

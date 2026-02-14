@@ -22,7 +22,8 @@ import {
     CalendarOutlined,
     EnvironmentOutlined,
     CheckCircleFilled,
-    GoogleOutlined
+    GoogleOutlined,
+    ShareAltOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { joinInvitation } from '../services/api';
@@ -131,14 +132,13 @@ const InvitationDetail = () => {
 
                 Modal.success({
                     title: '報名成功！',
-                    content: '已在聊天室發送 +1 訊息。要順便加入行事曆嗎？',
+                    content: <div style={{ color: theme === 'chill' ? 'white' : 'inherit' }}>
+                        已在聊天室發送 +1 訊息。要順便加入行事曆嗎？
+                    </div>,
                     okText: '好的，加入行事曆',
                     closable: true,
                     onOk: handleAddToCalendar,
-                    styles: {
-                        body: theme === 'chill' ? { color: 'white' } : {},
-                        header: theme === 'chill' ? { color: 'white' } : {}
-                    }
+                    style: theme === 'chill' ? { color: 'white' } : {}
                 });
             } else if (liff.isApiAvailable('shareTargetPicker')) {
                 // No chat context — let user pick a chat to send to
@@ -165,14 +165,13 @@ const InvitationDetail = () => {
 
                     Modal.success({
                         title: '報名成功！',
-                        content: '已發送 +1 訊息。要順便加入行事曆嗎？',
+                        content: <div style={{ color: theme === 'chill' ? 'white' : 'inherit' }}>
+                            已發送 +1 訊息。要順便加入行事曆嗎？
+                        </div>,
                         okText: '好的，加入行事曆',
                         closable: true,
                         onOk: handleAddToCalendar,
-                        styles: {
-                            body: theme === 'chill' ? { color: 'white' } : {},
-                            header: theme === 'chill' ? { color: 'white' } : {}
-                        }
+                        style: theme === 'chill' ? { color: 'white' } : {}
                     });
                 } else {
                     message.info('已取消發送');
@@ -186,6 +185,30 @@ const InvitationDetail = () => {
             message.error("無法發送訊息，請檢查 LINE 權限或是手動回覆");
         } finally {
             setSending(false);
+        }
+    };
+
+    // 轉發邀請卡
+    const handleShareFlexMessage = async () => {
+        if (!liff.isApiAvailable('shareTargetPicker')) {
+            message.error('此環境不支援分享功能');
+            return;
+        }
+
+        try {
+            console.log('獲取 Flex Message...');
+            const flexMessage = await apiClient.get(`/invitations/${id}/flex`);
+            console.log('Flex Message:', flexMessage);
+
+            const res = await liff.shareTargetPicker([flexMessage]);
+            if (res && res.status === 'success') {
+                message.success('邀請卡已分享！');
+            } else {
+                message.info('已取消分享');
+            }
+        } catch (error) {
+            console.error('分享邀請卡失敗:', error);
+            message.error('分享失敗，請稍後再試');
         }
     };
 
@@ -425,7 +448,30 @@ const InvitationDetail = () => {
                 )}
 
                 {/* Actions */}
-                <Row gutter={16} style={{ marginTop: 40 }}>
+                {invitation.allow_forwarding && (
+                    <Row gutter={16} style={{ marginTop: 40 }}>
+                        <Col span={24}>
+                            <Button
+                                block
+                                size="large"
+                                icon={<ShareAltOutlined />}
+                                style={{ 
+                                    height: 50, 
+                                    borderRadius: 25, 
+                                    background: theme === 'chill' ? '#1a4b3a' : '#f0f0f0',
+                                    borderColor: theme === 'chill' ? '#2d7a5f' : '#d9d9d9',
+                                    color: theme === 'chill' ? '#64ffaa' : '#595959',
+                                    marginBottom: 16,
+                                    fontWeight: 'bold'
+                                }}
+                                onClick={handleShareFlexMessage}
+                            >
+                                🍷 轉發邀請卡
+                            </Button>
+                        </Col>
+                    </Row>
+                )}
+                <Row gutter={16} style={{ marginTop: invitation.allow_forwarding ? 0 : 40 }}>
                     <Col span={12}>
                         <Button
                             block
