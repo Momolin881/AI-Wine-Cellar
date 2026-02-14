@@ -134,7 +134,11 @@ const InvitationDetail = () => {
                     content: '已在聊天室發送 +1 訊息。要順便加入行事曆嗎？',
                     okText: '好的，加入行事曆',
                     closable: true,
-                    onOk: handleAddToCalendar
+                    onOk: handleAddToCalendar,
+                    styles: {
+                        body: theme === 'chill' ? { color: 'white' } : {},
+                        header: theme === 'chill' ? { color: 'white' } : {}
+                    }
                 });
             } else if (liff.isApiAvailable('shareTargetPicker')) {
                 // No chat context — let user pick a chat to send to
@@ -164,7 +168,11 @@ const InvitationDetail = () => {
                         content: '已發送 +1 訊息。要順便加入行事曆嗎？',
                         okText: '好的，加入行事曆',
                         closable: true,
-                        onOk: handleAddToCalendar
+                        onOk: handleAddToCalendar,
+                        styles: {
+                            body: theme === 'chill' ? { color: 'white' } : {},
+                            header: theme === 'chill' ? { color: 'white' } : {}
+                        }
                     });
                 } else {
                     message.info('已取消發送');
