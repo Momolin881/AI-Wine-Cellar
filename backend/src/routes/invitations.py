@@ -162,10 +162,6 @@ def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
         
         db_invitation.wine_details = wine_details
         
-        # 確保 allow_forwarding 欄位存在（向後相容處理）
-        if not hasattr(db_invitation, 'allow_forwarding') or db_invitation.allow_forwarding is None:
-            db_invitation.allow_forwarding = True  # 舊邀請預設允許轉發
-        
         # 確保 attendees 是 list 格式，避免 JSON 轉換問題
         if isinstance(db_invitation.attendees, str):
             import json
@@ -176,7 +172,26 @@ def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
         elif db_invitation.attendees is None:
             db_invitation.attendees = []
         
-        return db_invitation
+        # 構建回應資料，確保所有欄位都存在  
+        response_data = {
+            "id": db_invitation.id,
+            "title": db_invitation.title,
+            "event_time": db_invitation.event_time,
+            "location": db_invitation.location or "",
+            "description": db_invitation.description or "",
+            "latitude": db_invitation.latitude,
+            "longitude": db_invitation.longitude,
+            "theme_image_url": db_invitation.theme_image_url,
+            "wine_ids": db_invitation.wine_ids or [],
+            "allow_forwarding": getattr(db_invitation, 'allow_forwarding', True),  # 安全取得，預設 True
+            "host_id": db_invitation.host_id,
+            "created_at": db_invitation.created_at,
+            "updated_at": db_invitation.updated_at,
+            "wine_details": db_invitation.wine_details,
+            "attendees": db_invitation.attendees
+        }
+        
+        return response_data
         
     except HTTPException:
         raise
