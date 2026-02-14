@@ -115,3 +115,39 @@ def create_test_invitation(db: Session = Depends(get_db)):
             status_code=500,
             detail=f"創建測試邀請失敗: {str(e)}"
         )
+
+@router.post("/fix-invitation-forwarding")
+def fix_invitation_forwarding(db: Session = Depends(get_db)):
+    """
+    修復舊邀請記錄的 allow_forwarding 欄位
+    """
+    try:
+        # 先嘗試添加欄位（如果不存在）
+        try:
+            db.execute(text("""
+                ALTER TABLE invitations 
+                ADD COLUMN allow_forwarding BOOLEAN DEFAULT TRUE
+            """))
+            db.commit()
+        except Exception:
+            # 欄位可能已經存在，忽略錯誤
+            pass
+        
+        # 為 NULL 值設定預設值
+        result = db.execute(text("""
+            UPDATE invitations 
+            SET allow_forwarding = TRUE 
+            WHERE allow_forwarding IS NULL
+        """))
+        
+        db.commit()
+        
+        return {
+            "status": "success", 
+            "message": f"Fixed {result.rowcount} invitation records with missing allow_forwarding field",
+            "updated_count": result.rowcount
+        }
+        
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
