@@ -500,10 +500,9 @@ export const createInvitation = (data) => {
       }
     })
     .then(response => {
-      console.log("API: GET 請求成功", response.data);
-      console.log("API: Response status:", response.status);
-      console.log("API: Response headers:", response.headers);
-      return response.data;
+      // apiClient 攔截器已經返回 response.data
+      console.log("API: GET 請求成功", response);
+      return response;
     })
     .catch(error => {
       console.warn('API: GET 請求失敗，嘗試 POST:', error.message);
@@ -512,7 +511,7 @@ export const createInvitation = (data) => {
       return apiClient.post('/invitations', data)
         .then(response => {
           console.log("API: POST 請求成功");
-          return response.data;
+          return response;
         })
         .catch(postError => {
           console.error('API: POST 也失敗:', postError.message);
