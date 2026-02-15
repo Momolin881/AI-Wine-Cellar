@@ -27,10 +27,19 @@ export const initializeLiff = async () => {
   try {
     await liff.init({ liffId: LIFF_ID });
 
-    // 檢查登入狀態
+    // 檢查當前路徑是否為邀請頁面（公開頁面，無需登入）
+    const currentPath = window.location.pathname;
+    const isInvitationPage = currentPath.startsWith('/invitation/');
+    
+    // 邀請頁面允許未登入用戶訪問
+    if (isInvitationPage) {
+      console.log('Invitation page: allowing guest access');
+      return true;
+    }
+
+    // 其他頁面需要登入
     if (!liff.isLoggedIn()) {
       // 儲存當前路徑，登入後恢復
-      const currentPath = window.location.pathname + window.location.search;
       if (currentPath !== '/') {
         localStorage.setItem('liff_redirect_path', currentPath);
         console.log('Saving redirect path:', currentPath);
