@@ -29,8 +29,27 @@ export const initializeLiff = async () => {
 
     // 檢查登入狀態
     if (!liff.isLoggedIn()) {
+      // 儲存當前路徑，登入後恢復
+      const currentPath = window.location.pathname + window.location.search;
+      if (currentPath !== '/') {
+        localStorage.setItem('liff_redirect_path', currentPath);
+        console.log('Saving redirect path:', currentPath);
+      }
+      
       liff.login();
       return false;
+    }
+
+    // 已登入，檢查是否需要跳轉到之前的頁面
+    const redirectPath = localStorage.getItem('liff_redirect_path');
+    if (redirectPath && redirectPath !== window.location.pathname) {
+      console.log('Redirecting to saved path:', redirectPath);
+      localStorage.removeItem('liff_redirect_path');
+      // 使用 pushState 來更新 URL，讓 React Router 處理
+      setTimeout(() => {
+        window.history.pushState({}, '', redirectPath);
+        window.location.reload();
+      }, 100);
     }
 
     return true;
