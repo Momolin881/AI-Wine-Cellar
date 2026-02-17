@@ -57,11 +57,11 @@ const InvitationDetail = () => {
                 // Use fetch directly to bypass auth token requirement for guests
                 // apiClient 的攔截器已經返回 response.data
                 const data = await apiClient.get(`/invitations/${id}`);
-                
+
                 if (!data) {
                     throw new Error('API 返回空數據');
                 }
-                
+
                 setInvitation(data);
 
                 if (data.wine_details && data.wine_details.length > 0) {
@@ -240,11 +240,11 @@ const InvitationDetail = () => {
                     const userLat = position.coords.latitude;
                     const userLng = position.coords.longitude;
                     const destination = encodeURIComponent(invitation.location);
-                    
+
                     // 使用 Google Maps 導航 URL 格式
                     const navigationUrl = `https://www.google.com/maps/dir/${userLat},${userLng}/${destination}`;
                     window.open(navigationUrl, '_blank');
-                    
+
                     message.success('正在開啟 Google Maps 導航...');
                 },
                 (error) => {
@@ -252,7 +252,7 @@ const InvitationDetail = () => {
                     console.warn('無法獲取用戶位置:', error);
                     const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(invitation.location)}`;
                     window.open(searchUrl, '_blank');
-                    
+
                     message.info('正在開啟 Google Maps 搜尋...');
                 },
                 {
@@ -265,7 +265,7 @@ const InvitationDetail = () => {
             // 瀏覽器不支援地理位置 - 使用搜尋模式
             const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(invitation.location)}`;
             window.open(searchUrl, '_blank');
-            
+
             message.info('正在開啟 Google Maps 搜尋...');
         }
     };
@@ -302,6 +302,7 @@ const InvitationDetail = () => {
     }
 
     const isEventEnded = dayjs.utc(invitation.event_time).local().isBefore(dayjs());
+    const isFull = invitation.max_attendees && attendees.length >= invitation.max_attendees && !hasRSVPd;
 
     return (
         <Layout style={{ minHeight: '100vh', background: theme.background }}>
@@ -346,10 +347,10 @@ const InvitationDetail = () => {
                             </div>
                         </div>
 
-                        <div 
-                            style={{ 
-                                display: 'flex', 
-                                gap: 12, 
+                        <div
+                            style={{
+                                display: 'flex',
+                                gap: 12,
                                 cursor: invitation.location ? 'pointer' : 'default',
                                 padding: '8px',
                                 borderRadius: '8px',
@@ -361,11 +362,11 @@ const InvitationDetail = () => {
                         >
                             <EnvironmentOutlined style={{ fontSize: 20, color: '#c9a227', marginTop: 4 }} />
                             <div>
-                                <Text 
-                                    strong 
-                                    style={{ 
-                                        color: '#fff', 
-                                        fontSize: 16, 
+                                <Text
+                                    strong
+                                    style={{
+                                        color: '#fff',
+                                        fontSize: 16,
                                         display: 'block',
                                         textDecoration: invitation.location ? 'underline' : 'none'
                                     }}
@@ -430,25 +431,40 @@ const InvitationDetail = () => {
                 {/* Attendees Avatar List */}
                 {attendees.length > 0 && (
                     <>
-                        <Divider style={{ borderColor: '#333', color: '#c9a227' }}>已報名 ({attendees.length})</Divider>
-                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-                            <Avatar.Group
-                                maxCount={10}
-                                size="large"
-                                maxStyle={{ color: theme.primary, backgroundColor: theme.card, border: `2px solid ${theme.primary}` }}
-                            >
-                                {attendees.map((att, index) => (
+                        <Divider style={{ borderColor: '#333', color: '#c9a227' }}>
+                            已報名 ({attendees.length}{invitation.max_attendees ? `/${invitation.max_attendees}` : ''})
+                        </Divider>
+                        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+                            {attendees.map((att, index) => (
+                                <div key={att.line_user_id || index} style={{ textAlign: 'center', width: 56 }}>
                                     <Avatar
-                                        key={att.line_user_id || index}
                                         src={att.avatar_url}
+                                        size="large"
                                         style={{ border: '2px solid #c9a227' }}
                                     >
                                         {att.name?.charAt(0)}
                                     </Avatar>
-                                ))}
-                            </Avatar.Group>
+                                    <div style={{
+                                        fontSize: 11,
+                                        color: '#ccc',
+                                        marginTop: 4,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                    }}>
+                                        {att.name}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </>
+                )}
+
+                {/* 額滿提示 */}
+                {invitation.max_attendees && attendees.length >= invitation.max_attendees && !hasRSVPd && (
+                    <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                        <Tag color="red" style={{ fontSize: 14, padding: '4px 16px' }}>🈵 名額已滿</Tag>
+                    </div>
                 )}
 
                 {/* Actions */}
@@ -469,20 +485,20 @@ const InvitationDetail = () => {
                             type="primary"
                             block
                             size="large"
-                            loading={!isEventEnded && !hasRSVPd && sending}
-                            disabled={isEventEnded || hasRSVPd}
+                            loading={!isEventEnded && !hasRSVPd && !isFull && sending}
+                            disabled={isEventEnded || hasRSVPd || isFull}
                             icon={<CheckCircleFilled />}
                             style={{
                                 height: 50,
                                 borderRadius: 25,
-                                background: isEventEnded ? '#555' : hasRSVPd ? '#2d5016' : '#c9a227',
-                                borderColor: isEventEnded ? '#555' : hasRSVPd ? '#3d7a1c' : '#c9a227',
-                                color: isEventEnded ? '#999' : hasRSVPd ? '#8fbc8f' : '#000',
+                                background: isEventEnded ? '#555' : hasRSVPd ? '#2d5016' : isFull ? '#555' : '#c9a227',
+                                borderColor: isEventEnded ? '#555' : hasRSVPd ? '#3d7a1c' : isFull ? '#555' : '#c9a227',
+                                color: isEventEnded ? '#999' : hasRSVPd ? '#8fbc8f' : isFull ? '#999' : '#000',
                                 fontWeight: 'bold'
                             }}
-                            onClick={(isEventEnded || hasRSVPd) ? undefined : handleRSVP}
+                            onClick={(isEventEnded || hasRSVPd || isFull) ? undefined : handleRSVP}
                         >
-                            {isEventEnded ? '聚會已結束' : hasRSVPd ? '✓ 已報名' : '我會參加'}
+                            {isEventEnded ? '聚會已結束' : hasRSVPd ? '✓ 已報名' : isFull ? '已額滿' : '我會參加'}
                         </Button>
                     </Col>
                 </Row>
@@ -495,9 +511,9 @@ const InvitationDetail = () => {
                                 block
                                 size="large"
                                 icon={<ShareAltOutlined />}
-                                style={{ 
-                                    height: 50, 
-                                    borderRadius: 25, 
+                                style={{
+                                    height: 50,
+                                    borderRadius: 25,
                                     background: theme === 'chill' ? '#1a4b3a' : '#f0f0f0',
                                     borderColor: theme === 'chill' ? '#2d7a5f' : '#d9d9d9',
                                     color: theme === 'chill' ? '#64ffaa' : '#595959',
@@ -514,9 +530,9 @@ const InvitationDetail = () => {
                             block
                             size="large"
                             icon={<AppstoreOutlined />}
-                            style={{ 
-                                height: 50, 
-                                borderRadius: 25, 
+                            style={{
+                                height: 50,
+                                borderRadius: 25,
                                 background: theme === 'chill' ? '#2a1810' : '#fff7e6',
                                 borderColor: theme === 'chill' ? '#8b4513' : '#ffa940',
                                 color: theme === 'chill' ? '#ffa940' : '#d46b08',

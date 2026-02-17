@@ -33,6 +33,9 @@ class Invitation(Base):
     # 報名者列表 [{line_user_id, name, avatar_url}]
     attendees = Column(JSON, default=list, comment="報名者列表")
     
+    # 參加人數上限（null = 不限）
+    max_attendees = Column(Integer, nullable=True, comment="參加人數上限")
+    
     # 是否允許受邀者轉發此邀請（預設開啟，用戶可手動關閉）
     allow_forwarding = Column(Boolean, default=True, comment="允許轉發")
 

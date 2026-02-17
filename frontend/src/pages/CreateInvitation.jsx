@@ -8,6 +8,7 @@ import {
     Typography,
     Form,
     Input,
+    InputNumber,
     DatePicker,
     Button,
     Row,
@@ -35,7 +36,7 @@ const { TextArea } = Input;
 const CreateInvitation = () => {
     const navigate = useNavigate();
     const { theme } = useMode();
-    
+
     // 開發環境加入 vConsole
     useEffect(() => {
         if (window.location.search.includes('test=1') && !window.VConsole) {
@@ -48,7 +49,7 @@ const CreateInvitation = () => {
             document.head.appendChild(script);
         }
     }, []);
-    
+
     // 生成行事曆 URL 的函數
     const generateCalendarUrl = (eventData) => {
         const startDate = eventData.event_time.format('YYYYMMDDTHHmmss');
@@ -56,7 +57,7 @@ const CreateInvitation = () => {
         const title = encodeURIComponent(eventData.title);
         const location = encodeURIComponent(eventData.location || '');
         const description = encodeURIComponent(eventData.description || '來次美好的品酒聚會！');
-        
+
         return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&location=${location}&details=${description}`;
     };
     const [form] = Form.useForm();
@@ -189,6 +190,7 @@ const CreateInvitation = () => {
                 description: previewData.description,
                 wine_ids: selectedWines,
                 theme_image_url: previewData.theme_image_url,
+                max_attendees: previewData.max_attendees || null,
                 allow_forwarding: previewData.allow_forwarding ?? true // 預設開啟
             };
 
@@ -196,25 +198,25 @@ const CreateInvitation = () => {
             console.log("2. 呼叫後端 API 創建邀請...");
             let invitationId;
             let invitationData;
-            
+
             // 呼叫真實後端 API - 不使用 fallback，確保創建真實邀請
             console.log("Payload being sent:", payload);
             invitationData = await createInvitation(payload);
             console.log("API 回應數據:", invitationData);
-            
+
             // 檢查 API 回應是否有效
             if (!invitationData) {
                 throw new Error("API 返回空數據");
             }
-            
+
             if (!invitationData.id) {
                 console.error("API 回應缺少 id 字段:", invitationData);
                 throw new Error("API 返回數據缺少邀請 ID");
             }
-            
+
             invitationId = invitationData.id;
             console.log("3. 後端創建成功，邀請 ID:", invitationId);
-            
+
             // 驗證 ID 是數字且有效
             if (!invitationId || isNaN(invitationId)) {
                 throw new Error("獲取到無效的邀請 ID");
@@ -225,7 +227,7 @@ const CreateInvitation = () => {
             const timeStr = previewData.event_time.format('YYYY/MM/DD HH:mm');
             const detailUrl = `https://liff.line.me/${import.meta.env.VITE_LIFF_ID}/invitation/${invitationId}`;
             console.log("7. detailUrl:", detailUrl);
-            
+
             const flexMessage = {
                 type: "flex",
                 altText: `🍷 ${previewData.title} — 品酒邀請`,
@@ -491,7 +493,7 @@ const CreateInvitation = () => {
                     const manualShare = window.confirm(
                         "是否要複製邀請連結，手動分享給朋友？"
                     );
-                    
+
                     if (manualShare) {
                         try {
                             await navigator.clipboard.writeText(invitationLink);
@@ -522,12 +524,12 @@ const CreateInvitation = () => {
                 status: err.response?.status,
                 statusText: err.response?.statusText
             });
-            
+
             // 顯示具體的錯誤信息給用戶
-            const errorMessage = err.response?.data?.detail 
-                || err.message 
+            const errorMessage = err.response?.data?.detail
+                || err.message
                 || "建立失敗，請稍後再試";
-            
+
             message.error(`創建邀請失敗: ${errorMessage}`);
         } finally {
             setSubmitting(false);
@@ -600,6 +602,18 @@ const CreateInvitation = () => {
                             rows={3}
                             placeholder="有什麼想對朋友說的..."
                             style={{ background: theme.card, border: '1px solid #444', color: '#fff' }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label={<span style={{ color: '#aaa' }}>參加人數上限（選填）</span>}
+                        name="max_attendees"
+                    >
+                        <InputNumber
+                            min={1}
+                            max={100}
+                            placeholder="不限"
+                            style={{ width: '100%', background: theme.card, border: '1px solid #444', color: '#fff' }}
                         />
                     </Form.Item>
 
