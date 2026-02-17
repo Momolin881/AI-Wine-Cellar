@@ -434,490 +434,490 @@ function AddWineItem() {
 
     return (
         <>
-        <style>{shimmerStyle}</style>
-        <Layout style={{ minHeight: '100vh', background: theme.background }}>
-            <Content style={{
-                padding: '16px',
-                maxWidth: 480,
-                margin: '0 auto',
-                animation: showShimmer ? 'pageGlow 0.8s ease-in-out' : 'none',
-            }}>
-                {/* 標題 */}
-                <div style={{ marginBottom: 16 }}>
-                    <Button
-                        icon={<ArrowLeftOutlined />}
-                        onClick={() => navigate('/')}
-                        style={{ marginBottom: 8 }}
-                    >
-                        返回
-                    </Button>
-                    <Title level={3}>🍷 新增酒款</Title>
-                </div>
-
-                {/* AI 辨識區塊 - Blob Card 效果 */}
-                <div className="blob-card" style={{ marginBottom: 16 }}>
-                    <div className="blob-card__blob"></div>
-                    <div className="blob-card__blob blob-card__blob--secondary"></div>
-                    <div className="blob-card__bg"></div>
-                    <div className="blob-card__content">
-                        {recognizing ? (
-                            <div className="blob-card__loading">
-                                <Spin size="large" tip="AI 辨識中..." />
-                            </div>
-                        ) : imageUrl ? (
-                            <>
-                                <img
-                                    src={imageUrl}
-                                    alt="酒標"
-                                    className="blob-card__image"
-                                    loading="lazy"
-                                />
-                                <div className="blob-card__buttons">
-                                    <Upload
-                                        accept="image/*"
-                                        showUploadList={false}
-                                        beforeUpload={handleImageUpload}
-                                        capture="environment"
-                                    >
-                                        <Button icon={<CameraOutlined />}>重新拍照</Button>
-                                    </Upload>
-                                    <Upload
-                                        accept="image/*"
-                                        showUploadList={false}
-                                        beforeUpload={handleImageUpload}
-                                    >
-                                        <Button icon={<UploadOutlined />}>重新上傳</Button>
-                                    </Upload>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <Text style={{ display: 'block', marginBottom: 16, color: '#aaa' }}>
-                                    AI 自動辨識酒標
-                                </Text>
-                                <div className="blob-card__buttons">
-                                    <Upload
-                                        accept="image/*"
-                                        showUploadList={false}
-                                        beforeUpload={handleImageUpload}
-                                        capture="environment"
-                                    >
-                                        <Button
-                                            type="primary"
-                                            icon={<CameraOutlined />}
-                                            size="large"
-                                            style={{ minWidth: 130 }}
-                                        >
-                                            拍照酒標
-                                        </Button>
-                                    </Upload>
-                                    <Upload
-                                        accept="image/*"
-                                        showUploadList={false}
-                                        beforeUpload={handleImageUpload}
-                                    >
-                                        <Button
-                                            icon={<UploadOutlined />}
-                                            size="large"
-                                            style={{ minWidth: 130 }}
-                                        >
-                                            上傳酒照
-                                        </Button>
-                                    </Upload>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {/* 表單 */}
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                    initialValues={{
-                        wine_type: '紅酒',
-                        quantity: 1,
-                        space_units: 1,
-                        container_type: '瓶',
-                        bottle_status: 'unopened',
-                        preservation_type: 'immediate',
-                        remaining_amount: 100,
-                        purchase_date: dayjs(),
-                    }}
-                >
-                    {/* 酒窖選擇 (隱藏，自動帶入) */}
-                    <Form.Item name="cellar_id" hidden>
-                        <Input />
-                    </Form.Item>
-
-                    {/* 保存類型 - 移到最上方 */}
-                    <Form.Item label="保存類型 (影響開瓶後建議飲用期)" name="preservation_type" rules={[{ required: true }]}>
-                        <Radio.Group buttonStyle="solid">
-                            <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
-                            <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
-                        </Radio.Group>
-                    </Form.Item>
-
-                    <Form.Item label="開瓶狀態" name="bottle_status">
-                        <Radio.Group buttonStyle="solid">
-                            <Radio.Button value="unopened">未開瓶</Radio.Button>
-                            <Radio.Button value="opened">已開瓶</Radio.Button>
-                        </Radio.Group>
-                    </Form.Item>
-
-                    {/* 只有在已開瓶時顯示剩餘量 */}
-                    <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.bottle_status !== currentValues.bottle_status}>
-                        {({ getFieldValue }) =>
-                            getFieldValue('bottle_status') === 'opened' && (
-                                <Form.Item label="剩餘量" name="remaining_amount">
-                                    <Slider
-                                        marks={{
-                                            0: '空',
-                                            25: '1/4',
-                                            50: '半',
-                                            75: '3/4',
-                                            100: '滿'
-                                        }}
-                                        step={null}
-                                        reverse={true}
-                                        tooltip={{ formatter: null }}
-                                        styles={{
-                                            rail: { backgroundColor: '#444' },
-                                            track: { backgroundColor: '#c9a227' },
-                                            handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
-                                        }}
-                                    />
-                                </Form.Item>
-                            )
-                        }
-                    </Form.Item>
-
-                    {/* 基本資訊 */}
-                    <Form.Item
-                        label="酒名"
-                        name="name"
-                        rules={[{ required: true, message: '請輸入酒名' }]}
-                    >
-                        <Input placeholder="例：Château Margaux 2018" />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="酒類"
-                        name="wine_type"
-                        rules={[{ required: true, message: '請選擇酒類' }]}
-                    >
-                        <Select placeholder="選擇酒類">
-                            {wineTypes.map((type) => (
-                                <Option key={type} value={type}>{type}</Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
-                    <Space style={{ width: '100%' }} size="middle">
-                        <Form.Item label="品牌/酒莊" name="brand" style={{ flex: 1 }}>
-                            <Input placeholder="例：波爾多" />
-                        </Form.Item>
-                        <Form.Item label="年份" name="vintage" style={{ width: 100 }}>
-                            <InputNumber
-                                min={1900}
-                                max={new Date().getFullYear()}
-                                placeholder="2018"
-                                style={{ width: '100%' }}
-                            />
-                        </Form.Item>
-                    </Space>
-
-                    <Space style={{ width: '100%' }} size="middle">
-                        <Form.Item label="產區" name="region" style={{ flex: 1 }}>
-                            <Input placeholder="例：波爾多" />
-                        </Form.Item>
-                        <Form.Item label="國家" name="country" style={{ flex: 1 }}>
-                            <Input placeholder="例：法國" />
-                        </Form.Item>
-                    </Space>
-
-                    <Space style={{ width: '100%' }} size="middle">
-                        <Form.Item label="酒精濃度 (%)" name="abv" style={{ flex: 1 }}>
-                            <InputNumber
-                                min={0}
-                                max={100}
-                                step={0.1}
-                                placeholder="13.5"
-                                style={{ width: '100%' }}
-                            />
-                        </Form.Item>
-                        <Form.Item label="數量" name="quantity" style={{ flex: 1 }}>
-                            <InputNumber min={1} style={{ width: '100%' }} />
-                        </Form.Item>
-                    </Space>
-
-                    {/* 價格（合併為單一欄位） + 日曆按鈕 */}
-                    <Form.Item label="價格（台幣）" style={{ marginBottom: 0 }}>
-                        <Space.Compact style={{ width: '100%' }}>
-                            <Form.Item name="price" noStyle>
-                                <InputNumber
-                                    min={0}
-                                    placeholder="1500"
-                                    style={{ width: 'calc(100% - 40px)' }}
-                                    formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                                    parser={(value) => value.replace(/,/g, '')}
-                                />
-                            </Form.Item>
-                            <Button
-                                icon={<CalendarOutlined />}
-                                onClick={handleOpenCalendar}
-                                title="查看/紀錄本月消費"
-                                style={{ width: 40 }}
-                            />
-                        </Space.Compact>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            點擊日曆查看本月消費紀錄
-                        </Text>
-                    </Form.Item>
-
-                    {/* 日期 */}
-                    <Form.Item label="購買日期" name="purchase_date" style={{ marginTop: 16 }}>
-                        <DatePicker style={{ width: '100%' }} />
-                    </Form.Item>
-
-                    {/* 儲存位置 */}
-                    <Form.Item label="存放位置" name="storage_location">
-                        <Input placeholder="例：A架第2層" />
-                    </Form.Item>
-
-                    {/* 備註 */}
-                    <Form.Item label="備註" name="notes">
-                        <TextArea rows={3} placeholder="品酒筆記、特殊說明..." />
-                    </Form.Item>
-
-                    {/* Pro Mode: 品飲筆記欄位 */}
-                    {isPro && (
-                        <>
-                            <Divider style={{ borderColor: '#404040' }}>
-                                <span style={{ color: '#c9a227', fontSize: 14 }}>📝 品飲筆記 (Pro)</span>
-                            </Divider>
-
-                            <Form.Item label="⭐ 評分" name="rating">
-                                <Rate allowHalf style={{ color: '#c9a227', fontSize: 28 }} />
-                            </Form.Item>
-
-                            <Form.Item label="💬 評價" name="review">
-                                <TextArea rows={2} placeholder="對這支酒的整體評價..." />
-                            </Form.Item>
-
-                            <Form.Item label="🌸 香氣" name="aroma">
-                                <TextArea rows={2} placeholder="描述聞到的香氣..." />
-                            </Form.Item>
-
-                            <Form.Item label="👅 口感" name="palate">
-                                <TextArea rows={2} placeholder="描述入口的感受..." />
-                            </Form.Item>
-
-                            <Form.Item label="✨ 餘韻" name="finish">
-                                <TextArea rows={2} placeholder="描述吞嚥後的尾韻..." />
-                            </Form.Item>
-
-                            {/* 進階風味分析 (Pro) - 折疊區塊 */}
-                            <Collapse
-                                ghost
-                                style={{ marginTop: 16 }}
-                                items={[{
-                                    key: 'flavor-analysis',
-                                    label: <Text strong style={{ color: '#c9a227' }}>📊 進階風味分析</Text>,
-                                    children: (
-                                        <Form.Item noStyle shouldUpdate>
-                                    {({ getFieldsValue, setFieldsValue }) => {
-                                        const values = getFieldsValue(['acidity', 'tannin', 'body', 'sweetness', 'alcohol_feel']);
-                                        // 確保有預設值
-                                        const radarData = {
-                                            acidity: values.acidity || 3,
-                                            tannin: values.tannin || 3,
-                                            body: values.body || 3,
-                                            sweetness: values.sweetness || 3,
-                                            alcohol_feel: values.alcohol_feel || 3
-                                        };
-
-                                        return (
-                                            <div style={{ background: '#252538', padding: '16px', borderRadius: 12 }}>
-                                                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-                                                    <FlavorRadar data={radarData} isChill={false} />
-                                                </div>
-
-                                                {[
-                                                    { key: 'acidity', label: '酸度' },
-                                                    { key: 'tannin', label: '單寧' },
-                                                    { key: 'body', label: '酒體' },
-                                                    { key: 'sweetness', label: '甜度' },
-                                                    { key: 'alcohol_feel', label: '酒感' },
-                                                ].map(item => (
-                                                    <Form.Item
-                                                        key={item.key}
-                                                        name={item.key}
-                                                        initialValue={3}
-                                                        style={{ marginBottom: 12 }}
-                                                    >
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                                            <Text style={{ fontSize: 12, color: '#888' }}>{item.label}</Text>
-                                                            <Text style={{ fontSize: 12, color: '#c9a227' }}>{radarData[item.key]}</Text>
-                                                        </div>
-                                                        <Slider
-                                                            min={1}
-                                                            max={5}
-                                                            onChange={(val) => {
-                                                                // 強制更新 render 以重繪雷達
-                                                                setFieldsValue({ [item.key]: val });
-                                                            }}
-                                                            styles={{
-                                                                rail: { backgroundColor: '#444' },
-                                                                track: { backgroundColor: '#c9a227' },
-                                                                handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
-                                                            }}
-                                                        />
-                                                    </Form.Item>
-                                                ))}
-                                            </div>
-                                        );
-                                    }}
-                                </Form.Item>
-                                    )
-                                }]}
-                            />
-                        </>
-                    )}
-
-                    {/* 提交按鈕 */}
-                    <Form.Item>
+            <style>{shimmerStyle}</style>
+            <Layout style={{ minHeight: '100vh', background: theme.background }}>
+                <Content style={{
+                    padding: '16px',
+                    maxWidth: 480,
+                    margin: '0 auto',
+                    animation: showShimmer ? 'pageGlow 0.8s ease-in-out' : 'none',
+                }}>
+                    {/* 標題 */}
+                    <div style={{ marginBottom: 16 }}>
                         <Button
-                            type="primary"
-                            htmlType="submit"
-                            icon={<SaveOutlined />}
-                            loading={loading}
-                            size="large"
-                            block
+                            icon={<ArrowLeftOutlined />}
+                            onClick={() => navigate('/')}
+                            style={{ marginBottom: 8 }}
                         >
-                            儲存酒款
+                            返回
                         </Button>
-                    </Form.Item>
-                </Form>
+                        <Title level={3}>🍷 新增酒款</Title>
+                    </div>
 
-                {/* 月曆 Modal */}
-                <Modal
-                    title={<><CalendarOutlined /> 本月消費紀錄</>}
-                    open={calendarVisible}
-                    onCancel={() => {
-                        setCalendarVisible(false);
-                        setSelectedDate(null);
-                        setDailyItems([]);
-                    }}
-                    footer={null}
-                    width={600}
-                >
-                    {/* 月份消費總計和預算 */}
-                    {(() => {
-                        const monthlyTotal = getMonthlyTotal(calendarMonth);
-                        const isOverBudget = budgetSettings?.monthly_budget && monthlyTotal > budgetSettings.monthly_budget;
-                        const statusColor = isChill
-                            ? (isOverBudget ? '#ff00ff' : '#00ff88')
-                            : (isOverBudget ? '#ff4d4f' : '#722ed1');
-                        return (
-                            <Card
-                                size="small"
-                                style={{
-                                    marginBottom: 16,
-                                    background: isChill
-                                        ? (isOverBudget ? 'rgba(255, 0, 255, 0.15)' : 'rgba(0, 255, 136, 0.15)')
-                                        : '#f9f0ff',
-                                    borderColor: isChill
-                                        ? (isOverBudget ? '#ff00ff' : '#00ff88')
-                                        : '#d3adf7',
-                                }}
-                            >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                        <Text strong style={{ fontSize: 16, color: isChill ? '#e0e0e0' : undefined }}>
-                                            {calendarMonth.format('YYYY 年 M 月')} 總消費
-                                        </Text>
-                                        <Text strong style={{
-                                            fontSize: 20,
-                                            color: statusColor,
-                                            marginLeft: 12,
-                                            textShadow: isChill ? `0 0 10px ${statusColor}` : 'none'
-                                        }}>
-                                            NT$ {monthlyTotal.toLocaleString()}
-                                        </Text>
-                                    </div>
-                                    {budgetSettings?.monthly_budget && (
-                                        <div>
-                                            <Text style={{ color: isChill ? '#888' : undefined }}>預算上限：</Text>
-                                            <Text strong style={{ color: isChill ? '#e0e0e0' : undefined }}>NT$ {budgetSettings.monthly_budget.toLocaleString()}</Text>
-                                        </div>
-                                    )}
+                    {/* AI 辨識區塊 - Blob Card 效果 */}
+                    <div className="blob-card" style={{ marginBottom: 16 }}>
+                        <div className="blob-card__blob"></div>
+                        <div className="blob-card__blob blob-card__blob--secondary"></div>
+                        <div className="blob-card__bg"></div>
+                        <div className="blob-card__content">
+                            {recognizing ? (
+                                <div className="blob-card__loading">
+                                    <Spin size="large" tip="AI 辨識中..." />
                                 </div>
-                                {budgetSettings?.monthly_budget && (
-                                    <div style={{ marginTop: 8 }}>
-                                        <Text style={{ fontSize: 12, color: isChill ? '#888' : undefined }}>
-                                            已使用 {((monthlyTotal / budgetSettings.monthly_budget) * 100).toFixed(1)}% 的預算
-                                        </Text>
+                            ) : imageUrl ? (
+                                <>
+                                    <img
+                                        src={imageUrl}
+                                        alt="酒標"
+                                        className="blob-card__image"
+                                        loading="lazy"
+                                    />
+                                    <div className="blob-card__buttons">
+                                        <Upload
+                                            accept="image/*"
+                                            showUploadList={false}
+                                            beforeUpload={handleImageUpload}
+
+                                        >
+                                            <Button icon={<CameraOutlined />}>重新拍照</Button>
+                                        </Upload>
+                                        <Upload
+                                            accept="image/*"
+                                            showUploadList={false}
+                                            beforeUpload={handleImageUpload}
+                                        >
+                                            <Button icon={<UploadOutlined />}>重新上傳</Button>
+                                        </Upload>
                                     </div>
-                                )}
-                            </Card>
-                        );
-                    })()}
-
-                    <Calendar
-                        fullscreen={false}
-                        cellRender={dateCellRender}
-                        onSelect={handleDateSelect}
-                        onPanelChange={handlePanelChange}
-                    />
-
-                    {/* 當日消費明細 */}
-                    {selectedDate && (
-                        <Card
-                            size="small"
-                            title={<span style={{ color: isChill ? '#e0e0e0' : undefined }}>{selectedDate.format('YYYY/MM/DD')} 消費明細</span>}
-                            style={{
-                                marginTop: 16,
-                                background: isChill ? theme.card : undefined,
-                                borderColor: isChill ? 'rgba(0, 240, 255, 0.2)' : undefined,
-                            }}
-                        >
-                            {dailyItems.length === 0 ? (
-                                <Text style={{ color: isChill ? '#888' : undefined }}>當日無消費紀錄</Text>
+                                </>
                             ) : (
                                 <>
-                                    <div style={{ marginBottom: 12 }}>
-                                        <Text strong style={{
-                                            fontSize: 16,
-                                            color: isChill ? '#00ff88' : '#722ed1',
-                                            textShadow: isChill ? '0 0 10px #00ff88' : 'none'
-                                        }}>
-                                            支出：NT$ {selectedDateTotal.toLocaleString()}
-                                        </Text>
+                                    <Text style={{ display: 'block', marginBottom: 16, color: '#aaa' }}>
+                                        AI 自動辨識酒標
+                                    </Text>
+                                    <div className="blob-card__buttons">
+                                        <Upload
+                                            accept="image/*"
+                                            showUploadList={false}
+                                            beforeUpload={handleImageUpload}
+
+                                        >
+                                            <Button
+                                                type="primary"
+                                                icon={<CameraOutlined />}
+                                                size="large"
+                                                style={{ minWidth: 130 }}
+                                            >
+                                                拍照酒標
+                                            </Button>
+                                        </Upload>
+                                        <Upload
+                                            accept="image/*"
+                                            showUploadList={false}
+                                            beforeUpload={handleImageUpload}
+                                        >
+                                            <Button
+                                                icon={<UploadOutlined />}
+                                                size="large"
+                                                style={{ minWidth: 130 }}
+                                            >
+                                                上傳酒照
+                                            </Button>
+                                        </Upload>
                                     </div>
-                                    <List
-                                        size="small"
-                                        dataSource={dailyItems}
-                                        renderItem={(item) => (
-                                            <List.Item style={{ borderColor: isChill ? 'rgba(0, 240, 255, 0.1)' : undefined }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                                                    <Space>
-                                                        <Text style={{ color: isChill ? '#e0e0e0' : undefined }}>{item.name}</Text>
-                                                        {item.wine_type && <Tag color={isChill ? 'cyan' : 'purple'}>{item.wine_type}</Tag>}
-                                                    </Space>
-                                                    <Text strong style={{ color: isChill ? '#00ff88' : undefined }}>NT$ {item.purchase_price?.toLocaleString()}</Text>
-                                                </div>
-                                            </List.Item>
-                                        )}
-                                    />
                                 </>
                             )}
-                        </Card>
-                    )}
-                </Modal>
-            </Content>
-        </Layout>
+                        </div>
+                    </div>
+
+                    {/* 表單 */}
+                    <Form
+                        form={form}
+                        layout="vertical"
+                        onFinish={handleSubmit}
+                        initialValues={{
+                            wine_type: '紅酒',
+                            quantity: 1,
+                            space_units: 1,
+                            container_type: '瓶',
+                            bottle_status: 'unopened',
+                            preservation_type: 'immediate',
+                            remaining_amount: 100,
+                            purchase_date: dayjs(),
+                        }}
+                    >
+                        {/* 酒窖選擇 (隱藏，自動帶入) */}
+                        <Form.Item name="cellar_id" hidden>
+                            <Input />
+                        </Form.Item>
+
+                        {/* 保存類型 - 移到最上方 */}
+                        <Form.Item label="保存類型 (影響開瓶後建議飲用期)" name="preservation_type" rules={[{ required: true }]}>
+                            <Radio.Group buttonStyle="solid">
+                                <Radio.Button value="immediate">即飲型 (3-5天)</Radio.Button>
+                                <Radio.Button value="aging">陳年型 (較長)</Radio.Button>
+                            </Radio.Group>
+                        </Form.Item>
+
+                        <Form.Item label="開瓶狀態" name="bottle_status">
+                            <Radio.Group buttonStyle="solid">
+                                <Radio.Button value="unopened">未開瓶</Radio.Button>
+                                <Radio.Button value="opened">已開瓶</Radio.Button>
+                            </Radio.Group>
+                        </Form.Item>
+
+                        {/* 只有在已開瓶時顯示剩餘量 */}
+                        <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.bottle_status !== currentValues.bottle_status}>
+                            {({ getFieldValue }) =>
+                                getFieldValue('bottle_status') === 'opened' && (
+                                    <Form.Item label="剩餘量" name="remaining_amount">
+                                        <Slider
+                                            marks={{
+                                                0: '空',
+                                                25: '1/4',
+                                                50: '半',
+                                                75: '3/4',
+                                                100: '滿'
+                                            }}
+                                            step={null}
+                                            reverse={true}
+                                            tooltip={{ formatter: null }}
+                                            styles={{
+                                                rail: { backgroundColor: '#444' },
+                                                track: { backgroundColor: '#c9a227' },
+                                                handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                                            }}
+                                        />
+                                    </Form.Item>
+                                )
+                            }
+                        </Form.Item>
+
+                        {/* 基本資訊 */}
+                        <Form.Item
+                            label="酒名"
+                            name="name"
+                            rules={[{ required: true, message: '請輸入酒名' }]}
+                        >
+                            <Input placeholder="例：Château Margaux 2018" />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="酒類"
+                            name="wine_type"
+                            rules={[{ required: true, message: '請選擇酒類' }]}
+                        >
+                            <Select placeholder="選擇酒類">
+                                {wineTypes.map((type) => (
+                                    <Option key={type} value={type}>{type}</Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+
+                        <Space style={{ width: '100%' }} size="middle">
+                            <Form.Item label="品牌/酒莊" name="brand" style={{ flex: 1 }}>
+                                <Input placeholder="例：波爾多" />
+                            </Form.Item>
+                            <Form.Item label="年份" name="vintage" style={{ width: 100 }}>
+                                <InputNumber
+                                    min={1900}
+                                    max={new Date().getFullYear()}
+                                    placeholder="2018"
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+                        </Space>
+
+                        <Space style={{ width: '100%' }} size="middle">
+                            <Form.Item label="產區" name="region" style={{ flex: 1 }}>
+                                <Input placeholder="例：波爾多" />
+                            </Form.Item>
+                            <Form.Item label="國家" name="country" style={{ flex: 1 }}>
+                                <Input placeholder="例：法國" />
+                            </Form.Item>
+                        </Space>
+
+                        <Space style={{ width: '100%' }} size="middle">
+                            <Form.Item label="酒精濃度 (%)" name="abv" style={{ flex: 1 }}>
+                                <InputNumber
+                                    min={0}
+                                    max={100}
+                                    step={0.1}
+                                    placeholder="13.5"
+                                    style={{ width: '100%' }}
+                                />
+                            </Form.Item>
+                            <Form.Item label="數量" name="quantity" style={{ flex: 1 }}>
+                                <InputNumber min={1} style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Space>
+
+                        {/* 價格（合併為單一欄位） + 日曆按鈕 */}
+                        <Form.Item label="價格（台幣）" style={{ marginBottom: 0 }}>
+                            <Space.Compact style={{ width: '100%' }}>
+                                <Form.Item name="price" noStyle>
+                                    <InputNumber
+                                        min={0}
+                                        placeholder="1500"
+                                        style={{ width: 'calc(100% - 40px)' }}
+                                        formatter={(value) => value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                                        parser={(value) => value.replace(/,/g, '')}
+                                    />
+                                </Form.Item>
+                                <Button
+                                    icon={<CalendarOutlined />}
+                                    onClick={handleOpenCalendar}
+                                    title="查看/紀錄本月消費"
+                                    style={{ width: 40 }}
+                                />
+                            </Space.Compact>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                點擊日曆查看本月消費紀錄
+                            </Text>
+                        </Form.Item>
+
+                        {/* 日期 */}
+                        <Form.Item label="購買日期" name="purchase_date" style={{ marginTop: 16 }}>
+                            <DatePicker style={{ width: '100%' }} />
+                        </Form.Item>
+
+                        {/* 儲存位置 */}
+                        <Form.Item label="存放位置" name="storage_location">
+                            <Input placeholder="例：A架第2層" />
+                        </Form.Item>
+
+                        {/* 備註 */}
+                        <Form.Item label="備註" name="notes">
+                            <TextArea rows={3} placeholder="品酒筆記、特殊說明..." />
+                        </Form.Item>
+
+                        {/* Pro Mode: 品飲筆記欄位 */}
+                        {isPro && (
+                            <>
+                                <Divider style={{ borderColor: '#404040' }}>
+                                    <span style={{ color: '#c9a227', fontSize: 14 }}>📝 品飲筆記 (Pro)</span>
+                                </Divider>
+
+                                <Form.Item label="⭐ 評分" name="rating">
+                                    <Rate allowHalf style={{ color: '#c9a227', fontSize: 28 }} />
+                                </Form.Item>
+
+                                <Form.Item label="💬 評價" name="review">
+                                    <TextArea rows={2} placeholder="對這支酒的整體評價..." />
+                                </Form.Item>
+
+                                <Form.Item label="🌸 香氣" name="aroma">
+                                    <TextArea rows={2} placeholder="描述聞到的香氣..." />
+                                </Form.Item>
+
+                                <Form.Item label="👅 口感" name="palate">
+                                    <TextArea rows={2} placeholder="描述入口的感受..." />
+                                </Form.Item>
+
+                                <Form.Item label="✨ 餘韻" name="finish">
+                                    <TextArea rows={2} placeholder="描述吞嚥後的尾韻..." />
+                                </Form.Item>
+
+                                {/* 進階風味分析 (Pro) - 折疊區塊 */}
+                                <Collapse
+                                    ghost
+                                    style={{ marginTop: 16 }}
+                                    items={[{
+                                        key: 'flavor-analysis',
+                                        label: <Text strong style={{ color: '#c9a227' }}>📊 進階風味分析</Text>,
+                                        children: (
+                                            <Form.Item noStyle shouldUpdate>
+                                                {({ getFieldsValue, setFieldsValue }) => {
+                                                    const values = getFieldsValue(['acidity', 'tannin', 'body', 'sweetness', 'alcohol_feel']);
+                                                    // 確保有預設值
+                                                    const radarData = {
+                                                        acidity: values.acidity || 3,
+                                                        tannin: values.tannin || 3,
+                                                        body: values.body || 3,
+                                                        sweetness: values.sweetness || 3,
+                                                        alcohol_feel: values.alcohol_feel || 3
+                                                    };
+
+                                                    return (
+                                                        <div style={{ background: '#252538', padding: '16px', borderRadius: 12 }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                                                                <FlavorRadar data={radarData} isChill={false} />
+                                                            </div>
+
+                                                            {[
+                                                                { key: 'acidity', label: '酸度' },
+                                                                { key: 'tannin', label: '單寧' },
+                                                                { key: 'body', label: '酒體' },
+                                                                { key: 'sweetness', label: '甜度' },
+                                                                { key: 'alcohol_feel', label: '酒感' },
+                                                            ].map(item => (
+                                                                <Form.Item
+                                                                    key={item.key}
+                                                                    name={item.key}
+                                                                    initialValue={3}
+                                                                    style={{ marginBottom: 12 }}
+                                                                >
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                                                        <Text style={{ fontSize: 12, color: '#888' }}>{item.label}</Text>
+                                                                        <Text style={{ fontSize: 12, color: '#c9a227' }}>{radarData[item.key]}</Text>
+                                                                    </div>
+                                                                    <Slider
+                                                                        min={1}
+                                                                        max={5}
+                                                                        onChange={(val) => {
+                                                                            // 強制更新 render 以重繪雷達
+                                                                            setFieldsValue({ [item.key]: val });
+                                                                        }}
+                                                                        styles={{
+                                                                            rail: { backgroundColor: '#444' },
+                                                                            track: { backgroundColor: '#c9a227' },
+                                                                            handle: { borderColor: '#c9a227', backgroundColor: '#c9a227' }
+                                                                        }}
+                                                                    />
+                                                                </Form.Item>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                }}
+                                            </Form.Item>
+                                        )
+                                    }]}
+                                />
+                            </>
+                        )}
+
+                        {/* 提交按鈕 */}
+                        <Form.Item>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                icon={<SaveOutlined />}
+                                loading={loading}
+                                size="large"
+                                block
+                            >
+                                儲存酒款
+                            </Button>
+                        </Form.Item>
+                    </Form>
+
+                    {/* 月曆 Modal */}
+                    <Modal
+                        title={<><CalendarOutlined /> 本月消費紀錄</>}
+                        open={calendarVisible}
+                        onCancel={() => {
+                            setCalendarVisible(false);
+                            setSelectedDate(null);
+                            setDailyItems([]);
+                        }}
+                        footer={null}
+                        width={600}
+                    >
+                        {/* 月份消費總計和預算 */}
+                        {(() => {
+                            const monthlyTotal = getMonthlyTotal(calendarMonth);
+                            const isOverBudget = budgetSettings?.monthly_budget && monthlyTotal > budgetSettings.monthly_budget;
+                            const statusColor = isChill
+                                ? (isOverBudget ? '#ff00ff' : '#00ff88')
+                                : (isOverBudget ? '#ff4d4f' : '#722ed1');
+                            return (
+                                <Card
+                                    size="small"
+                                    style={{
+                                        marginBottom: 16,
+                                        background: isChill
+                                            ? (isOverBudget ? 'rgba(255, 0, 255, 0.15)' : 'rgba(0, 255, 136, 0.15)')
+                                            : '#f9f0ff',
+                                        borderColor: isChill
+                                            ? (isOverBudget ? '#ff00ff' : '#00ff88')
+                                            : '#d3adf7',
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <Text strong style={{ fontSize: 16, color: isChill ? '#e0e0e0' : undefined }}>
+                                                {calendarMonth.format('YYYY 年 M 月')} 總消費
+                                            </Text>
+                                            <Text strong style={{
+                                                fontSize: 20,
+                                                color: statusColor,
+                                                marginLeft: 12,
+                                                textShadow: isChill ? `0 0 10px ${statusColor}` : 'none'
+                                            }}>
+                                                NT$ {monthlyTotal.toLocaleString()}
+                                            </Text>
+                                        </div>
+                                        {budgetSettings?.monthly_budget && (
+                                            <div>
+                                                <Text style={{ color: isChill ? '#888' : undefined }}>預算上限：</Text>
+                                                <Text strong style={{ color: isChill ? '#e0e0e0' : undefined }}>NT$ {budgetSettings.monthly_budget.toLocaleString()}</Text>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {budgetSettings?.monthly_budget && (
+                                        <div style={{ marginTop: 8 }}>
+                                            <Text style={{ fontSize: 12, color: isChill ? '#888' : undefined }}>
+                                                已使用 {((monthlyTotal / budgetSettings.monthly_budget) * 100).toFixed(1)}% 的預算
+                                            </Text>
+                                        </div>
+                                    )}
+                                </Card>
+                            );
+                        })()}
+
+                        <Calendar
+                            fullscreen={false}
+                            cellRender={dateCellRender}
+                            onSelect={handleDateSelect}
+                            onPanelChange={handlePanelChange}
+                        />
+
+                        {/* 當日消費明細 */}
+                        {selectedDate && (
+                            <Card
+                                size="small"
+                                title={<span style={{ color: isChill ? '#e0e0e0' : undefined }}>{selectedDate.format('YYYY/MM/DD')} 消費明細</span>}
+                                style={{
+                                    marginTop: 16,
+                                    background: isChill ? theme.card : undefined,
+                                    borderColor: isChill ? 'rgba(0, 240, 255, 0.2)' : undefined,
+                                }}
+                            >
+                                {dailyItems.length === 0 ? (
+                                    <Text style={{ color: isChill ? '#888' : undefined }}>當日無消費紀錄</Text>
+                                ) : (
+                                    <>
+                                        <div style={{ marginBottom: 12 }}>
+                                            <Text strong style={{
+                                                fontSize: 16,
+                                                color: isChill ? '#00ff88' : '#722ed1',
+                                                textShadow: isChill ? '0 0 10px #00ff88' : 'none'
+                                            }}>
+                                                支出：NT$ {selectedDateTotal.toLocaleString()}
+                                            </Text>
+                                        </div>
+                                        <List
+                                            size="small"
+                                            dataSource={dailyItems}
+                                            renderItem={(item) => (
+                                                <List.Item style={{ borderColor: isChill ? 'rgba(0, 240, 255, 0.1)' : undefined }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                                        <Space>
+                                                            <Text style={{ color: isChill ? '#e0e0e0' : undefined }}>{item.name}</Text>
+                                                            {item.wine_type && <Tag color={isChill ? 'cyan' : 'purple'}>{item.wine_type}</Tag>}
+                                                        </Space>
+                                                        <Text strong style={{ color: isChill ? '#00ff88' : undefined }}>NT$ {item.purchase_price?.toLocaleString()}</Text>
+                                                    </div>
+                                                </List.Item>
+                                            )}
+                                        />
+                                    </>
+                                )}
+                            </Card>
+                        )}
+                    </Modal>
+                </Content>
+            </Layout>
         </>
     );
 }
