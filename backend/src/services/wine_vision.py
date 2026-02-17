@@ -82,7 +82,7 @@ def recognize_wine_label(image_bytes: bytes) -> dict:
                             "type": "image_url",
                             "image_url": {
                                 "url": f"data:image/jpeg;base64,{base64_image}",
-                                "detail": "high",  # 使用高解析度以辨識酒標細節
+                                "detail": "high",  # 高解析度確保酒標小字辨識準確
                             },
                         },
                     ],

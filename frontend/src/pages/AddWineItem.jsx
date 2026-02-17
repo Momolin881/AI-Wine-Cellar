@@ -5,7 +5,7 @@
  * Neumorphism 深色主題
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Layout,
@@ -123,12 +123,57 @@ const shimmerStyle = `
 
 const wineTypes = ['紅酒', '白酒', '粉紅酒', '氣泡酒', '香檳', '威士忌', '白蘭地', '伏特加', '清酒', '啤酒', '其他'];
 
+// 圖片壓縮工具函式
+const compressImage = (file, maxWidth = 1200, quality = 0.8) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let { width, height } = img;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob(
+                    (blob) => {
+                        const compressed = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now(),
+                        });
+                        resolve(compressed);
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
+// 分階段進度文字
+const PROGRESS_STAGES = [
+    { delay: 0, text: '📤 上傳圖片中...' },
+    { delay: 2000, text: '🤖 AI 辨識酒標中...' },
+    { delay: 5000, text: '🔍 解析酒款資訊...' },
+    { delay: 10000, text: '⏳ 即將完成...' },
+];
+
 function AddWineItem() {
     const navigate = useNavigate();
     const { isPro, isChill, theme } = useMode();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [recognizing, setRecognizing] = useState(false);
+    const [progressText, setProgressText] = useState('');
+    const progressTimers = useRef([]);
     const [imageUrl, setImageUrl] = useState(null);
     const [cloudinaryPublicId, setCloudinaryPublicId] = useState(null);
     const [cellars, setCellars] = useState([]);
@@ -144,6 +189,27 @@ function AddWineItem() {
 
     // 品飲儀式動畫
     const [showShimmer, setShowShimmer] = useState(false);
+
+    // 分階段進度控制
+    const startProgress = useCallback(() => {
+        progressTimers.current.forEach(clearTimeout);
+        progressTimers.current = [];
+        PROGRESS_STAGES.forEach(({ delay, text }) => {
+            const timer = setTimeout(() => setProgressText(text), delay);
+            progressTimers.current.push(timer);
+        });
+    }, []);
+
+    const stopProgress = useCallback(() => {
+        progressTimers.current.forEach(clearTimeout);
+        progressTimers.current = [];
+        setProgressText('');
+    }, []);
+
+    // 清理 timers
+    useEffect(() => {
+        return () => progressTimers.current.forEach(clearTimeout);
+    }, []);
 
     useEffect(() => {
         loadCellars();
@@ -283,9 +349,13 @@ function AddWineItem() {
 
         try {
             setRecognizing(true);
+            startProgress();
+
+            // 壓縮圖片（原圖 3-8MB → ~200KB，大幅加速上傳）
+            const compressed = await compressImage(file);
 
             const formData = new FormData();
-            formData.append('image', file);
+            formData.append('image', compressed);
             formData.append('cellar_id', selectedCellar);
 
             const data = await apiClient.post('/wine-items/recognize', formData, {
@@ -364,6 +434,7 @@ function AddWineItem() {
             console.error('AI 辨識失敗:', error);
             message.error('辨識失敗，請手動輸入');
         } finally {
+            stopProgress();
             setRecognizing(false);
         }
 
@@ -462,7 +533,10 @@ function AddWineItem() {
                         <div className="blob-card__content">
                             {recognizing ? (
                                 <div className="blob-card__loading">
-                                    <Spin size="large" tip="AI 辨識中..." />
+                                    <Spin size="large" />
+                                    <p style={{ marginTop: 12, color: '#c9a227', fontSize: 14 }}>
+                                        {progressText || '準備中...'}
+                                    </p>
                                 </div>
                             ) : imageUrl ? (
                                 <>

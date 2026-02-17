@@ -804,11 +804,12 @@ async def recognize_wine_label(
         # 讀取圖片
         image_bytes = await image.read()
 
-        # 上傳至 Cloudinary
-        upload_result = storage.upload_image(image_bytes, folder="wine_items")
-
-        # AI 辨識酒標
-        ai_result = wine_vision.recognize_wine_label(image_bytes)
+        # 並行執行：Cloudinary 上傳 + AI 辨識（節省 2-5 秒）
+        import asyncio
+        upload_result, ai_result = await asyncio.gather(
+            asyncio.to_thread(storage.upload_image, image_bytes, "wine_items"),
+            asyncio.to_thread(wine_vision.recognize_wine_label, image_bytes),
+        )
 
         # 組裝回應
         response = AIWineRecognitionResponse(
