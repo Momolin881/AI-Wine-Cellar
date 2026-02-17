@@ -18,4 +18,5 @@ export { default as TastingNoteModal } from './TastingNoteModal';
 export { default as FoodItemCard } from './FoodItemCard';
 export { default as CompartmentSelector } from './CompartmentSelector';
 export { default as ExpenseCalendarModal } from './ExpenseCalendarModal';
+export { default as OnboardingQuest } from './OnboardingQuest';
 

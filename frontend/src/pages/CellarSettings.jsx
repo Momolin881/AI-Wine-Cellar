@@ -20,7 +20,8 @@ import {
 } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useMode } from '../contexts/ModeContext';
-import apiClient from '../services/api';
+import apiClient, { getFoodItems } from '../services/api';
+import '../styles/OnboardingQuest.css';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -34,17 +35,69 @@ function CellarSettings() {
     const [selectedCellar, setSelectedCellar] = useState(null);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [form] = Form.useForm();
+    const [questDone, setQuestDone] = useState(false);
 
     useEffect(() => {
         loadCellars();
     }, []);
 
+    // 檢查新手三部曲是否完成
+    useEffect(() => {
+        const checkQuest = async () => {
+            try {
+                const items = await getFoodItems({ status: 'active' });
+                const hasScan = Array.isArray(items) && items.some(i => i.recognized_by_ai === 1);
+                const hasOpen = Array.isArray(items) && items.some(i => i.bottle_status === 'opened');
+
+                let hasInvite = false;
+                try {
+                    const invitations = await apiClient.get('/invitations');
+                    hasInvite = Array.isArray(invitations) && invitations.length > 0;
+                } catch { /* ignore */ }
+
+                setQuestDone(hasScan && hasInvite && hasOpen);
+            } catch {
+                setQuestDone(false);
+            }
+        };
+        checkQuest();
+    }, []);
+
+    // 模式切換（含新手鎖定）
+    const handleModeChange = (selectedMode) => {
+        if (selectedMode === 'pro' && !questDone) {
+            Modal.info({
+                title: '🏆 先完成新手三部曲！',
+                content: (
+                    <div style={{ color: '#ccc', lineHeight: 1.8 }}>
+                        <p>完成以下任務即可解鎖 <strong style={{ color: '#00f0ff' }}>Pro Mode</strong>：</p>
+                        <p>📸 拍照入庫一支酒</p>
+                        <p>🥂 揪喝分享一位酒友</p>
+                        <p>🍷 完成一次開瓶儀式</p>
+                        <p style={{ marginTop: 12, fontSize: 13, color: '#888' }}>
+                            先用 Chill Mode 體驗吧！
+                        </p>
+                    </div>
+                ),
+                okText: '了解',
+                styles: {
+                    content: { background: '#252538', borderRadius: 12 },
+                    header: { background: '#252538', color: '#fff', borderBottom: '1px solid #2a2a4a' },
+                    body: { background: '#252538' },
+                    footer: { background: '#252538', borderTop: '1px solid #2a2a4a' },
+                    mask: { background: 'rgba(0,0,0,0.7)' },
+                },
+                className: 'onboarding-quest-modal',
+            });
+            return;
+        }
+        setMode(selectedMode);
+    };
+
     const loadCellars = async (showLoading = true) => {
         try {
             if (showLoading) setLoading(true);
-            // apiClient 的 response interceptor 已經回傳 data，不需要 .data
             const data = await apiClient.get('/wine-cellars');
-            // Ensure data is an array
             const cellarList = Array.isArray(data) ? data : [];
             setCellars(cellarList);
             return cellarList;
@@ -58,10 +111,8 @@ function CellarSettings() {
         }
     };
 
-    // 載入酒窖詳情
     const loadCellarDetail = async (cellarId) => {
         try {
-            // apiClient 的 response interceptor 已經回傳 data
             const data = await apiClient.get(`/wine-cellars/${cellarId}`);
             return data;
         } catch (error) {
@@ -70,14 +121,10 @@ function CellarSettings() {
         }
     };
 
-    // 編輯酒窖
     const handleEdit = async (cellar) => {
         try {
             let cellarId = cellar?.id;
-
-            // 如果沒有 cellar，直接從 API 取得
             if (!cellarId) {
-                // apiClient 的 response interceptor 已經回傳 data
                 const data = await apiClient.get('/wine-cellars');
                 if (Array.isArray(data) && data.length > 0) {
                     cellarId = data[0].id;
@@ -87,7 +134,6 @@ function CellarSettings() {
                     return;
                 }
             }
-
             const detail = await loadCellarDetail(cellarId);
             if (detail) {
                 setSelectedCellar(detail);
@@ -100,7 +146,6 @@ function CellarSettings() {
         }
     };
 
-    // 儲存編輯
     const handleSaveEdit = async (values) => {
         const cellarId = selectedCellar?.id || cellars[0]?.id;
         if (!cellarId) {
@@ -108,7 +153,6 @@ function CellarSettings() {
             return;
         }
         try {
-            // 如果 total_capacity 為空，使用預設值 50
             if (!values.total_capacity) {
                 values.total_capacity = 50;
             }
@@ -153,7 +197,7 @@ function CellarSettings() {
                     </div>
                     <Segmented
                         value={mode}
-                        onChange={setMode}
+                        onChange={handleModeChange}
                         block
                         options={[
                             {
@@ -169,9 +213,9 @@ function CellarSettings() {
                             {
                                 label: (
                                     <div style={{ padding: '8px 0' }}>
-                                        <div style={{ fontSize: 24 }}>🎯</div>
+                                        <div style={{ fontSize: 24 }}>{questDone ? '🏆' : '🔒'}</div>
                                         <div style={{ fontSize: 13, fontWeight: 600, color: mode === 'pro' ? '#fff' : '#aaa' }}>Pro</div>
-                                        <div style={{ fontSize: 10, color: mode === 'pro' ? '#ddd' : '#888' }}>達人模式</div>
+                                        <div style={{ fontSize: 10, color: mode === 'pro' ? '#ddd' : '#888' }}>{questDone ? '達人模式' : '完成三部曲解鎖'}</div>
                                     </div>
                                 ),
                                 value: 'pro',

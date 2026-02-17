@@ -31,8 +31,13 @@
 }
 
 @keyframes gridMove {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(50px, 50px); }
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(50px, 50px);
+    }
 }
 
 .mode-select__header {
@@ -176,4 +181,25 @@
         width: 100%;
         max-width: 200px;
     }
+}
+
+/* Pro Mode 鎖定 Modal */
+.onboarding-quest-modal .ant-modal-title,
+.onboarding-quest-modal .ant-modal-confirm-title {
+    color: #fff !important;
+}
+
+.onboarding-quest-modal .ant-modal-confirm-content {
+    color: #ccc !important;
+}
+
+.onboarding-quest-modal .ant-btn-primary {
+    background: #00f0ff !important;
+    color: #1a1a2e !important;
+    border: none !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+}
+
+.mode-card--locked {
+    cursor: not-allowed;
 }

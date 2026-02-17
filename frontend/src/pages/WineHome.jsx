@@ -30,6 +30,7 @@ import {
     VersionFooter,
     WineDetailModal,
     ExpenseCalendarModal,
+    OnboardingQuest,
 } from '../components';
 import apiClient, { getFoodItems } from '../services/api';
 import { useMode } from '../contexts/ModeContext';
@@ -325,6 +326,9 @@ function WineHome() {
                         icon="cheers"
                     />
                 </div>
+
+                {/* 新手三部曲 */}
+                <OnboardingQuest wineItems={wineItems} />
 
                 {/* 統計看板 */}
                 <Card
