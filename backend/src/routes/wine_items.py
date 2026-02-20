@@ -18,6 +18,7 @@ from src.models.wine_item import WineItem
 from src.models.wine_cellar import WineCellar
 from src.routes.dependencies import DBSession, CurrentUserId
 from src.services import wine_vision, storage
+from src.schemas.wine_item import HistoryMatchResponse
 
 logger = logging.getLogger(__name__)
 
