@@ -122,6 +122,11 @@ def create_invitation_via_get(
             detail=f"日期格式錯誤: {str(e)}"
         )
     except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"❌ 創建 invitation 失敗:")
+        print(f"錯誤: {str(e)}")
+        print(f"詳細堆疊: {error_detail}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"建立邀請失敗: {str(e)}"
