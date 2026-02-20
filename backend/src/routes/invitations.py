@@ -188,7 +188,6 @@ def get_invitation(invitation_id: int, db: Session = Depends(get_db)):
             "longitude": db_invitation.longitude,
             "theme_image_url": db_invitation.theme_image_url,
             "wine_ids": db_invitation.wine_ids or [],
-            "max_attendees": db_invitation.max_attendees,
             "allow_forwarding": getattr(db_invitation, 'allow_forwarding', True),  # 安全取得，預設 True
             "host_id": db_invitation.host_id,
             "created_at": db_invitation.created_at,
@@ -242,9 +241,6 @@ def join_invitation(
             # 已報名，直接返回
             return AttendeeInfo(**att)
     
-    # 檢查人數上限
-    if db_invitation.max_attendees and len(current_attendees) >= db_invitation.max_attendees:
-        raise HTTPException(status_code=400, detail="已額滿，無法報名")
     
     # 新增報名者
     new_attendee = attendee.model_dump()

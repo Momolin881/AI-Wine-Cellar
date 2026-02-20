@@ -12,7 +12,6 @@ class InvitationBase(BaseModel):
     longitude: Optional[str] = None
     theme_image_url: Optional[str] = None
     wine_ids: List[int] = []
-    max_attendees: Optional[int] = None  # null = 不限人數
     allow_forwarding: bool = True  # 預設開啟轉發，用戶可手動關閉
 
 class InvitationCreate(InvitationBase):
