@@ -91,6 +91,59 @@ def get_dashboard_stats(
     active_users_week = db.query(func.count(func.distinct(WineItem.created_by)))\
         .filter(WineItem.created_at >= week_ago).scalar() or 0
     
+    # 新手用戶 (7天內註冊)
+    newcomers = db.query(User).filter(User.created_at >= week_ago).count()
+    
+    # 新手完成度分析
+    newcomer_users = db.query(User).filter(User.created_at >= week_ago).all()
+    newcomer_progress = []
+    
+    for user in newcomer_users:
+        # 檢查新手三部曲進度
+        has_cellar = db.query(WineCellar).filter(WineCellar.owner_id == user.id).count() > 0
+        has_wine = db.query(WineItem).filter(WineItem.created_by == user.id).count() > 0
+        has_invitation = db.query(Invitation).filter(Invitation.created_by == user.id).count() > 0
+        
+        progress_score = sum([has_cellar, has_wine, has_invitation])
+        days_since_join = (datetime.now() - user.created_at).days if user.created_at else 0
+        
+        newcomer_progress.append({
+            "user_id": user.id,
+            "display_name": user.display_name,
+            "picture_url": user.picture_url,
+            "days_since_join": days_since_join,
+            "progress": {
+                "has_cellar": has_cellar,
+                "has_wine": has_wine,
+                "has_invitation": has_invitation,
+                "score": progress_score,
+                "completion_rate": (progress_score / 3) * 100
+            },
+            "needs_reminder": progress_score < 3 and days_since_join <= 7
+        })
+    
+    # 用戶活躍度分類
+    user_activity_stats = {
+        "highly_active": 0,  # 5+ 酒款或邀請
+        "moderate": 0,       # 2-4 酒款或邀請  
+        "light": 0,          # 1 酒款或邀請
+        "inactive": 0        # 0 活動
+    }
+    
+    for user in db.query(User).all():
+        wine_count = db.query(WineItem).filter(WineItem.created_by == user.id).count()
+        invitation_count = db.query(Invitation).filter(Invitation.created_by == user.id).count()
+        total_activity = wine_count + invitation_count
+        
+        if total_activity >= 5:
+            user_activity_stats["highly_active"] += 1
+        elif total_activity >= 2:
+            user_activity_stats["moderate"] += 1
+        elif total_activity >= 1:
+            user_activity_stats["light"] += 1
+        else:
+            user_activity_stats["inactive"] += 1
+    
     # 熱門酒類統計
     wine_types = db.query(
         WineItem.wine_type,
@@ -124,6 +177,49 @@ def get_dashboard_stats(
         })
     user_growth.reverse()
     
+    # PRO 用戶統計
+    pro_users_count = db.query(User).filter(User.storage_mode == 'pro').count() if hasattr(User, 'storage_mode') else 0
+    pro_percentage = round((pro_users_count / total_users) * 100, 1) if total_users > 0 else 0
+    
+    # 整體酒款偏好分析
+    overall_wine_types = db.query(
+        WineItem.wine_type,
+        func.count(WineItem.id).label('count')
+    ).filter(WineItem.wine_type.isnot(None))\
+     .group_by(WineItem.wine_type)\
+     .order_by(desc('count'))\
+     .all()
+    
+    total_wines_with_type = sum([wt[1] for wt in overall_wine_types])
+    wine_distribution = [
+        {
+            "type": wt[0], 
+            "count": wt[1], 
+            "percentage": round((wt[1] / total_wines_with_type) * 100, 1) if total_wines_with_type > 0 else 0
+        } for wt in overall_wine_types
+    ]
+    
+    # 整體價格區間分析
+    overall_price_ranges = db.query(
+        func.case(
+            (WineItem.price == None, "未設定"),
+            (WineItem.price < 1000, "< $1K"),
+            (WineItem.price < 3000, "$1K - $3K"),
+            (WineItem.price < 5000, "$3K - $5K"),
+            (WineItem.price >= 5000, "> $5K")
+        ).label('price_range'),
+        func.count(WineItem.id).label('count')
+    ).group_by('price_range').all()
+    
+    total_wines_analyzed = sum([pr[1] for pr in overall_price_ranges])
+    price_distribution = [
+        {
+            "range": pr[0],
+            "count": pr[1],
+            "percentage": round((pr[1] / total_wines_analyzed) * 100, 1) if total_wines_analyzed > 0 else 0
+        } for pr in overall_price_ranges
+    ]
+    
     return {
         "overview": {
             "total_users": total_users,
@@ -133,8 +229,24 @@ def get_dashboard_stats(
             "today_new_users": today_users,
             "today_new_wines": today_wines,
             "today_new_invitations": today_invitations,
-            "active_users_week": active_users_week
+            "active_users_week": active_users_week,
+            "newcomers_7days": newcomers,
+            "pro_users": {
+                "count": pro_users_count,
+                "percentage": pro_percentage
+            }
         },
+        "overall_wine_analysis": {
+            "wine_distribution": wine_distribution,
+            "price_distribution": price_distribution
+        },
+        "newcomer_analysis": {
+            "total_newcomers": len(newcomer_progress),
+            "need_reminders": len([u for u in newcomer_progress if u["needs_reminder"]]),
+            "avg_completion_rate": sum([u["progress"]["completion_rate"] for u in newcomer_progress]) / len(newcomer_progress) if newcomer_progress else 0,
+            "users": newcomer_progress
+        },
+        "user_activity": user_activity_stats,
         "wine_types": [{"type": wt[0], "count": wt[1]} for wt in wine_types],
         "price_ranges": [{"range": pr[0], "count": pr[1]} for pr in price_ranges],
         "user_growth": user_growth,
@@ -176,12 +288,41 @@ def get_users_list(
         wine_count = db.query(WineItem).filter(WineItem.created_by == user.id).count()
         invitation_count = db.query(Invitation).filter(Invitation.created_by == user.id).count()
         
+        # 檢查是否為 PRO 用戶
+        is_pro = getattr(user, 'storage_mode', 'cellar') == 'pro'
+        
+        # 計算品飲筆記使用率 (PRO 用戶才有)
+        tasting_notes_usage = 0
+        if is_pro:
+            wines_with_notes = db.query(WineItem).filter(
+                WineItem.created_by == user.id,
+                WineItem.notes.isnot(None),
+                WineItem.notes != ''
+            ).count()
+            tasting_notes_usage = round((wines_with_notes / wine_count) * 100, 1) if wine_count > 0 else 0
+        
+        # 檢查新手進度
+        days_since_join = (datetime.now() - user.created_at).days if user.created_at else 999
+        has_cellar = cellar_count > 0
+        has_wine = wine_count > 0
+        has_invitation = invitation_count > 0
+        onboarding_progress = sum([has_cellar, has_wine, has_invitation])
+        
         user_list.append({
             "id": user.id,
             "line_user_id": user.line_user_id,
             "display_name": user.display_name,
             "picture_url": user.picture_url,
             "created_at": user.created_at.isoformat() if user.created_at else None,
+            "is_pro": is_pro,
+            "days_since_join": days_since_join,
+            "is_newcomer": days_since_join <= 7,
+            "onboarding_progress": {
+                "score": onboarding_progress,
+                "total": 3,
+                "percentage": round((onboarding_progress / 3) * 100, 1)
+            },
+            "tasting_notes_usage": tasting_notes_usage if is_pro else None,
             "stats": {
                 "cellars": cellar_count,
                 "wines": wine_count,
@@ -264,8 +405,188 @@ def get_user_detail(
         "budget": {
             "monthly_budget": float(budget.monthly_budget) if budget and budget.monthly_budget else None,
             "currency": budget.currency if budget else "TWD"
-        } if budget else None
+        } if budget else None,
+        "wine_preferences": analyze_wine_preferences(db, user_id),
+        "consumption_patterns": analyze_consumption_patterns(db, user_id),
+        "onboarding_progress": get_onboarding_progress(db, user)
     }
+
+def analyze_wine_preferences(db: Session, user_id: int) -> Dict[str, Any]:
+    """分析用戶酒款偏好"""
+    
+    user_wines = db.query(WineItem).filter(WineItem.created_by == user_id).all()
+    
+    if not user_wines:
+        return {"total_wines": 0, "preferences": {}}
+    
+    # 酒類偏好
+    wine_types = {}
+    regions = {}
+    price_ranges = {"under_1k": 0, "1k_3k": 0, "3k_5k": 0, "over_5k": 0, "unset": 0}
+    vintages = {}
+    
+    total_value = 0
+    wines_with_price = 0
+    
+    for wine in user_wines:
+        # 酒類統計
+        wine_type = wine.wine_type or "未分類"
+        wine_types[wine_type] = wine_types.get(wine_type, 0) + 1
+        
+        # 產區統計
+        region = wine.region or "未知產區"
+        regions[region] = regions.get(region, 0) + 1
+        
+        # 價格分析
+        if wine.price:
+            wines_with_price += 1
+            total_value += float(wine.price)
+            
+            if wine.price < 1000:
+                price_ranges["under_1k"] += 1
+            elif wine.price < 3000:
+                price_ranges["1k_3k"] += 1
+            elif wine.price < 5000:
+                price_ranges["3k_5k"] += 1
+            else:
+                price_ranges["over_5k"] += 1
+        else:
+            price_ranges["unset"] += 1
+        
+        # 年份統計
+        if wine.vintage:
+            decade = f"{wine.vintage // 10 * 10}年代"
+            vintages[decade] = vintages.get(decade, 0) + 1
+    
+    # 排序並取前5
+    top_wine_types = sorted(wine_types.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_regions = sorted(regions.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    return {
+        "total_wines": len(user_wines),
+        "avg_price": round(total_value / wines_with_price, 2) if wines_with_price > 0 else None,
+        "collection_value": round(total_value, 2),
+        "preferences": {
+            "wine_types": [{"type": t[0], "count": t[1], "percentage": round(t[1]/len(user_wines)*100, 1)} for t in top_wine_types],
+            "regions": [{"region": r[0], "count": r[1], "percentage": round(r[1]/len(user_wines)*100, 1)} for r in top_regions],
+            "price_distribution": price_ranges,
+            "vintage_decades": vintages
+        }
+    }
+
+def analyze_consumption_patterns(db: Session, user_id: int) -> Dict[str, Any]:
+    """分析用戶消費模式（暫時返回基本統計，未來可擴展）"""
+    
+    # 這裡可以根據未來的 wine_consumption 表或酒款狀態來分析
+    # 目前先返回基本的邀請和社交活動統計
+    
+    invitations = db.query(Invitation).filter(Invitation.created_by == user_id).all()
+    
+    return {
+        "social_activity": {
+            "total_invitations": len(invitations),
+            "avg_invitations_per_month": round(len(invitations) / max(1, (datetime.now() - db.query(User).filter(User.id == user_id).first().created_at).days / 30), 2) if invitations else 0
+        },
+        # 未來可以增加：
+        # "tasting_frequency": {...},
+        # "opening_patterns": {...},
+        # "consumption_rate": {...}
+    }
+
+def get_onboarding_progress(db: Session, user: User) -> Dict[str, Any]:
+    """獲取用戶新手進度"""
+    
+    days_since_join = (datetime.now() - user.created_at).days if user.created_at else 999
+    
+    # 新手三部曲檢查
+    has_cellar = db.query(WineCellar).filter(WineCellar.owner_id == user.id).count() > 0
+    has_wine = db.query(WineItem).filter(WineItem.created_by == user.id).count() > 0
+    has_invitation = db.query(Invitation).filter(Invitation.created_by == user.id).count() > 0
+    
+    progress_steps = [
+        {"step": "建立酒窖", "completed": has_cellar, "description": "設定個人酒窖空間"},
+        {"step": "新增酒款", "completed": has_wine, "description": "添加第一款酒到酒窖"},
+        {"step": "發送邀請", "completed": has_invitation, "description": "邀請朋友品酒聚會"}
+    ]
+    
+    completed_steps = sum([step["completed"] for step in progress_steps])
+    
+    return {
+        "is_newcomer": days_since_join <= 7,
+        "days_since_join": days_since_join,
+        "progress": {
+            "steps": progress_steps,
+            "completed_count": completed_steps,
+            "total_count": 3,
+            "completion_rate": round((completed_steps / 3) * 100, 1)
+        },
+        "needs_guidance": completed_steps < 3 and days_since_join <= 7,
+        "next_suggestion": get_next_suggestion(progress_steps)
+    }
+
+def get_next_suggestion(steps: List[Dict[str, Any]]) -> str:
+    """根據進度給出下一步建議"""
+    
+    for step in steps:
+        if not step["completed"]:
+            return f"建議完成：{step['step']} - {step['description']}"
+    
+    return "恭喜完成新手三部曲！開始享受Wine Cellar的完整功能吧！"
+
+@router.post("/users/{user_id}/toggle-pro")
+def toggle_user_pro_mode(
+    user_id: int,
+    admin: dict = Depends(verify_admin_token),
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """切換用戶的 PRO 模式狀態"""
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # 切換 storage_mode
+    current_mode = getattr(user, 'storage_mode', 'cellar')
+    new_mode = 'pro' if current_mode != 'pro' else 'cellar'
+    
+    # 如果 User model 沒有 storage_mode 欄位，需要先檢查是否存在
+    try:
+        user.storage_mode = new_mode
+        db.commit()
+        
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "old_mode": current_mode,
+            "new_mode": new_mode,
+            "is_pro": new_mode == 'pro',
+            "message": f"用戶 {user.display_name} 已{'升級為' if new_mode == 'pro' else '降級為'} {'PRO' if new_mode == 'pro' else '一般'} 用戶"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        # 如果沒有 storage_mode 欄位，先添加
+        try:
+            db.execute(text("ALTER TABLE users ADD COLUMN storage_mode VARCHAR(50) DEFAULT 'cellar'"))
+            db.commit()
+            # 重新嘗試
+            user = db.query(User).filter(User.id == user_id).first()
+            user.storage_mode = new_mode
+            db.commit()
+            
+            return {
+                "status": "success", 
+                "user_id": user_id,
+                "new_mode": new_mode,
+                "is_pro": new_mode == 'pro',
+                "message": f"已為用戶添加 PRO 模式功能並設定為 {'PRO' if new_mode == 'pro' else '一般'} 用戶"
+            }
+        except Exception as e2:
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"更新用戶模式失敗: {str(e2)}"
+            )
 
 @router.post("/migrate-database")
 def run_database_migration(db: Session = Depends(get_db)):

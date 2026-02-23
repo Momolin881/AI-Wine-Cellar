@@ -221,11 +221,32 @@ app.include_router(recipes.router, prefix="/api/v1", tags=["Recipes"])
 app.include_router(invitations.router, prefix="/api/v1", tags=["Invitations"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
 
-# 靜態檔案服務 - 管理後台
-# 從 backend/src/ 往上兩層到專案根目錄，再進入 admin 資料夾
-admin_static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin")
-print(f"🔍 Admin static path: {admin_static_path}")
-print(f"🔍 Admin path exists: {os.path.exists(admin_static_path)}")
-if os.path.exists(admin_static_path):
-    app.mount("/admin", StaticFiles(directory=admin_static_path, html=True), name="admin")
-    print("✅ Admin dashboard mounted at /admin")
+# 管理後台路由 - 手動處理，避免與 API 路由衝突
+from fastapi.responses import FileResponse
+
+@app.get("/admin")
+@app.get("/admin/")
+async def admin_dashboard():
+    """管理後台首頁"""
+    admin_index_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin", "index.html")
+    if os.path.exists(admin_index_path):
+        return FileResponse(admin_index_path, media_type="text/html")
+    return {"error": "Admin dashboard not found"}
+
+@app.get("/admin/{file_path:path}")
+async def admin_static_files(file_path: str):
+    """管理後台靜態檔案服務"""
+    admin_static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin")
+    file_full_path = os.path.join(admin_static_path, file_path)
+    
+    if os.path.exists(file_full_path) and os.path.isfile(file_full_path):
+        if file_path.endswith('.js'):
+            return FileResponse(file_full_path, media_type="application/javascript")
+        elif file_path.endswith('.css'):
+            return FileResponse(file_full_path, media_type="text/css")
+        elif file_path.endswith('.html'):
+            return FileResponse(file_full_path, media_type="text/html")
+        else:
+            return FileResponse(file_full_path)
+    
+    return {"error": f"File not found: {file_path}"}

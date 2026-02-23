@@ -37,6 +37,7 @@ dependencies = [
     "python-multipart>=0.0.6",
     "tenacity>=8.2.0",
     "pillow>=10.1.0",
+    "PyJWT>=2.8.0",
 ]
 
 [project.optional-dependencies]
