@@ -102,7 +102,7 @@ def get_dashboard_stats(
         # 檢查新手三部曲進度
         has_cellar = db.query(WineCellar).filter(WineCellar.owner_id == user.id).count() > 0
         has_wine = db.query(WineItem).filter(WineItem.created_by == user.id).count() > 0
-        has_invitation = db.query(Invitation).filter(Invitation.created_by == user.id).count() > 0
+        has_invitation = db.query(Invitation).filter(Invitation.host_id == user.id).count() > 0
         
         progress_score = sum([has_cellar, has_wine, has_invitation])
         days_since_join = (datetime.now() - user.created_at).days if user.created_at else 0
@@ -360,7 +360,7 @@ def get_user_detail(
         .order_by(desc(WineItem.created_at)).limit(10).all()
     
     # 用戶的邀請（最近 10 個）
-    invitations = db.query(Invitation).filter(Invitation.created_by == user_id)\
+    invitations = db.query(Invitation).filter(Invitation.host_id == user_id)\
         .order_by(desc(Invitation.created_at)).limit(10).all()
     
     # 預算設定
@@ -501,7 +501,7 @@ def get_onboarding_progress(db: Session, user: User) -> Dict[str, Any]:
     # 新手三部曲檢查
     has_cellar = db.query(WineCellar).filter(WineCellar.owner_id == user.id).count() > 0
     has_wine = db.query(WineItem).filter(WineItem.created_by == user.id).count() > 0
-    has_invitation = db.query(Invitation).filter(Invitation.created_by == user.id).count() > 0
+    has_invitation = db.query(Invitation).filter(Invitation.host_id == user.id).count() > 0
     
     progress_steps = [
         {"step": "建立酒窖", "completed": has_cellar, "description": "設定個人酒窖空間"},
