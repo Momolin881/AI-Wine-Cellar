@@ -222,6 +222,10 @@ app.include_router(invitations.router, prefix="/api/v1", tags=["Invitations"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
 
 # 靜態檔案服務 - 管理後台
-admin_static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "admin")
+# 從 backend/src/ 往上兩層到專案根目錄，再進入 admin 資料夾
+admin_static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin")
+print(f"🔍 Admin static path: {admin_static_path}")
+print(f"🔍 Admin path exists: {os.path.exists(admin_static_path)}")
 if os.path.exists(admin_static_path):
     app.mount("/admin", StaticFiles(directory=admin_static_path, html=True), name="admin")
+    print("✅ Admin dashboard mounted at /admin")
