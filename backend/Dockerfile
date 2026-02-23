@@ -17,8 +17,9 @@ COPY pyproject.toml uv.lock ./
 # 安裝 Python 依賴
 RUN uv sync --no-dev --frozen
 
-# 複製專案檔案
+# 複製專案檔案  
 COPY src ./src
+COPY admin ./admin
 
 # 暴露端口
 EXPOSE 8080
