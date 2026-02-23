@@ -36,6 +36,18 @@ async def upload_invitation_image(
             detail=f"圖片上傳失敗: {str(e)}"
         )
 
+@router.get("", response_model=List[InvitationResponse])
+def get_invitations(db: Session = Depends(get_db)):
+    """獲取所有邀請函"""
+    try:
+        invitations = db.query(Invitation).all()
+        return invitations
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"獲取邀請函失敗: {str(e)}"
+        )
+
 @router.post("", response_model=InvitationResponse, status_code=status.HTTP_201_CREATED)
 def create_invitation(invitation: InvitationCreate, db: Session = Depends(get_db)):
     """建立新的邀請函"""
