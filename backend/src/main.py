@@ -132,8 +132,11 @@ async def lifespan(app: FastAPI):
     print("資料庫表格初始化完成")
 
     # 執行資料庫遷移（新增缺少的欄位）
-    run_migrations()
-    print("資料庫遷移檢查完成")
+    try:
+        run_migrations()
+        print("資料庫遷移檢查完成")
+    except Exception as e:
+        print(f"⚠️ 資料庫遷移失敗，但繼續啟動: {e}")
 
     # 啟動排程器
     scheduler.start_scheduler()
@@ -213,17 +216,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 # CORS preflight 處理器
 @app.options("/{full_path:path}")
-async def options_handler(request: Request, full_path: str):
+async def options_handler(full_path: str):
     """處理所有 OPTIONS 請求（CORS preflight）"""
-    # 手動設置 CORS headers 確保預檢請求通過
-    headers = {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
-        "Access-Control-Allow-Headers": "*",
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Max-Age": "600"
-    }
-    return JSONResponse(content={"status": "ok"}, headers=headers)
+    return {"status": "ok"}
 
 
 # 健康檢查端點
