@@ -5,8 +5,9 @@
 
 import psycopg2
 import json
+import os
 
-DATABASE_URL = "postgresql://root:4Y7RhKkQ5N8m12sUyilw09MnSGcx3eL6@sjc1.clusters.zeabur.com:28948/zeabur"
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://localhost/zeabur')
 
 def test_invitation_102():
     """測試 invitation 102"""

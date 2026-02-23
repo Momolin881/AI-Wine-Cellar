@@ -11,7 +11,7 @@ possible_db_urls = [
     os.getenv('POSTGRES_URL'),
     os.getenv('DATABASE_URL'),  
     os.getenv('ZEABUR_POSTGRES_URL'),
-    "postgresql://root:4Y7RhKkQ5N8m12sUyilw09MnSGcx3eL6@sjc1.clusters.zeabur.com:28948/zeabur"  # fallback
+    "postgresql://localhost/zeabur"  # fallback
 ]
 
 DATABASE_URL = next((url for url in possible_db_urls if url), None)
