@@ -596,15 +596,14 @@ def run_database_migration(db: Session = Depends(get_db)):
     """
     try:
         # 檢查 attendees 欄位是否存在
+        # 獲取當前所有欄位
         check_query = text("""
             SELECT column_name 
             FROM information_schema.columns 
-            WHERE table_name = 'invitations' AND column_name = 'attendees'
+            WHERE table_name = 'invitations'
         """)
-        result = db.execute(check_query).fetchone()
-        
-        if result:
-            return {"status": "success", "message": "attendees 欄位已存在，無需遷移"}
+        result = db.execute(check_query).fetchall()
+        existing_columns = [row[0] for row in result]
         
         # 執行遷移
         migration_queries = [
@@ -612,8 +611,9 @@ def run_database_migration(db: Session = Depends(get_db)):
             "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS latitude VARCHAR(50)",  
             "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS longitude VARCHAR(50)",
             "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS host_id INTEGER",
-            # 重命名 event_date 為 event_time (如果存在)
-            "ALTER TABLE invitations RENAME COLUMN event_date TO event_time",
+            "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS theme_image_url VARCHAR(500)",
+            "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             "UPDATE invitations SET attendees = '[]' WHERE attendees IS NULL",
             "UPDATE invitations SET wine_ids = '[]' WHERE wine_ids IS NULL"
         ]
