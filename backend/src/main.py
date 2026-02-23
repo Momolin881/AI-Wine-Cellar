@@ -155,43 +155,22 @@ app = FastAPI(
 # 管理後台路由 - 必須在所有其他路由之前定義
 from fastapi.responses import FileResponse
 
-@app.get("/admin")
-@app.get("/admin/")
-async def admin_dashboard():
-    """管理後台首頁"""
-    print("🚨 Admin dashboard route hit!")
-    admin_index_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin", "index.html")
-    print(f"🔍 Admin path: {admin_index_path}")
-    print(f"🔍 Admin path exists: {os.path.exists(admin_index_path)}")
-    if os.path.exists(admin_index_path):
-        return FileResponse(admin_index_path, media_type="text/html")
-    return {"error": "Admin dashboard not found", "path": admin_index_path}
-
 @app.get("/admin-test")
 async def admin_test():
     """測試 admin 路由是否正常工作"""
-    return {"message": "Admin route is working!", "timestamp": "2025-01-26"}
+    return {"message": "Admin route is working!", "timestamp": "2025-01-26", "backend_url": "https://ai-wine-cellar-backend.zeabur.app"}
 
-@app.get("/admin/{file_path:path}")
-async def admin_static_files(file_path: str):
-    """管理後台靜態檔案服務"""
-    admin_static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin")
-    file_full_path = os.path.join(admin_static_path, file_path)
-    
-    print(f"🔍 Admin static file: {file_full_path}")
-    print(f"🔍 Admin static file exists: {os.path.exists(file_full_path)}")
-    
-    if os.path.exists(file_full_path) and os.path.isfile(file_full_path):
-        if file_path.endswith('.js'):
-            return FileResponse(file_full_path, media_type="application/javascript")
-        elif file_path.endswith('.css'):
-            return FileResponse(file_full_path, media_type="text/css")
-        elif file_path.endswith('.html'):
-            return FileResponse(file_full_path, media_type="text/html")
-        else:
-            return FileResponse(file_full_path)
-    
-    return {"error": f"File not found: {file_path}", "path": file_full_path}
+@app.get("/admin")
+@app.get("/admin/")
+async def admin_dashboard():
+    """管理後台首頁 - 暫時重導向到主應用"""
+    print("🚨 Admin dashboard route hit!")
+    # 暫時返回簡單的管理頁面，避免文件路徑問題
+    return JSONResponse(content={
+        "message": "Admin dashboard temporarily redirected",
+        "redirect_url": "https://ai-wine-cellar.zeabur.app",
+        "admin_api": "https://ai-wine-cellar-backend.zeabur.app/api/v1/admin"
+    })
 
 # 設定 CORS middleware - 允許前端和 LINE 來源
 app.add_middleware(
@@ -201,15 +180,17 @@ app.add_middleware(
         "http://127.0.0.1:5174",
         "http://localhost:3000",  # 管理後台本地開發
         "https://ai-wine-cellar.zeabur.app",
+        "https://ai-wine-cellar-backend.zeabur.app",  # 後端自己的域名
         "https://liff.line.me",
         "https://access.line.me",
         "https://line.me",
         "*"  # 允許所有來源訪問管理 API (生產環境建議限制)
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=600,  # OPTIONS 預檢請求緩存時間（秒）
 )
 
 
@@ -232,9 +213,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 # CORS preflight 處理器
 @app.options("/{full_path:path}")
-async def options_handler(full_path: str):
+async def options_handler(request: Request, full_path: str):
     """處理所有 OPTIONS 請求（CORS preflight）"""
-    return {"status": "ok"}
+    # 手動設置 CORS headers 確保預檢請求通過
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "600"
+    }
+    return JSONResponse(content={"status": "ok"}, headers=headers)
 
 
 # 健康檢查端點
