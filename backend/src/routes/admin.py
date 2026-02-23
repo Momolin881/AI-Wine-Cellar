@@ -657,8 +657,8 @@ def create_test_invitation(db: Session = Depends(get_db)):
         # 創建測試邀請
         insert_query = text("""
             INSERT INTO invitations 
-            (title, description, event_time, location, theme_image_url, wine_ids, attendees, host_id, created_at, updated_at)
-            VALUES (:title, :description, :event_time, :location, :theme_image_url, :wine_ids, :attendees, :host_id, :created_at, :updated_at)
+            (title, description, event_date, location, theme_image_url, wine_ids, attendees, host_id, created_at, updated_at)
+            VALUES (:title, :description, :event_date, :location, :theme_image_url, :wine_ids, :attendees, :host_id, :created_at, :updated_at)
             RETURNING id;
         """)
         
@@ -666,7 +666,7 @@ def create_test_invitation(db: Session = Depends(get_db)):
         result = db.execute(insert_query, {
             'title': '功能測試邀請 - 三大功能驗證',
             'description': '測試 Google Maps 地點導航、Google Calendar 行事曆、RSVP 報名功能',
-            'event_time': datetime(2026, 2, 14, 19, 30, tzinfo=timezone.utc),
+            'event_date': datetime(2026, 2, 14, 19, 30, tzinfo=timezone.utc),
             'location': '台北101觀景台',
             'theme_image_url': 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
             'wine_ids': '[]',
