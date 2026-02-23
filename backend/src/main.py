@@ -187,7 +187,7 @@ app.add_middleware(
         "https://liff.line.me",
         "https://access.line.me",
         "https://line.me",
-        "*"  # 允許所有來源訪問管理 API (生產環境建議限制)
+        # 移除通配符 "*" 以支持 credentials
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
