@@ -17,7 +17,7 @@ class Invitation(Base):
     
     title = Column(String(100), nullable=False, comment="聚會標題")
     description = Column(Text, nullable=True, comment="聚會描述")
-    event_time = Column(DateTime, nullable=False, comment="聚會時間")
+    event_time = Column("event_date", DateTime, nullable=False, comment="聚會時間")
     location = Column(String(200), nullable=True, comment="地點名稱")
     
     # 地點座標 (選填，用於地圖導航)
