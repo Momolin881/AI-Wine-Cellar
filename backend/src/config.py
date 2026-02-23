@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # 資料庫設定
     DATABASE_URL: str
 
+    # 安全設定
+    SECRET_KEY: str
+
     # LINE Bot 設定
     LINE_CHANNEL_SECRET: str
     LINE_CHANNEL_ACCESS_TOKEN: str
