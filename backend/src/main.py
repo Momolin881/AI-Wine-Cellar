@@ -60,7 +60,7 @@ def run_migrations():
         missing_columns = [col for col, _ in new_columns if col not in existing_columns]
         print(f"📋 需要新增的欄位: {missing_columns}")
 
-        # 檢查 invitations 表格的 allow_forwarding 欄位
+        # 檢查 invitations 表格的欄位
         invitation_columns = {}
         if 'invitations' in table_names:
             invitation_columns = {col['name'] for col in inspector.get_columns('invitations')}
@@ -78,17 +78,27 @@ def run_migrations():
                         except Exception as e:
                             print(f"⚠️ 新增欄位 {col_name} 失敗: {e}")
             
-            # 處理 invitations 表格的 allow_forwarding 欄位
-            if 'invitations' in table_names and 'allow_forwarding' not in invitation_columns:
-                try:
-                    conn.execute(text('ALTER TABLE invitations ADD COLUMN allow_forwarding BOOLEAN DEFAULT TRUE'))
-                    conn.commit()
-                    print("✅ 已新增欄位: invitations.allow_forwarding")
-                except Exception as e:
-                    print(f"⚠️ 新增 allow_forwarding 欄位失敗: {e}")
-            
-            # 修復 NULL 值
+            # 處理 invitations 表格的缺失欄位
             if 'invitations' in table_names:
+                # 檢查並新增 host_id 欄位
+                if 'host_id' not in invitation_columns:
+                    try:
+                        conn.execute(text('ALTER TABLE invitations ADD COLUMN host_id INTEGER'))
+                        conn.commit()
+                        print("✅ 已新增欄位: invitations.host_id")
+                    except Exception as e:
+                        print(f"⚠️ 新增 host_id 欄位失敗: {e}")
+                
+                # 檢查並新增 allow_forwarding 欄位
+                if 'allow_forwarding' not in invitation_columns:
+                    try:
+                        conn.execute(text('ALTER TABLE invitations ADD COLUMN allow_forwarding BOOLEAN DEFAULT TRUE'))
+                        conn.commit()
+                        print("✅ 已新增欄位: invitations.allow_forwarding")
+                    except Exception as e:
+                        print(f"⚠️ 新增 allow_forwarding 欄位失敗: {e}")
+                
+                # 修復 NULL 值
                 try:
                     result = conn.execute(text('UPDATE invitations SET allow_forwarding = TRUE WHERE allow_forwarding IS NULL'))
                     conn.commit()

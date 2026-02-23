@@ -611,6 +611,7 @@ def run_database_migration(db: Session = Depends(get_db)):
             "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS attendees TEXT DEFAULT '[]'",
             "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS latitude VARCHAR(50)",  
             "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS longitude VARCHAR(50)",
+            "ALTER TABLE invitations ADD COLUMN IF NOT EXISTS host_id INTEGER",
             "UPDATE invitations SET attendees = '[]' WHERE attendees IS NULL",
             "UPDATE invitations SET wine_ids = '[]' WHERE wine_ids IS NULL"
         ]
