@@ -152,6 +152,47 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# 管理後台路由 - 必須在所有其他路由之前定義
+from fastapi.responses import FileResponse
+
+@app.get("/admin")
+@app.get("/admin/")
+async def admin_dashboard():
+    """管理後台首頁"""
+    print("🚨 Admin dashboard route hit!")
+    admin_index_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin", "index.html")
+    print(f"🔍 Admin path: {admin_index_path}")
+    print(f"🔍 Admin path exists: {os.path.exists(admin_index_path)}")
+    if os.path.exists(admin_index_path):
+        return FileResponse(admin_index_path, media_type="text/html")
+    return {"error": "Admin dashboard not found", "path": admin_index_path}
+
+@app.get("/admin-test")
+async def admin_test():
+    """測試 admin 路由是否正常工作"""
+    return {"message": "Admin route is working!", "timestamp": "2025-01-26"}
+
+@app.get("/admin/{file_path:path}")
+async def admin_static_files(file_path: str):
+    """管理後台靜態檔案服務"""
+    admin_static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin")
+    file_full_path = os.path.join(admin_static_path, file_path)
+    
+    print(f"🔍 Admin static file: {file_full_path}")
+    print(f"🔍 Admin static file exists: {os.path.exists(file_full_path)}")
+    
+    if os.path.exists(file_full_path) and os.path.isfile(file_full_path):
+        if file_path.endswith('.js'):
+            return FileResponse(file_full_path, media_type="application/javascript")
+        elif file_path.endswith('.css'):
+            return FileResponse(file_full_path, media_type="text/css")
+        elif file_path.endswith('.html'):
+            return FileResponse(file_full_path, media_type="text/html")
+        else:
+            return FileResponse(file_full_path)
+    
+    return {"error": f"File not found: {file_path}", "path": file_full_path}
+
 # 設定 CORS middleware - 允許前端和 LINE 來源
 app.add_middleware(
     CORSMiddleware,
@@ -218,35 +259,6 @@ app.include_router(budget.router, prefix="/api/v1", tags=["Budget"])
 app.include_router(recipes.router, prefix="/api/v1", tags=["Recipes"])
 # app.include_router(fridge_members.router, prefix="/api/v1", tags=["Cellar Members"])  # 暫時停用
 # app.include_router(fridge_export.router, prefix="/api/v1", tags=["Cellar Export"])  # 暫時停用
+
 app.include_router(invitations.router, prefix="/api/v1", tags=["Invitations"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
-
-# 管理後台路由 - 手動處理，避免與 API 路由衝突
-from fastapi.responses import FileResponse
-
-@app.get("/admin")
-@app.get("/admin/")
-async def admin_dashboard():
-    """管理後台首頁"""
-    admin_index_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin", "index.html")
-    if os.path.exists(admin_index_path):
-        return FileResponse(admin_index_path, media_type="text/html")
-    return {"error": "Admin dashboard not found"}
-
-@app.get("/admin/{file_path:path}")
-async def admin_static_files(file_path: str):
-    """管理後台靜態檔案服務"""
-    admin_static_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin")
-    file_full_path = os.path.join(admin_static_path, file_path)
-    
-    if os.path.exists(file_full_path) and os.path.isfile(file_full_path):
-        if file_path.endswith('.js'):
-            return FileResponse(file_full_path, media_type="application/javascript")
-        elif file_path.endswith('.css'):
-            return FileResponse(file_full_path, media_type="text/css")
-        elif file_path.endswith('.html'):
-            return FileResponse(file_full_path, media_type="text/html")
-        else:
-            return FileResponse(file_full_path)
-    
-    return {"error": f"File not found: {file_path}"}

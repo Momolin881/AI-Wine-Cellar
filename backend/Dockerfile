@@ -19,6 +19,7 @@ RUN uv sync --no-dev --frozen
 
 # 複製專案檔案
 COPY src ./src
+COPY ../admin ./admin
 
 # 暴露端口
 EXPOSE 8080
