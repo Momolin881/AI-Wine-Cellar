@@ -41,6 +41,29 @@ def get_invitations(db: Session = Depends(get_db)):
     """獲取所有邀請函"""
     try:
         invitations = db.query(Invitation).all()
+        
+        # 處理每個邀請的 JSON 字段，確保正確序列化
+        for invitation in invitations:
+            # 確保 attendees 是 list 格式
+            if isinstance(invitation.attendees, str):
+                import json
+                try:
+                    invitation.attendees = json.loads(invitation.attendees) if invitation.attendees else []
+                except:
+                    invitation.attendees = []
+            elif invitation.attendees is None:
+                invitation.attendees = []
+            
+            # 確保 wine_ids 是 list 格式
+            if isinstance(invitation.wine_ids, str):
+                import json
+                try:
+                    invitation.wine_ids = json.loads(invitation.wine_ids) if invitation.wine_ids else []
+                except:
+                    invitation.wine_ids = []
+            elif invitation.wine_ids is None:
+                invitation.wine_ids = []
+        
         return invitations
     except Exception as e:
         raise HTTPException(
