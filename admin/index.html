@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Cellar 管理後台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-item:hover {
+            background-color: rgb(55 65 81);
+        }
+        .sidebar-item.active {
+            background-color: rgb(59 130 246);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- 登入頁面 -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center bg-gray-50">
+        <div class="max-w-md w-full space-y-8">
+            <div>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    🍷 Wine Cellar 管理後台
+                </h2>
+            </div>
+            <form class="mt-8 space-y-6" onsubmit="handleLogin(event)">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <input id="username" name="username" type="text" required 
+                               class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                               placeholder="管理員帳號">
+                    </div>
+                    <div>
+                        <input id="password" name="password" type="password" required 
+                               class="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                               placeholder="密碼">
+                    </div>
+                </div>
+                
+                <div>
+                    <button type="submit" 
+                            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        登入
+                    </button>
+                </div>
+                
+                <div id="login-error" class="text-red-500 text-sm text-center hidden"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主後台頁面 -->
+    <div id="admin-page" class="hidden">
+        <div class="flex h-screen bg-gray-100">
+            <!-- 側邊欄 -->
+            <div class="w-64 bg-gray-800 text-white">
+                <div class="p-4">
+                    <h1 class="text-xl font-bold">🍷 Wine Cellar</h1>
+                    <p class="text-gray-400 text-sm">管理後台</p>
+                </div>
+                
+                <nav class="mt-8">
+                    <a href="#" class="sidebar-item active block px-4 py-2 text-sm" onclick="showDashboard()">
+                        <i class="fas fa-chart-pie mr-3"></i>Dashboard
+                    </a>
+                    <a href="#" class="sidebar-item block px-4 py-2 text-sm" onclick="showUsers()">
+                        <i class="fas fa-users mr-3"></i>用戶管理
+                    </a>
+                    <a href="#" class="sidebar-item block px-4 py-2 text-sm" onclick="showCellars()">
+                        <i class="fas fa-warehouse mr-3"></i>酒窖管理
+                    </a>
+                    <a href="#" class="sidebar-item block px-4 py-2 text-sm" onclick="showWines()">
+                        <i class="fas fa-wine-bottle mr-3"></i>酒款統計
+                    </a>
+                    <a href="#" class="sidebar-item block px-4 py-2 text-sm" onclick="showInvitations()">
+                        <i class="fas fa-calendar-alt mr-3"></i>邀請活動
+                    </a>
+                    <div class="mt-8 border-t border-gray-700 pt-4">
+                        <a href="#" class="sidebar-item block px-4 py-2 text-sm text-gray-400" onclick="logout()">
+                            <i class="fas fa-sign-out-alt mr-3"></i>登出
+                        </a>
+                    </div>
+                </nav>
+            </div>
+            
+            <!-- 主內容區 -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- 頂部導航 -->
+                <header class="bg-white shadow-sm border-b border-gray-200">
+                    <div class="px-6 py-4">
+                        <h2 id="page-title" class="text-2xl font-semibold text-gray-800">Dashboard</h2>
+                    </div>
+                </header>
+                
+                <!-- 主內容 -->
+                <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                    <!-- Dashboard 頁面 -->
+                    <div id="dashboard-content">
+                        <!-- 統計卡片 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-users text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-500">總用戶數</p>
+                                        <p id="total-users" class="text-2xl font-semibold text-gray-900">-</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <span id="today-users" class="text-green-500 text-sm">+0 今日新增</span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-warehouse text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-500">酒窖數</p>
+                                        <p id="total-cellars" class="text-2xl font-semibold text-gray-900">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-wine-bottle text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-500">酒款數</p>
+                                        <p id="total-wines" class="text-2xl font-semibold text-gray-900">-</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <span id="today-wines" class="text-green-500 text-sm">+0 今日新增</span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-calendar-alt text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-500">邀請活動</p>
+                                        <p id="total-invitations" class="text-2xl font-semibold text-gray-900">-</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <span id="today-invitations" class="text-green-500 text-sm">+0 今日新增</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 圖表區域 -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">酒類統計</h3>
+                                <canvas id="wine-types-chart"></canvas>
+                            </div>
+                            
+                            <div class="bg-white p-6 rounded-lg shadow">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">價格分佈</h3>
+                                <canvas id="price-ranges-chart"></canvas>
+                            </div>
+                            
+                            <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">7天用戶增長趨勢</h3>
+                                <canvas id="user-growth-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 用戶管理頁面 -->
+                    <div id="users-content" class="hidden">
+                        <div class="bg-white shadow rounded-lg">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-lg font-medium text-gray-900">用戶列表</h3>
+                                    <div class="flex space-x-3">
+                                        <input type="text" id="user-search" placeholder="搜尋用戶..." 
+                                               class="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                               onkeyup="searchUsers(event)">
+                                        <button onclick="loadUsers()" 
+                                                class="px-4 py-2 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600">
+                                            重新整理
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="users-table" class="overflow-x-auto">
+                                <!-- 用戶表格將在這裡動態生成 -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他頁面佔位符 -->
+                    <div id="cellars-content" class="hidden">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-medium text-gray-900">酒窖管理</h3>
+                            <p class="mt-2 text-gray-600">酒窖管理功能開發中...</p>
+                        </div>
+                    </div>
+                    
+                    <div id="wines-content" class="hidden">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-medium text-gray-900">酒款統計</h3>
+                            <p class="mt-2 text-gray-600">酒款統計功能開發中...</p>
+                        </div>
+                    </div>
+                    
+                    <div id="invitations-content" class="hidden">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="text-lg font-medium text-gray-900">邀請活動</h3>
+                            <p class="mt-2 text-gray-600">邀請活動管理功能開發中...</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

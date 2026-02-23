@@ -1,0 +1,137 @@
+{
+  "export_date": "2026-02-23T15:23:30.946174",
+  "database_info": {
+    "host": "sjc1.clusters.zeabur.com",
+    "port": 28948,
+    "database": "zeabur"
+  },
+  "tables": {
+    "budget_settings": {
+      "table_name": "budget_settings",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer"
+        },
+        {
+          "name": "user_id",
+          "type": "integer"
+        },
+        {
+          "name": "monthly_budget",
+          "type": "double precision"
+        },
+        {
+          "name": "warning_threshold",
+          "type": "integer"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone"
+        }
+      ],
+      "data": [],
+      "row_count": 0
+    },
+    "food_items": {
+      "table_name": "food_items",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer"
+        },
+        {
+          "name": "fridge_id",
+          "type": "integer"
+        },
+        {
+          "name": "compartment_id",
+          "type": "integer"
+        },
+        {
+          "name": "name",
+          "type": "character varying"
+        },
+        {
+          "name": "category",
+          "type": "character varying"
+        },
+        {
+          "name": "quantity",
+          "type": "integer"
+        },
+        {
+          "name": "unit",
+          "type": "character varying"
+        },
+        {
+          "name": "expiry_date",
+          "type": "date"
+        },
+        {
+          "name": "purchase_date",
+          "type": "date"
+        },
+        {
+          "name": "price",
+          "type": "double precision"
+        },
+        {
+          "name": "volume_liters",
+          "type": "double precision"
+        },
+        {
+          "name": "storage_type",
+          "type": "character varying"
+        },
+        {
+          "name": "image_url",
+          "type": "character varying"
+        },
+        {
+          "name": "cloudinary_public_id",
+          "type": "character varying"
+        },
+        {
+          "name": "recognized_by_ai",
+          "type": "integer"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone"
+        },
+        {
+          "name": "status",
+          "type": "character varying"
+        },
+        {
+          "name": "archived_at",
+          "type": "timestamp without time zone"
+        },
+        {
+          "name": "archived_by",
+          "type": "integer"
+        },
+        {
+          "name": "disposal_reason",
+          "type": "character varying"
+        }
+      ],
+      "data": [
+        {
+          "id": 5,
+          "fridge_id": 1,
+          "compartment_id": 2,
+          "name": "即食米飯",
+          "category": "其他",
+          "quantity": 5,
+          "unit": "包",
+          "expiry_date": 

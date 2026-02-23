@@ -11,6 +11,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.staticfiles import StaticFiles
+import os
 
 from sqlalchemy import text, inspect
 
@@ -155,11 +157,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5174",
-        "http://127.0.0.1:5174", 
+        "http://127.0.0.1:5174",
+        "http://localhost:3000",  # 管理後台本地開發
         "https://ai-wine-cellar.zeabur.app",
         "https://liff.line.me",
         "https://access.line.me",
-        "https://line.me"
+        "https://line.me",
+        "*"  # 允許所有來源訪問管理 API (生產環境建議限制)
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -216,3 +220,8 @@ app.include_router(recipes.router, prefix="/api/v1", tags=["Recipes"])
 # app.include_router(fridge_export.router, prefix="/api/v1", tags=["Cellar Export"])  # 暫時停用
 app.include_router(invitations.router, prefix="/api/v1", tags=["Invitations"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
+
+# 靜態檔案服務 - 管理後台
+admin_static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "admin")
+if os.path.exists(admin_static_path):
+    app.mount("/admin", StaticFiles(directory=admin_static_path, html=True), name="admin")
