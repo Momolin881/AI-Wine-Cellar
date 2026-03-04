@@ -6,7 +6,7 @@
 import psycopg2
 from datetime import datetime
 
-NEW_DATABASE_URL = "postgresql://root:atbw08hzus35C6iMy2NQf7914ZJegHBo@tpe1.clusters.zeabur.com:22032/zeabur"
+NEW_DATABASE_URL = "postgresql://root:8x26U597Iukp4MjGWda3RoZe1mtXTJl0@tpe1.clusters.zeabur.com:27644/zeabur"
 
 def verify_import():
     """驗證匯入結果"""

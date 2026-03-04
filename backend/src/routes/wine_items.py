@@ -328,7 +328,7 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
         sweetness=_safe_int(_safe_get(item, 'sweetness', None)),
         alcohol_feel=_safe_int(_safe_get(item, 'alcohol_feel', None)),
         recognized_by_ai=item.recognized_by_ai,
-        status=item.status or 'active',
+        status='active',
         created_at=item.created_at,
         updated_at=item.updated_at,
         is_optimal_now=item.is_optimal_now,
@@ -360,9 +360,9 @@ async def list_wine_items(
         .filter(WineCellar.user_id == user_id)
     )
 
-    # 篩選狀態
-    if status and status != 'all':
-        query = query.filter(WineItem.status == status)
+    # 篩選狀態 (暫時忽略，因為資料庫沒有status欄位)
+    # if status and status != 'all':
+    #     query = query.filter(WineItem.status == status)
 
     # 篩選酒類
     if wine_type:
