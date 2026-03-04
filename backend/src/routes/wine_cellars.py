@@ -26,14 +26,14 @@ class WineCellarCreate(BaseModel):
     """建立酒窖的請求資料"""
     name: str = "我的酒窖"
     description: Optional[str] = None
-    total_capacity: int = 50
+    capacity: int = 50
 
 
 class WineCellarUpdate(BaseModel):
     """更新酒窖的請求資料"""
     name: Optional[str] = None
     description: Optional[str] = None
-    total_capacity: Optional[int] = None
+    capacity: Optional[int] = None
 
 
 class WineCellarResponse(BaseModel):
@@ -42,7 +42,7 @@ class WineCellarResponse(BaseModel):
     user_id: int
     name: str
     description: Optional[str]
-    total_capacity: int
+    capacity: int
     created_at: datetime
     updated_at: datetime
 
@@ -75,7 +75,7 @@ async def list_wine_cellars(db: DBSession, user_id: CurrentUserId):
             user_id=user_id,
             name="我的酒窖",
             description="自動建立的預設酒窖",
-            total_capacity=50
+            capacity=50
         )
         db.add(default_cellar)
         db.commit()
@@ -136,11 +136,11 @@ async def get_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
         "user_id": cellar.user_id,
         "name": cellar.name,
         "description": cellar.description,
-        "total_capacity": cellar.total_capacity,
+        "total_capacity": cellar.capacity,
         "created_at": cellar.created_at,
         "updated_at": cellar.updated_at,
         "used_capacity": used_capacity,
-        "available_capacity": cellar.total_capacity - used_capacity,
+        "available_capacity": cellar.capacity - used_capacity,
         "total_value": total_value,
         "wine_count": len(active_wines),
         "unopened_count": unopened_count,
@@ -242,7 +242,7 @@ async def get_wine_cellar_stats(id: int, db: DBSession, user_id: CurrentUserId):
         "total_bottles": sum(w.quantity for w in active_wines),
         "total_value": sum(w.total_value for w in active_wines),
         "capacity_used": sum(w.space_units * w.quantity for w in active_wines),
-        "capacity_total": cellar.total_capacity,
+        "capacity_total": cellar.capacity,
         "status_stats": status_stats,
         "bottle_stats": bottle_stats,
         "wine_type_stats": wine_type_stats,
