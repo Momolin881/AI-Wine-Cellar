@@ -6,7 +6,9 @@
 import psycopg2
 from datetime import datetime
 
-NEW_DATABASE_URL = "postgresql://root:8x26U597Iukp4MjGWda3RoZe1mtXTJl0@tpe1.clusters.zeabur.com:27644/zeabur"
+# 從環境變數讀取資料庫連接
+import os
+NEW_DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://localhost/zeabur')
 
 def verify_import():
     """驗證匯入結果"""
