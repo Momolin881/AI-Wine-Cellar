@@ -1,7 +1,7 @@
 /**
  * OnboardingQuest - 新手三部曲
  *
- * 首週新用戶引導：三個任務配橫式金色進度環
+ * 新用戶引導：三個任務配橫式金色進度環
  * 1. 拍照入庫  2. 揪喝分享  3. 開瓶儀式
  * 全部完成後引導至 Pro Mode
  */
@@ -12,7 +12,6 @@ import apiClient from '../services/api';
 import '../styles/OnboardingQuest.css';
 
 const STORAGE_KEY = 'wine_cellar_onboarding';
-const QUEST_DAYS = 7;
 
 const TASKS = [
     {
@@ -131,17 +130,9 @@ const OnboardingQuest = ({ wineItems = [] }) => {
         return state;
     }, []);
 
-    const isWithinFirstWeek = useMemo(() => {
-        if (!onboardingState?.startDate) return false;
-        const start = new Date(onboardingState.startDate);
-        const now = new Date();
-        const diffDays = (now - start) / (1000 * 60 * 60 * 24);
-        return diffDays <= QUEST_DAYS;
-    }, [onboardingState]);
-
     // 查詢邀請紀錄
     useEffect(() => {
-        if (!isWithinFirstWeek || onboardingState?.dismissed) return;
+        if (onboardingState?.dismissed) return;
         const checkInvitations = async () => {
             try {
                 const data = await apiClient.get('/invitations');
@@ -153,7 +144,7 @@ const OnboardingQuest = ({ wineItems = [] }) => {
             }
         };
         checkInvitations();
-    }, [isWithinFirstWeek, onboardingState]);
+    }, [onboardingState]);
 
     // 任務完成狀態
     const taskStatus = useMemo(() => ({
@@ -208,7 +199,6 @@ const OnboardingQuest = ({ wineItems = [] }) => {
 
     // 不該顯示的情況
     if (dismissed || onboardingState?.dismissed) return null;
-    if (!isWithinFirstWeek) return null;
     // 全部完成且已看過慶祝，不再顯示
     if (allDone && onboardingState?.celebrationShown && !showCelebration) return null;
 
