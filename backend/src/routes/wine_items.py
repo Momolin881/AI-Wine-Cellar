@@ -285,37 +285,65 @@ def _safe_int(value):
 
 
 def _build_wine_item_response(item: WineItem) -> WineItemResponse:
-    """將 WineItem ORM 物件轉換為 WineItemResponse"""
+    """將 WineItem ORM 物件轉換為 WineItemResponse
+    
+    注意：model 欄位名和 response 欄位名有差異（歷史原因），
+    這裡做映射和安全存取。
+    """
+    # 映射：model 用 producer，response 用 brand
+    brand = _safe_get(item, 'brand', None) or _safe_get(item, 'producer', None)
+    # 映射：model 用 alcohol_content，response 用 abv
+    abv = _safe_get(item, 'abv', None) or _safe_get(item, 'alcohol_content', None)
+    # 映射：model 用 price，response 用 purchase_price
+    purchase_price = _safe_get(item, 'purchase_price', None) or _safe_get(item, 'price', None)
+    
+    # 安全取得日期
+    purchase_date_val = _safe_get(item, 'purchase_date', None)
+    optimal_start_val = _safe_get(item, 'optimal_drinking_start', None)
+    optimal_end_val = _safe_get(item, 'optimal_drinking_end', None)
+    
+    # 計算 is_optimal_now
+    try:
+        is_optimal = getattr(item, 'is_optimal_now', False)
+    except Exception:
+        is_optimal = False
+    
+    # 計算 total_value
+    try:
+        total_val = getattr(item, 'total_value', 0.0)
+    except Exception:
+        total_val = float(purchase_price or 0) * (item.quantity or 1)
+    
     return WineItemResponse(
         id=item.id,
         cellar_id=item.cellar_id,
         name=item.name,
-        wine_type=item.wine_type,
-        brand=item.brand,
+        wine_type=_safe_get(item, 'wine_type', '未分類') or '未分類',
+        brand=brand,
         vintage=item.vintage,
         region=item.region,
-        country=item.country,
-        abv=item.abv,
-        quantity=item.quantity,
-        space_units=item.space_units,
-        container_type=item.container_type,
-        bottle_status=item.bottle_status,
+        country=_safe_get(item, 'country', None),
+        abv=abv,
+        quantity=item.quantity or 1,
+        space_units=_safe_get(item, 'space_units', 1.0) or 1.0,
+        container_type=_safe_get(item, 'container_type', '瓶') or '瓶',
+        bottle_status=_safe_get(item, 'bottle_status', 'unopened') or 'unopened',
 
-        preservation_type=item.preservation_type,
-        remaining_amount=item.remaining_amount,
+        preservation_type=_safe_get(item, 'preservation_type', 'immediate') or 'immediate',
+        remaining_amount=_safe_get(item, 'remaining_amount', 'full') or 'full',
         disposition=_safe_get(item, 'disposition', 'personal') or 'personal',
         split_from_id=_safe_get(item, 'split_from_id', None),
-        purchase_price=item.purchase_price,
-        retail_price=item.retail_price,
-        purchase_date=str(item.purchase_date) if item.purchase_date else None,
-        optimal_drinking_start=str(item.optimal_drinking_start) if item.optimal_drinking_start else None,
-        optimal_drinking_end=str(item.optimal_drinking_end) if item.optimal_drinking_end else None,
-        storage_location=item.storage_location,
-        storage_temp=item.storage_temp,
-        image_url=item.image_url,
-        cloudinary_public_id=item.cloudinary_public_id,
-        notes=item.notes,
-        tasting_notes=item.tasting_notes,
+        purchase_price=purchase_price,
+        retail_price=_safe_get(item, 'retail_price', None),
+        purchase_date=str(purchase_date_val) if purchase_date_val else None,
+        optimal_drinking_start=str(optimal_start_val) if optimal_start_val else None,
+        optimal_drinking_end=str(optimal_end_val) if optimal_end_val else None,
+        storage_location=_safe_get(item, 'storage_location', None),
+        storage_temp=_safe_get(item, 'storage_temp', None),
+        image_url=_safe_get(item, 'image_url', None),
+        cloudinary_public_id=_safe_get(item, 'cloudinary_public_id', None),
+        notes=_safe_get(item, 'notes', None),
+        tasting_notes=_safe_get(item, 'tasting_notes', None),
         rating=_safe_int(_safe_get(item, 'rating', None)),
         review=_safe_get(item, 'review', None),
         flavor_tags=_safe_get(item, 'flavor_tags', None),
@@ -327,12 +355,12 @@ def _build_wine_item_response(item: WineItem) -> WineItemResponse:
         body=_safe_int(_safe_get(item, 'body', None)),
         sweetness=_safe_int(_safe_get(item, 'sweetness', None)),
         alcohol_feel=_safe_int(_safe_get(item, 'alcohol_feel', None)),
-        recognized_by_ai=item.recognized_by_ai,
+        recognized_by_ai=_safe_get(item, 'recognized_by_ai', 0) or 0,
         status='active',
-        created_at=item.created_at,
-        updated_at=item.updated_at,
-        is_optimal_now=item.is_optimal_now,
-        total_value=item.total_value,
+        created_at=item.created_at or datetime.utcnow(),
+        updated_at=item.updated_at or datetime.utcnow(),
+        is_optimal_now=is_optimal,
+        total_value=total_val,
     )
 
 
@@ -368,8 +396,8 @@ async def list_wine_items(
     if wine_type:
         query = query.filter(WineItem.wine_type == wine_type)
 
-    # 篩選開瓶狀態
-    if bottle_status:
+    # 篩選開瓶狀態（如果欄位存在）
+    if bottle_status and hasattr(WineItem, 'bottle_status'):
         query = query.filter(WineItem.bottle_status == bottle_status)
 
     try:
