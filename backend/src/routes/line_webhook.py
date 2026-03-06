@@ -2,6 +2,7 @@
 LINE Webhook 路由
 
 處理 LINE Bot 的 webhook 事件（訊息、Postback 等）。
+使用 LINE Bot SDK v3 API。
 """
 
 import logging
@@ -11,9 +12,11 @@ import base64
 import json
 
 from fastapi import APIRouter, Request, HTTPException, status
-from linebot import LineBotApi
-from linebot.exceptions import LineBotApiError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.v3.messaging import MessagingApi, ApiClient, Configuration, ApiException
+from linebot.v3.messaging.models import (
+    TextMessage,
+    ReplyMessageRequest,
+)
 
 from src.config import settings
 
@@ -21,8 +24,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["LINE"])
 
-# LINE Bot API
-line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
+# LINE Bot v3 API 客戶端
+_configuration = Configuration(access_token=settings.LINE_CHANNEL_ACCESS_TOKEN)
+_api_client = ApiClient(_configuration)
+messaging_api = MessagingApi(_api_client)
 
 
 def verify_signature(body: bytes, signature: str) -> bool:
@@ -122,6 +127,11 @@ async def handle_text_message(event_data: dict):
 
     # 回覆訊息
     try:
-        line_bot_api.reply_message(reply_token, TextSendMessage(text=reply_text))
-    except LineBotApiError as e:
-        logger.error(f"LINE Bot API 錯誤: {e}")
+        messaging_api.reply_message(
+            ReplyMessageRequest(
+                reply_token=reply_token,
+                messages=[TextMessage(text=reply_text)]
+            )
+        )
+    except ApiException as e:
+        logger.error(f"LINE Messaging API 錯誤: {e.status} - {e.body}")

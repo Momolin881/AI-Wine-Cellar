@@ -2,21 +2,28 @@
 LINE Bot 服務模組
 
 提供 LINE Bot 訊息發送功能，包含文字訊息和 Flex Message。
+使用 LINE Bot SDK v3 API。
 """
 
 import logging
 from typing import Optional
 
-from linebot import LineBotApi
-from linebot.exceptions import LineBotApiError
-from linebot.models import TextSendMessage, FlexSendMessage
+from linebot.v3.messaging import MessagingApi, ApiClient, Configuration, ApiException
+from linebot.v3.messaging.models import (
+    TextMessage,
+    FlexMessage,
+    FlexContainer,
+    PushMessageRequest,
+)
 
 from src.config import settings
 
 logger = logging.getLogger(__name__)
 
-# 初始化 LINE Bot API 客戶端
-line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
+# 初始化 LINE Bot v3 API 客戶端
+_configuration = Configuration(access_token=settings.LINE_CHANNEL_ACCESS_TOKEN)
+_api_client = ApiClient(_configuration)
+messaging_api = MessagingApi(_api_client)
 
 
 def send_text_message(user_id: str, text: str) -> bool:
@@ -36,15 +43,17 @@ def send_text_message(user_id: str, text: str) -> bool:
         True
     """
     try:
-        line_bot_api.push_message(
-            user_id,
-            TextSendMessage(text=text)
+        messaging_api.push_message(
+            PushMessageRequest(
+                to=user_id,
+                messages=[TextMessage(text=text)]
+            )
         )
         logger.info(f"文字訊息發送成功: user_id={user_id}")
         return True
 
-    except LineBotApiError as e:
-        logger.error(f"LINE Bot API 錯誤: {e.status_code} - {e.error.message}")
+    except ApiException as e:
+        logger.error(f"LINE Messaging API 錯誤: {e.status} - {e.body}")
         return False
 
     except Exception as e:
@@ -59,7 +68,7 @@ def send_flex_message(user_id: str, alt_text: str, contents: dict) -> bool:
     Args:
         user_id: LINE User ID
         alt_text: 替代文字（在通知中顯示）
-        contents: Flex Message 內容（JSON 格式）
+        contents: Flex Message 內容（JSON dict 格式）
 
     Returns:
         bool: 發送成功返回 True，失敗返回 False
@@ -80,15 +89,22 @@ def send_flex_message(user_id: str, alt_text: str, contents: dict) -> bool:
         True
     """
     try:
-        line_bot_api.push_message(
-            user_id,
-            FlexSendMessage(alt_text=alt_text, contents=contents)
+        # v3 SDK 需要用 FlexContainer.from_dict() 將 dict 轉為物件
+        flex_container = FlexContainer.from_dict(contents)
+
+        messaging_api.push_message(
+            PushMessageRequest(
+                to=user_id,
+                messages=[
+                    FlexMessage(alt_text=alt_text, contents=flex_container)
+                ]
+            )
         )
         logger.info(f"Flex Message 發送成功: user_id={user_id}, alt_text={alt_text}")
         return True
 
-    except LineBotApiError as e:
-        logger.error(f"LINE Bot API 錯誤: {e.status_code} - {e.error.message}")
+    except ApiException as e:
+        logger.error(f"LINE Messaging API 錯誤: {e.status} - {e.body}")
         return False
 
     except Exception as e:
