@@ -137,9 +137,53 @@ async def lifespan(app: FastAPI):
     關閉時: 關閉排程器
     """
     # Startup
+    # 修復可能缺少主鍵的表格（生產環境已知問題）
+    try:
+        inspector = inspect(engine)
+        table_names = inspector.get_table_names()
+        
+        # 如果 recipes 表存在但缺少主鍵，先修復
+        if 'recipes' in table_names:
+            pk = inspector.get_pk_constraint('recipes')
+            if not pk or not pk.get('constrained_columns'):
+                print("⚠️ recipes 表缺少主鍵，嘗試修復...")
+                with engine.connect() as conn:
+                    try:
+                        conn.execute(text('ALTER TABLE recipes ADD PRIMARY KEY (id)'))
+                        conn.commit()
+                        print("✅ 已修復 recipes 表主鍵")
+                    except Exception as e:
+                        print(f"⚠️ 修復 recipes 主鍵失敗: {e}")
+                        conn.rollback()
+        
+        # 如果 user_recipes 表有問題，先刪除讓 create_all 重建
+        if 'user_recipes' in table_names:
+            try:
+                pk = inspector.get_pk_constraint('user_recipes')
+                fks = inspector.get_foreign_keys('user_recipes')
+                if not fks:  # 外鍵不存在，表可能損壞
+                    print("⚠️ user_recipes 表外鍵異常，刪除後重建...")
+                    with engine.connect() as conn:
+                        conn.execute(text('DROP TABLE IF EXISTS user_recipes CASCADE'))
+                        conn.commit()
+            except Exception as e:
+                print(f"⚠️ 檢查 user_recipes 表失敗: {e}")
+                
+    except Exception as e:
+        print(f"⚠️ 表格預檢查失敗: {e}")
+
     # 建立所有資料庫表格（如果不存在）
-    Base.metadata.create_all(bind=engine)
-    print("資料庫表格初始化完成")
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("資料庫表格初始化完成")
+    except Exception as e:
+        print(f"⚠️ 資料庫建表失敗，嘗試跳過問題表格繼續啟動: {e}")
+        # 嘗試逐表建立，跳過有問題的表
+        for table in Base.metadata.sorted_tables:
+            try:
+                table.create(bind=engine, checkfirst=True)
+            except Exception as te:
+                print(f"  ⚠️ 建立表 {table.name} 失敗: {te}")
 
     # 執行資料庫遷移（新增缺少的欄位）
     try:
