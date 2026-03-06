@@ -2,7 +2,7 @@
 LINE Webhook 路由
 
 處理 LINE Bot 的 webhook 事件（訊息、Postback 等）。
-使用 LINE Bot SDK v3 API。
+使用 LINE Bot SDK v3 API（延遲初始化）。
 """
 
 import logging
@@ -12,22 +12,12 @@ import base64
 import json
 
 from fastapi import APIRouter, Request, HTTPException, status
-from linebot.v3.messaging import MessagingApi, ApiClient, Configuration, ApiException
-from linebot.v3.messaging.models import (
-    TextMessage,
-    ReplyMessageRequest,
-)
 
 from src.config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["LINE"])
-
-# LINE Bot v3 API 客戶端
-_configuration = Configuration(access_token=settings.LINE_CHANNEL_ACCESS_TOKEN)
-_api_client = ApiClient(_configuration)
-messaging_api = MessagingApi(_api_client)
 
 
 def verify_signature(body: bytes, signature: str) -> bool:
@@ -125,13 +115,21 @@ async def handle_text_message(event_data: dict):
     else:
         reply_text = f"你說：「{user_message}」\n\n目前此訊息功能尚未實作，請使用 LIFF 應用管理酒款。"
 
-    # 回覆訊息
+    # 回覆訊息（延遲載入 SDK，避免 import 時 crash）
     try:
-        messaging_api.reply_message(
+        from linebot.v3.messaging import MessagingApi, ApiClient, Configuration
+        from linebot.v3.messaging.models import TextMessage, ReplyMessageRequest
+
+        _configuration = Configuration(access_token=settings.LINE_CHANNEL_ACCESS_TOKEN)
+        _api_client = ApiClient(_configuration)
+        api = MessagingApi(_api_client)
+
+        api.reply_message(
             ReplyMessageRequest(
                 reply_token=reply_token,
                 messages=[TextMessage(text=reply_text)]
             )
         )
-    except ApiException as e:
-        logger.error(f"LINE Messaging API 錯誤: {e.status} - {e.body}")
+    except Exception as e:
+        logger.error(f"LINE Messaging API 回覆失敗: {e}")
+

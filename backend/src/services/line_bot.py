@@ -2,28 +2,34 @@
 LINE Bot 服務模組
 
 提供 LINE Bot 訊息發送功能，包含文字訊息和 Flex Message。
-使用 LINE Bot SDK v3 API。
+使用 LINE Bot SDK v3 API（延遲初始化，避免啟動時 crash）。
 """
 
 import logging
 from typing import Optional
 
-from linebot.v3.messaging import MessagingApi, ApiClient, Configuration, ApiException
-from linebot.v3.messaging.models import (
-    TextMessage,
-    FlexMessage,
-    FlexContainer,
-    PushMessageRequest,
-)
-
 from src.config import settings
 
 logger = logging.getLogger(__name__)
 
-# 初始化 LINE Bot v3 API 客戶端
-_configuration = Configuration(access_token=settings.LINE_CHANNEL_ACCESS_TOKEN)
-_api_client = ApiClient(_configuration)
-messaging_api = MessagingApi(_api_client)
+# 延遲初始化 LINE Bot v3 API 客戶端（避免 import 時 crash 導致整個 app 無法啟動）
+_messaging_api = None
+
+
+def get_messaging_api():
+    """取得 MessagingApi 實例（延遲初始化）"""
+    global _messaging_api
+    if _messaging_api is None:
+        try:
+            from linebot.v3.messaging import MessagingApi, ApiClient, Configuration
+            _configuration = Configuration(access_token=settings.LINE_CHANNEL_ACCESS_TOKEN)
+            _api_client = ApiClient(_configuration)
+            _messaging_api = MessagingApi(_api_client)
+            logger.info("LINE Messaging API v3 初始化成功")
+        except Exception as e:
+            logger.error(f"LINE Messaging API v3 初始化失敗: {e}")
+            return None
+    return _messaging_api
 
 
 def send_text_message(user_id: str, text: str) -> bool:
@@ -43,7 +49,15 @@ def send_text_message(user_id: str, text: str) -> bool:
         True
     """
     try:
-        messaging_api.push_message(
+        from linebot.v3.messaging import ApiException
+        from linebot.v3.messaging.models import TextMessage, PushMessageRequest
+
+        api = get_messaging_api()
+        if api is None:
+            logger.error("LINE Messaging API 未初始化，無法發送訊息")
+            return False
+
+        api.push_message(
             PushMessageRequest(
                 to=user_id,
                 messages=[TextMessage(text=text)]
@@ -51,10 +65,6 @@ def send_text_message(user_id: str, text: str) -> bool:
         )
         logger.info(f"文字訊息發送成功: user_id={user_id}")
         return True
-
-    except ApiException as e:
-        logger.error(f"LINE Messaging API 錯誤: {e.status} - {e.body}")
-        return False
 
     except Exception as e:
         logger.error(f"發送文字訊息失敗: {e}")
@@ -89,10 +99,17 @@ def send_flex_message(user_id: str, alt_text: str, contents: dict) -> bool:
         True
     """
     try:
+        from linebot.v3.messaging.models import FlexMessage, FlexContainer, PushMessageRequest
+
+        api = get_messaging_api()
+        if api is None:
+            logger.error("LINE Messaging API 未初始化，無法發送 Flex Message")
+            return False
+
         # v3 SDK 需要用 FlexContainer.from_dict() 將 dict 轉為物件
         flex_container = FlexContainer.from_dict(contents)
 
-        messaging_api.push_message(
+        api.push_message(
             PushMessageRequest(
                 to=user_id,
                 messages=[
@@ -102,10 +119,6 @@ def send_flex_message(user_id: str, alt_text: str, contents: dict) -> bool:
         )
         logger.info(f"Flex Message 發送成功: user_id={user_id}, alt_text={alt_text}")
         return True
-
-    except ApiException as e:
-        logger.error(f"LINE Messaging API 錯誤: {e.status} - {e.body}")
-        return False
 
     except Exception as e:
         logger.error(f"發送 Flex Message 失敗: {e}")
