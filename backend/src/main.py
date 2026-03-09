@@ -174,8 +174,17 @@ async def lifespan(app: FastAPI):
 
     # 建立所有資料庫表格（如果不存在）
     try:
+        print("🔧 開始建立資料庫表格...")
         Base.metadata.create_all(bind=engine)
-        print("資料庫表格初始化完成")
+        print("✅ 資料庫表格初始化完成")
+        
+        # 列出已建立的表格
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"))
+            tables = [row[0] for row in result]
+            print(f"📊 已建立 {len(tables)} 個表格: {tables}")
+            
     except Exception as e:
         print(f"⚠️ 資料庫建表失敗，嘗試跳過問題表格繼續啟動: {e}")
         # 嘗試逐表建立，跳過有問題的表
