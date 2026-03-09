@@ -203,14 +203,14 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
             "contents": [
                 {
                     "type": "text",
-                    "text": "🍷 本週適飲提醒",
+                    "text": "🍷 適飲期提醒",
                     "weight": "bold",
                     "size": "xl",
                     "color": "#c9a227" # 金色標題
                 },
                 {
                     "type": "text",
-                    "text": f"週末到了！您有 {len(items)} 瓶已開瓶的酒款建議盡快飲用。",
+                    "text": f"您有 {len(items)} 瓶已開瓶的酒款要注意適飲期限喔！",
                     "size": "sm",
                     "color": "#b0b0b0",
                     "margin": "md",
@@ -247,7 +247,7 @@ def send_expiry_notification(user_id: str, items: list[dict]) -> bool:
         }
     }
 
-    return send_flex_message(user_id, f"🍷 週末小酌提醒：有 {len(items)} 瓶酒建議飲用", contents)
+    return send_flex_message(user_id, f"🍷 適飲提醒：有 {len(items)} 瓶酒建議飲用", contents)
 
 
 def send_low_stock_notification(user_id: str, items: list[dict]) -> bool:

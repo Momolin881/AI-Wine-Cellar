@@ -36,19 +36,19 @@ def start_scheduler():
         return
 
     try:
-        # 註冊每日任務：檢查適飲期提醒（每天早上 9:00 執行，以用戶設定時間發送）
+        # 註冊每日任務：檢查適飲期提醒（每小時檢查一次，依照用戶設定的小時發送）
         scheduler.add_job(
             check_drinking_period,
-            trigger=CronTrigger(hour=9, minute=0),
+            trigger=CronTrigger(minute=0),
             id="check_drinking_period",
             name="每日適飲期提醒檢查",
             replace_existing=True
         )
 
-        # 註冊每日任務：檢查空間使用率（每天早上 9:00 執行）
+        # 註冊每日任務：檢查空間使用率（每小時檢查一次，依照用戶設定的小時發送）
         scheduler.add_job(
             check_space_usage,
-            trigger=CronTrigger(hour=9, minute=0),
+            trigger=CronTrigger(minute=0),
             id="check_space_usage",
             name="檢查酒窖空間使用率",
             replace_existing=True
@@ -84,7 +84,7 @@ def check_drinking_period():
     檢查所有使用者的適飲期提醒並在用戶設定時間發送通知
     
     對象：已開瓶 (opened) 且接近最佳飲用期結束 (optimal_drinking_end) 的酒款
-    時間：每日 9:00 檢查，根據用戶設定時間發送
+    時間：每小時的 0 分檢查，當「當前小時」符合用戶「設定小時」時發送。
     """
     logger.info("開始執行：適飲期提醒檢查")
     db = SessionLocal()
@@ -101,14 +101,10 @@ def check_drinking_period():
             try:
                 now = datetime.now(TAIWAN_TZ)
                 today = now.date()
-                current_time = now.time()
                 
-                # 檢查是否為該用戶的通知時間（允許 ±15 分鐘誤差）
+                # 檢查是否為該用戶的通知時間 (僅比對小時)
                 user_notification_time = settings.notification_time
-                time_diff = abs((current_time.hour * 60 + current_time.minute) - 
-                              (user_notification_time.hour * 60 + user_notification_time.minute))
-                
-                if time_diff > 15:  # 如果不在用戶設定時間範圍內，跳過
+                if now.hour != user_notification_time.hour:
                     continue
                 
                 # 查詢該使用者的所有酒款
@@ -153,7 +149,7 @@ def check_drinking_period():
                 logger.error(f"處理使用者 {settings.user_id} 的提醒時發生錯誤: {e}")
                 continue
 
-        logger.info("完成：每週五適飲期提醒")
+        logger.info("完成：適飲期提醒檢查")
 
     except Exception as e:
         logger.error(f"檢查適飲期時發生錯誤: {e}")
@@ -181,6 +177,13 @@ def check_space_usage():
 
         for settings in settings_list:
             try:
+                now = datetime.now(TAIWAN_TZ)
+                
+                # 檢查是否為該用戶的通知時間 (僅比對小時)
+                user_notification_time = settings.notification_time
+                if now.hour != user_notification_time.hour:
+                    continue
+
                 # 查詢該使用者的所有酒窖
                 fridges = db.query(Fridge).filter(
                     Fridge.user_id == settings.user_id
