@@ -161,10 +161,10 @@ async def get_current_user_id(
             # 為新用戶建立預設酒窖
             from src.models.wine_cellar import WineCellar
             default_cellar = WineCellar(
-                user_id=user.id,
+                owner_id=user.id,
                 name="我的酒窖",
                 description="自動建立的預設酒窖",
-                total_capacity=50
+                capacity=50
             )
             db.add(default_cellar)
             db.commit()
