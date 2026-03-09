@@ -78,3 +78,21 @@ backend/migrations/versions/*.pyc
 Thumbs.db
 backend/.env
 frontend/.env
+
+# ⚠️ 防止密碼洩露的關鍵規則
+**/fix_*.py
+**/check_*.py
+**/migrate_*.py
+**/import_*.py
+**/export_*.py
+**/diagnose_*.py
+**/manual_*.py
+**/simple_*.py
+**/test_*.py
+backend/fixed_*.py
+backend/create_test_*.py
+
+# 任何包含 postgresql:// 的檔案
+**/*postgresql*.py
+**/*database*.py
+**/*db_*.py
