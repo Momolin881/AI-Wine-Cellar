@@ -10,11 +10,8 @@ export { default as EditWineItem } from './EditWineItem';
 export { default as CellarSettings } from './CellarSettings';
 export { default as NotificationSettings } from './NotificationSettings';
 
-// 功能頁面（待遷移到新系統）
+// 功能頁面
 export { default as BudgetManagement } from './BudgetManagement';
-export { default as RecipeRecommendations } from './RecipeRecommendations';
-export { default as RecipeDetail } from './RecipeDetail';
-export { default as UserRecipes } from './UserRecipes';
 
 // 聚會邀請
 export { default as CreateInvitation } from './CreateInvitation';

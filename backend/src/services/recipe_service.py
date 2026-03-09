@@ -11,7 +11,8 @@ from sqlalchemy.orm import Session
 from openai import OpenAI
 
 from src.config import settings
-from src.models.food_item import FoodItem
+from src.models.wine_item import WineItem
+from src.models.wine_cellar import WineCellar
 from src.models.recipe import Recipe
 from src.models.user_recipe import UserRecipe
 from src.schemas.recipe import RecipeRecommendationResponse
@@ -46,29 +47,29 @@ class RecipeService:
             Exception: AI 推薦失敗時拋出
         """
         try:
-            # 查詢食材（只查詢 active 狀態，排除已處理的）
-            query = db.query(FoodItem).join(FoodItem.fridge).filter(
-                FoodItem.fridge.has(user_id=user_id),
-                FoodItem.status == 'active'
+            # 查詢酒款（只查詢 active 狀態）
+            query = db.query(WineItem).join(WineCellar).filter(
+                WineCellar.owner_id == user_id,
+                WineItem.status == 'active'
             )
 
             if item_ids:
-                query = query.filter(FoodItem.id.in_(item_ids))
+                query = query.filter(WineItem.id.in_(item_ids))
 
-            food_items = query.all()
+            wine_items = query.all()
 
-            if not food_items:
-                logger.warning(f"使用者 {user_id} 沒有食材可用於推薦")
+            if not wine_items:
+                logger.warning(f"使用者 {user_id} 沒有酒款可用於推薦")
                 return []
 
-            # 整理食材清單
-            ingredients_list = [
-                f"{item.name}（{item.quantity}{item.unit or '個'}）"
-                for item in food_items
+            # 整理酒款清單
+            wine_list = [
+                f"{item.name} {item.vintage or ''}年（{item.wine_type or ''}）"
+                for item in wine_items
             ]
-            ingredients_text = "、".join(ingredients_list)
+            wines_text = "、".join(wine_list)
 
-            logger.info(f"使用食材推薦食譜: {ingredients_text}")
+            logger.info(f"使用酒款推薦下酒菜: {wines_text}")
 
             # 建立 GPT-4 prompt
             prompt = f"""

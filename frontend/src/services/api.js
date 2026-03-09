@@ -325,44 +325,8 @@ export const testExpiryNotification = () => {
   return apiClient.post('/notifications/test-expiry-check');
 };
 
-// ---------- 酒食搭配相關 ----------
-
-/**
- * 根據現有酒款推薦酒食搭配
- * @param {Array<number>} itemIds - 酒款 ID 陣列（可選）
- * @returns {Promise<Array>} 推薦搭配清單
- */
-export const getRecipeRecommendations = (itemIds = []) => {
-  return apiClient.post('/recipes/recommendations', { item_ids: itemIds });
-};
-
-/**
- * 獲取使用者酒食搭配
- * @param {string} category - 類別 (favorites, pro)
- * @returns {Promise<Array>} 搭配清單
- */
-export const getUserRecipes = (category = null) => {
-  return apiClient.get('/recipes', { params: { category } });
-};
-
-/**
- * 新增使用者酒食搭配
- * @param {Object} recipeData - 搭配資料
- * @param {string} category - 分類 (favorites, pro, 常用)
- * @returns {Promise<Object>} 新增的搭配
- */
-export const createUserRecipe = (recipeData, category = 'favorites') => {
-  return apiClient.post('/recipes', recipeData, { params: { category } });
-};
-
-/**
- * 刪除使用者酒食搭配
- * @param {number} userRecipeId - 使用者搭配 ID
- * @returns {Promise<void>}
- */
-export const deleteUserRecipe = (userRecipeId) => {
-  return apiClient.delete(`/recipes/${userRecipeId}`);
-};
+// ---------- 酒食搭配相關 (由 LINE Bot 處理) ----------
+// Recipe 功能已移到 LINE Bot，這裡的 API 僅供後端保留
 
 // ---------- 預算相關 ----------
 

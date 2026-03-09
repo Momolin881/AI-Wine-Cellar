@@ -14,9 +14,7 @@ export { default as WineCardSquare } from './WineCardSquare';
 export { default as FloatAddButton } from './FloatAddButton';
 export { default as TastingNoteModal } from './TastingNoteModal';
 
-// 保留舊元件（向下相容）
-export { default as FoodItemCard } from './FoodItemCard';
-export { default as CompartmentSelector } from './CompartmentSelector';
+// 其他元件
 export { default as ExpenseCalendarModal } from './ExpenseCalendarModal';
 export { default as OnboardingQuest } from './OnboardingQuest';
 
