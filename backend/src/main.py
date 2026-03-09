@@ -304,8 +304,7 @@ app.include_router(line_webhook.router, tags=["LINE"])
 app.include_router(notifications.router, prefix="/api/v1", tags=["Notifications"])
 app.include_router(budget.router, prefix="/api/v1", tags=["Budget"])
 app.include_router(recipes.router, prefix="/api/v1", tags=["Recipes"])
-# app.include_router(fridge_members.router, prefix="/api/v1", tags=["Cellar Members"])  # 暫時停用
-# app.include_router(fridge_export.router, prefix="/api/v1", tags=["Cellar Export"])  # 暫時停用
+# 冰箱相關路由已移除
 
 app.include_router(invitations.router, prefix="/api/v1", tags=["Invitations"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
