@@ -14,8 +14,8 @@ from sqlalchemy import func
 
 from src.database import SessionLocal
 from src.models.notification_settings import NotificationSettings
-from src.models.food_item import FoodItem
-from src.models.fridge import Fridge, FridgeCompartment
+from src.models.wine_item import WineItem
+from src.models.wine_cellar import WineCellar
 from src.services.line_bot import send_expiry_notification, send_space_warning
 
 logger = logging.getLogger(__name__)

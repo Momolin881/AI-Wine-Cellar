@@ -122,7 +122,7 @@ from src.routes import wine_items, wine_cellars
 # 功能路由
 
 # 功能路由
-from src.routes import line_webhook, notifications, budget, recipes, fridge_members, fridge_export, invitations, admin
+from src.routes import line_webhook, notifications, budget, recipes, invitations, admin
 
 
 logger = logging.getLogger(__name__)
