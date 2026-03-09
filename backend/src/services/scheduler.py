@@ -108,9 +108,7 @@ def check_drinking_period():
                     continue
                 
                 # 查詢該使用者的所有酒款
-                # 條件 1: 已開瓶 (bottle_status == 'opened')
-                # 條件 2: active 狀態
-                # 條件 3: 有設定 optimal_drinking_end
+                # 條件: 有設定 optimal_drinking_end 的酒款
                 
                 from src.models.wine_item import WineItem
                 from src.models.wine_cellar import WineCellar
@@ -118,9 +116,7 @@ def check_drinking_period():
                 items = db.query(WineItem).join(
                     WineCellar, WineItem.cellar_id == WineCellar.id
                 ).filter(
-                    WineCellar.user_id == settings.user_id,
-                    WineItem.status == 'active',
-                    WineItem.bottle_status == 'opened',
+                    WineCellar.owner_id == settings.user_id,  # 修正欄位名稱
                     WineItem.optimal_drinking_end.isnot(None)
                 ).all()
 
@@ -137,7 +133,7 @@ def check_drinking_period():
                             "name": item.name,
                             "expiry_date": item.optimal_drinking_end.isoformat(),
                             "days_remaining": days_remaining,
-                            "type": item.preservation_type
+                            "type": "wine"  # 簡化為固定值
                         })
 
                 if notify_items:
@@ -185,32 +181,31 @@ def check_space_usage():
                     continue
 
                 # 查詢該使用者的所有酒窖
-                fridges = db.query(Fridge).filter(
-                    Fridge.user_id == settings.user_id
+                from src.models.wine_cellar import WineCellar
+                wine_cellars = db.query(WineCellar).filter(
+                    WineCellar.owner_id == settings.user_id
                 ).all()
 
-                for fridge in fridges:
-                    # 計算總容量和已使用容量
-                    compartments = db.query(FridgeCompartment).filter(
-                        FridgeCompartment.fridge_id == fridge.id
-                    ).all()
-
-                    total_capacity = sum(c.total_slots for c in compartments)
-                    if total_capacity == 0:
+                for wine_cellar in wine_cellars:
+                    # 計算酒窖空間使用率
+                    # 簡化計算：使用酒款數量 vs 酒窖容量
+                    
+                    # 如果酒窖沒有設定容量，跳過
+                    if not wine_cellar.capacity or wine_cellar.capacity == 0:
                         continue
-
-                    # 計算已使用的格子數
-                    used_slots = db.query(func.count(FoodItem.id)).filter(
-                        FoodItem.fridge_id == fridge.id
-                    ).scalar()
-
+                    
+                    # 計算該酒窖的酒款總數量
+                    used_slots = db.query(func.sum(WineItem.quantity)).filter(
+                        WineItem.cellar_id == wine_cellar.id
+                    ).scalar() or 0
+                    
                     # 計算使用率
-                    usage_percentage = (used_slots / total_capacity) * 100
-
+                    usage_percentage = (used_slots / wine_cellar.capacity) * 100
+                    
                     # 如果超過門檻，發送警告
                     if usage_percentage >= settings.space_warning_threshold:
                         logger.info(
-                            f"酒窖 {fridge.id} 空間使用率 {usage_percentage:.1f}% "
+                            f"酒窖 {wine_cellar.id} 空間使用率 {usage_percentage:.1f}% "
                             f"超過門檻 {settings.space_warning_threshold}%"
                         )
                         send_space_warning(settings.user.line_user_id, usage_percentage)
