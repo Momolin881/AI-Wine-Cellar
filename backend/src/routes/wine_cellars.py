@@ -66,22 +66,8 @@ class WineCellarDetailResponse(WineCellarResponse):
 
 @router.get("/wine-cellars", response_model=list[WineCellarResponse])
 async def list_wine_cellars(db: DBSession, user_id: CurrentUserId):
-    """取得使用者的所有酒窖（若無則自動建立預設酒窖）"""
+    """取得使用者的所有酒窖（預設酒窖已在新用戶建立時自動建立）"""
     cellars = db.query(WineCellar).filter(WineCellar.owner_id == user_id).all()
-
-    # 若使用者沒有酒窖，自動建立一個預設酒窖
-    if not cellars:
-        default_cellar = WineCellar(
-            owner_id=user_id,
-            name="我的酒窖",
-            description="自動建立的預設酒窖",
-            capacity=50
-        )
-        db.add(default_cellar)
-        db.commit()
-        db.refresh(default_cellar)
-        logger.info(f"使用者 {user_id} 自動建立預設酒窖 (ID: {default_cellar.id})")
-        cellars = [default_cellar]
 
     return cellars
 
@@ -101,35 +87,8 @@ async def create_wine_cellar(data: WineCellarCreate, db: DBSession, user_id: Cur
 @router.get("/wine-cellars/{id}", response_model=WineCellarDetailResponse)
 async def get_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
     """取得單一酒窖（含統計資訊）"""
-    cellar = db.query(WineCellar).filter(
-        WineCellar.id == id, WineCellar.owner_id == user_id
-    ).first()
-
-    if not cellar:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="酒窖不存在或無權限存取"
-        )
-
-    # 計算統計資訊
-    active_wines = [w for w in cellar.wine_items if w.status == 'active']
-    
-    # 計算容量
-    used_capacity = sum(w.space_units * w.quantity for w in active_wines)
-    
-    # 計算總價值
-    total_value = sum(w.total_value for w in active_wines)
-    
-    # 計算開瓶狀態統計
-    unopened_count = sum(1 for w in active_wines if w.bottle_status == 'unopened')
-    opened_count = sum(1 for w in active_wines if w.bottle_status == 'opened')
-    
-    # 計算酒類統計
-    wine_type_stats = {}
-    for wine in active_wines:
-        wine_type = wine.wine_type or "其他"
-        if wine_type not in wine_type_stats:
-            wine_type_stats[wine_type] = 0
-        wine_type_stats[wine_type] += wine.quantity
+    cellar = _get_cellar_or_404(id, user_id, db)
+    stats = _compute_cellar_stats(cellar)
 
     return {
         "id": cellar.id,
@@ -139,27 +98,14 @@ async def get_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
         "total_capacity": cellar.capacity,
         "created_at": cellar.created_at,
         "updated_at": cellar.updated_at,
-        "used_capacity": used_capacity,
-        "available_capacity": cellar.capacity - used_capacity,
-        "total_value": total_value,
-        "wine_count": len(active_wines),
-        "unopened_count": unopened_count,
-        "opened_count": opened_count,
-        "wine_type_stats": wine_type_stats,
+        **stats,
     }
 
 
 @router.put("/wine-cellars/{id}", response_model=WineCellarResponse)
 async def update_wine_cellar(id: int, data: WineCellarUpdate, db: DBSession, user_id: CurrentUserId):
     """更新酒窖"""
-    cellar = db.query(WineCellar).filter(
-        WineCellar.id == id, WineCellar.owner_id == user_id
-    ).first()
-
-    if not cellar:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="酒窖不存在或無權限存取"
-        )
+    cellar = _get_cellar_or_404(id, user_id, db)
 
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -175,14 +121,7 @@ async def update_wine_cellar(id: int, data: WineCellarUpdate, db: DBSession, use
 @router.delete("/wine-cellars/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
     """刪除酒窖（會一併刪除所有酒款）"""
-    cellar = db.query(WineCellar).filter(
-        WineCellar.id == id, WineCellar.owner_id == user_id
-    ).first()
-
-    if not cellar:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="酒窖不存在或無權限存取"
-        )
+    cellar = _get_cellar_or_404(id, user_id, db)
 
     db.delete(cellar)
     db.commit()
@@ -193,58 +132,79 @@ async def delete_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
 @router.get("/wine-cellars/{id}/stats")
 async def get_wine_cellar_stats(id: int, db: DBSession, user_id: CurrentUserId):
     """取得酒窖統計摘要"""
-    cellar = db.query(WineCellar).filter(
-        WineCellar.id == id, WineCellar.owner_id == user_id
-    ).first()
-
-    if not cellar:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="酒窖不存在或無權限存取"
-        )
-
-    active_wines = [w for w in cellar.wine_items if w.status == 'active']
-    
-    # 按狀態分類
-    status_stats = {
-        'active': len([w for w in cellar.wine_items if w.status == 'active']),
-        'sold': len([w for w in cellar.wine_items if w.status == 'sold']),
-        'gifted': len([w for w in cellar.wine_items if w.status == 'gifted']),
-        'consumed': len([w for w in cellar.wine_items if w.status == 'consumed']),
-    }
-    
-    # 按開瓶狀態
-    bottle_stats = {
-        'unopened': len([w for w in active_wines if w.bottle_status == 'unopened']),
-        'opened': len([w for w in active_wines if w.bottle_status == 'opened']),
-    }
-    
-    # 按酒類
-    wine_type_stats = {}
-    for wine in active_wines:
-        wine_type = wine.wine_type or "其他"
-        if wine_type not in wine_type_stats:
-            wine_type_stats[wine_type] = {"count": 0, "value": 0}
-        wine_type_stats[wine_type]["count"] += wine.quantity
-        wine_type_stats[wine_type]["value"] += wine.total_value
-    
-    # 按國家
-    country_stats = {}
-    for wine in active_wines:
-        country = wine.country or "未知"
-        if country not in country_stats:
-            country_stats[country] = 0
-        country_stats[country] += wine.quantity
+    cellar = _get_cellar_or_404(id, user_id, db)
+    stats = _compute_cellar_stats(cellar)
 
     return {
         "cellar_id": id,
         "cellar_name": cellar.name,
-        "total_wines": len(active_wines),
-        "total_bottles": sum(w.quantity for w in active_wines),
-        "total_value": sum(w.total_value for w in active_wines),
-        "capacity_used": sum(w.space_units * w.quantity for w in active_wines),
         "capacity_total": cellar.capacity,
-        "status_stats": status_stats,
+        **stats,
+    }
+
+
+# ============ Helpers ============
+
+def _get_cellar_or_404(cellar_id: int, user_id: int, db) -> WineCellar:
+    """查詢酒窖，不存在或無權限則拋 404"""
+    cellar = db.query(WineCellar).filter(
+        WineCellar.id == cellar_id, WineCellar.owner_id == user_id
+    ).first()
+    if not cellar:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="酒窖不存在或無權限存取"
+        )
+    return cellar
+
+
+def _compute_cellar_stats(cellar: WineCellar) -> dict:
+    """計算酒窖統計數據（共用邏輯）"""
+    all_wines = cellar.wine_items or []
+    active_wines = [w for w in all_wines if w.status == 'active']
+
+    # 容量與價值
+    used_capacity = sum(w.space_units * w.quantity for w in active_wines)
+    total_value = sum(w.total_value for w in active_wines)
+
+    # 開瓶狀態
+    bottle_stats = {
+        'unopened': sum(1 for w in active_wines if w.bottle_status == 'unopened'),
+        'opened': sum(1 for w in active_wines if w.bottle_status == 'opened'),
+    }
+
+    # 按酒款狀態
+    status_stats = {}
+    for w in all_wines:
+        s = w.status or 'active'
+        status_stats[s] = status_stats.get(s, 0) + 1
+
+    # 按酒類
+    wine_type_stats = {}
+    for w in active_wines:
+        wt = w.wine_type or "其他"
+        if wt not in wine_type_stats:
+            wine_type_stats[wt] = {"count": 0, "value": 0}
+        wine_type_stats[wt]["count"] += w.quantity
+        wine_type_stats[wt]["value"] += w.total_value
+
+    # 按國家
+    country_stats = {}
+    for w in active_wines:
+        c = w.country or "未知"
+        country_stats[c] = country_stats.get(c, 0) + w.quantity
+
+    return {
+        "wine_count": len(active_wines),
+        "total_bottles": sum(w.quantity for w in active_wines),
+        "total_value": total_value,
+        "used_capacity": used_capacity,
+        "available_capacity": (cellar.capacity or 0) - used_capacity,
+        "capacity_used": used_capacity,
+        "unopened_count": bottle_stats['unopened'],
+        "opened_count": bottle_stats['opened'],
         "bottle_stats": bottle_stats,
+        "status_stats": status_stats,
         "wine_type_stats": wine_type_stats,
         "country_stats": country_stats,
     }
+

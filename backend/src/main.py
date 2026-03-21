@@ -117,10 +117,8 @@ def run_migrations():
 
 
 from src.services import scheduler
-# 酒窖路由
+# 酒窖與酒款路由
 from src.routes import wine_items, wine_cellars
-# 功能路由
-
 # 功能路由
 from src.routes import line_webhook, notifications, budget, recipes, invitations, admin
 
@@ -304,7 +302,6 @@ app.include_router(line_webhook.router, tags=["LINE"])
 app.include_router(notifications.router, prefix="/api/v1", tags=["Notifications"])
 app.include_router(budget.router, prefix="/api/v1", tags=["Budget"])
 app.include_router(recipes.router, prefix="/api/v1", tags=["Recipes"])
-# 冰箱相關路由已移除
 
 app.include_router(invitations.router, prefix="/api/v1", tags=["Invitations"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])

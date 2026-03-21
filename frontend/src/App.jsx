@@ -73,9 +73,6 @@ const LoadingPage = () => (
   </div>
 );
 
-// API base URL
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 function App() {
   const [liffReady, setLiffReady] = useState(false);
   const [liffError, setLiffError] = useState(null);
