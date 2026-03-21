@@ -2,75 +2,63 @@
 import os
 import sys
 from linebot import LineBotApi
-from linebot.models import RichMenu, RichMenuSize, RichMenuArea, RichMenuBounds, URIAction
+from linebot.models import RichMenu, RichMenuSize, RichMenuArea, RichMenuBounds, URIAction, Action
+from linebot.models.actions import MessageAction
+from dotenv import load_dotenv
 
-# Add parent directory to path to import config
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-try:
-    from src.config import settings
-except ImportError:
-    # Fallback if running from root
-    sys.path.append(os.getcwd())
-    from src.config import settings
+# Load environment variables
+load_dotenv()
+
+CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+if not CHANNEL_ACCESS_TOKEN:
+    print("Error: LINE_CHANNEL_ACCESS_TOKEN not found in .env")
+    sys.exit(1)
+
+line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 
 def setup_rich_menu():
-    if not settings.LINE_CHANNEL_ACCESS_TOKEN:
-        print("Error: LINE_CHANNEL_ACCESS_TOKEN not set")
-        return
+    print("Setting up Rich Menu...")
 
-    line_bot_api = LineBotApi(settings.LINE_CHANNEL_ACCESS_TOKEN)
-
-    # 1. Create Rich Menu Object (Compact Size 2500x843 for 2 buttons setup)
-    # User Configuration:
-    # Left: Create Invitation (馬上揪喝)
-    # Right: My Cellar (我的酒窖)
-    
+    # 1. Define Rich Menu
     rich_menu_to_create = RichMenu(
-        size=RichMenuSize(width=2500, height=843),
+        size=RichMenuSize(width=2500, height=843), # Compact size (half height)
         selected=True,
-        name="Wine Cellar Compact Menu",
+        name="Wine Cellar Menu",
         chat_bar_text="開啟選單",
         areas=[
-            # Button 1: Create Invitation (Left Half)
             RichMenuArea(
                 bounds=RichMenuBounds(x=0, y=0, width=1250, height=843),
-                action=URIAction(label='馬上揪喝', uri=f'https://liff.line.me/{settings.LIFF_ID}/invitation/create')
+                action=URIAction(label="我的酒窖", uri=f"https://liff.line.me/{os.getenv('LIFF_ID')}/")
             ),
-            # Button 2: My Cellar (Right Half)
             RichMenuArea(
                 bounds=RichMenuBounds(x=1250, y=0, width=1250, height=843),
-                action=URIAction(label='我的酒窖', uri=f'https://liff.line.me/{settings.LIFF_ID}/')
+                action=URIAction(label="發起聚會", uri=f"https://liff.line.me/{os.getenv('LIFF_ID')}/invitation/create")
             )
         ]
     )
 
-    try:
-        rich_menu_id = line_bot_api.create_rich_menu(rich_menu=rich_menu_to_create)
-        print(f"Rich Menu created: {rich_menu_id}")
+    # 2. Create Rich Menu
+    rich_menu_id = line_bot_api.create_rich_menu(rich_menu=rich_menu_to_create)
+    print(f"Rich Menu created: {rich_menu_id}")
 
-        # 2. Upload Image
-        # Note: Users managed this manually in LINE Manager, 
-        # so we skip auto-upload unless a file is provided.
-        image_path = 'rich_menu_bg.jpg'
-        if os.path.exists(image_path):
-            # Verify image size if strictly following script, 
-            # but here we just try to upload if it matches constraints.
-            # Compact menu needs 2500x843 image.
-            try:
-                with open(image_path, 'rb') as f:
-                    line_bot_api.set_rich_menu_image(rich_menu_id, "image/jpeg", f)
-                print("Image uploaded successfully")
-            except Exception as img_err:
-                print(f"Image upload failed (might be size mismatch): {img_err}")
-        else:
-            print("No local image found. Assuming image is set manually or not needed for this script run.")
+    # 3. Upload Image
+    # Check if image exists, otherwise create a generated one or error
+    image_path = "rich_menu_bg.jpg"
+    if not os.path.exists(image_path):
+        print(f"Warning: {image_path} not found. Please place a 2500x843 image there. Skipping image upload.")
+        # We can't set default without image.
+        return
+    
+    with open(image_path, 'rb') as f:
+        line_bot_api.set_rich_menu_image(rich_menu_id, "image/jpeg", f)
+    print("Rich Menu image uploaded.")
 
-        # 3. Set as Default
-        line_bot_api.set_default_rich_menu(rich_menu_id)
-        print("Rich Menu set as default")
-
-    except Exception as e:
-        print(f"Failed to setup Rich Menu: {e}")
+    # 4. Set as Default
+    line_bot_api.set_default_rich_menu(rich_menu_id)
+    print("Rich Menu set as default.")
 
 if __name__ == "__main__":
-    setup_rich_menu()
+    try:
+        setup_rich_menu()
+    except Exception as e:
+        print(f"Error: {e}")

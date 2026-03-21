@@ -25,6 +25,16 @@ async def get_dashboard_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
         total_wines = db.query(func.count(WineItem.id)).scalar()
         total_invitations = db.query(func.count(Invitation.id)).scalar()
         
+        # 酒類分佈統計（從 DB 查詢）
+        wine_type_rows = db.query(
+            WineItem.wine_type, func.count(WineItem.id)
+        ).group_by(WineItem.wine_type).all()
+
+        wine_types = [
+            {"type": wt or "未分類", "count": cnt}
+            for wt, cnt in wine_type_rows
+        ]
+
         return {
             "status": "success",
             "overview": {
@@ -33,11 +43,7 @@ async def get_dashboard_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
                 "total_wines": total_wines or 0,
                 "total_invitations": total_invitations or 0
             },
-            "wine_types": [
-                {"type": "紅酒", "count": 18},
-                {"type": "白酒", "count": 8},
-                {"type": "氣泡酒", "count": 4}
-            ],
+            "wine_types": wine_types,
             "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
     except Exception as e:
@@ -45,10 +51,10 @@ async def get_dashboard_stats(db: Session = Depends(get_db)) -> Dict[str, Any]:
             "status": "error", 
             "message": str(e),
             "overview": {
-                "total_users": 15,
-                "total_cellars": 15,
-                "total_wines": 30,
-                "total_invitations": 105
+                "total_users": 0,
+                "total_cellars": 0,
+                "total_wines": 0,
+                "total_invitations": 0
             }
         }
 

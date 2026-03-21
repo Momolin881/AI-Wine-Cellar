@@ -1,4 +1,4 @@
-# AI Fridge Elf 部署檢查清單
+# AI Wine Cellar 部署檢查清單
 
 ## ✅ 已完成
 
@@ -22,13 +22,13 @@
 ### 第一步：推送到 GitHub（5 分鐘）
 
 ```bash
-cd "/Users/momo/Desktop/AI Fridge Elf/AI FRIDGE ELF/ai-fridge-elf"
+cd /Users/momo/Desktop/AI-Wine-Cellar
 
 # 如果還沒有 GitHub repository，先建立一個
 # 然後執行：
 
 # 加入 remote
-git remote add origin https://github.com/你的帳號/ai-fridge-elf.git
+git remote add origin https://github.com/你的帳號/ai-wine-cellar.git
 
 # 推送到 GitHub
 git branch -M main
@@ -47,8 +47,8 @@ git push -u origin main
 2. 選擇或創建 Provider
 3. 點擊 "Create a new channel" → "Messaging API"
 4. 填寫資訊：
-   - Channel name: `AI Fridge Elf`
-   - Channel description: `智慧冰箱管理系統`
+   - Channel name: `AI Wine Cellar`
+   - Channel description: `個人數位酒窖管理系統`
    - Category: `Food & Dining`
    - Subcategory: 選擇適合的
 
@@ -80,7 +80,7 @@ git push -u origin main
 2. 點擊 "Add" 創建新 LIFF app
 3. 填寫設定：
    ```
-   LIFF app name: AI Fridge Elf
+   LIFF app name: AI Wine Cellar
    Size: Full
    Endpoint URL: https://暫時留空.zeabur.app （稍後更新）
    Scope:
@@ -138,7 +138,7 @@ API Secret：___________________________________
 2. 使用 GitHub 登入
 3. 點擊 "New Project"
 4. 選擇 "Deploy from GitHub"
-5. 選擇 `ai-fridge-elf` repository
+5. 選擇 `ai-wine-cellar` repository
 6. Zeabur 會自動偵測 `docker-compose.yml`
 
 #### 4.2 設定環境變數
@@ -285,35 +285,32 @@ line://app/你的LIFF_ID
 **測試項目：**
 - [ ] LIFF 初始化成功
 - [ ] 可以看到登入畫面
-- [ ] 進入冰箱設定頁面
-- [ ] 可以創建冰箱
+- [ ] 進入酒窖設定頁面
+- [ ] 可以建立酒窖
 
 #### 6.5 完整功能測試
 
-**Phase 3 - 食材管理：**
-- [ ] 新增食材（手動輸入）
-- [ ] 拍照辨識食材（測試 GPT-4 Vision）
-- [ ] 查看食材列表
-- [ ] 編輯食材
-- [ ] 刪除食材
+**Phase 3 - 酒款管理：**
+- [ ] 新增酒款（手動輸入）
+- [ ] 拍照辨識酒標（測試 GPT-4 Vision）
+- [ ] 查看酒款列表
+- [ ] 編輯酒款
+- [ ] 刪除酒款
 
 **Phase 4 - 通知設定：**
 - [ ] 進入通知設定頁面
-- [ ] 修改效期提醒設定
-- [ ] 修改庫存警報設定
+- [ ] 修改適飲期提醒設定
+- [ ] 修改空間警報設定
 - [ ] 儲存設定
 
-**Phase 5 - 食譜推薦：**
-- [ ] 查看食譜推薦
-- [ ] 測試 GPT-4 推薦食譜
-- [ ] 收藏食譜
-- [ ] 查看我的食譜庫
+**Phase 5 - 酒食搭配：**
+- [ ] 查看搭配推薦（由 LINE Bot 處理）
 
 **Phase 6 - 預算控管：**
 - [ ] 查看消費統計
 - [ ] 查看圖表（趨勢圖、圓餅圖）
 - [ ] 設定月度預算
-- [ ] 查看採買建議
+- [ ] 查看消費月曆
 
 ---
 
@@ -330,10 +327,10 @@ line://app/你的LIFF_ID
 ```bash
 # 本地測試 Docker 建置
 cd backend
-docker build -t ai-fridge-backend .
+docker build -t wine-cellar-backend .
 
 cd ../frontend
-docker build -t ai-fridge-frontend .
+docker build -t wine-cellar-frontend .
 ```
 
 ### 問題：資料庫連線失敗
@@ -406,7 +403,7 @@ curl -X POST https://你的zeabur網址.zeabur.app/webhook \
 
 ## 🎉 部署成功！
 
-恭喜！AI Fridge Elf 已成功部署並可以使用了。
+恭喜！AI Wine Cellar 已成功部署並可以使用了。
 
 **下一步：**
 1. 邀請使用者加入 LINE Bot 測試

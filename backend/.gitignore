@@ -68,5 +68,6 @@ htmlcov/
 uploads/
 static/images/
 
-# 敏感腳本
-scripts/
+# 敏感腳本（根目錄散落的一次性腳本）
+/*.py
+!pyproject.toml
