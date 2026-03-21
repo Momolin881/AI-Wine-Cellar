@@ -123,10 +123,10 @@ export const updateUserSettings = (settings) => {
 
 /**
  * 獲取所有酒款
- * @param {Object} params - 查詢參數 (compartment, status, etc.)
+ * @param {Object} params - 查詢參數 (status, etc.)
  * @returns {Promise<Array>} 酒款清單
  */
-export const getFoodItems = (params = {}) => {
+export const getWineItems = (params = {}) => {
   return apiClient.get('/wine-items', { params });
 };
 
@@ -135,35 +135,33 @@ export const getFoodItems = (params = {}) => {
  * @param {number} itemId - 酒款 ID
  * @returns {Promise<Object>} 酒款詳情
  */
-export const getFoodItem = (itemId) => {
+export const getWineItem = (itemId) => {
   return apiClient.get(`/wine-items/${itemId}`);
 };
 
 /**
  * 上傳圖片並辨識酒標
  * @param {File} imageFile - 圖片檔案
- * @param {number} fridgeId - 酒窖 ID
- * @param {string} storageType - 儲存類型
+ * @param {number} cellarId - 酒窖 ID
  * @param {number} compartmentId - 分區 ID（可選）
  * @returns {Promise<Object>} 辨識結果
  */
-export const recognizeFoodImage = (imageFile, cellarId, storageType, compartmentId = null) => {
+export const recognizeWineImage = (imageFile, cellarId, compartmentId = null) => {
   // 嚴格驗證 cellarId 必須是有效數字
   const validCellarId = Number(cellarId);
   if (!cellarId || isNaN(validCellarId) || validCellarId <= 0) {
-    console.error('❌ Invalid cellar_id in recognizeFoodImage:', { cellarId, validCellarId });
+    console.error('❌ Invalid cellar_id in recognizeWineImage:', { cellarId, validCellarId });
     return Promise.reject(new Error('cellar_id 必須是有效的數字'));
   }
 
   const formData = new FormData();
   formData.append('image', imageFile);
-  formData.append('cellar_id', validCellarId);  // 使用驗證過的數字
+  formData.append('cellar_id', validCellarId);
   if (compartmentId) {
     formData.append('compartment_id', compartmentId);
   }
 
-  // Debug logging
-  console.log('🔍 recognizeFoodImage called with:', {
+  console.log('🔍 recognizeWineImage called with:', {
     imageFile: imageFile ? { name: imageFile.name, size: imageFile.size, type: imageFile.type } : null,
     cellarId: validCellarId,
     compartmentId,
@@ -175,21 +173,21 @@ export const recognizeFoodImage = (imageFile, cellarId, storageType, compartment
 
 /**
  * 新增酒款
- * @param {Object} foodData - 酒款資料
+ * @param {Object} wineData - 酒款資料
  * @returns {Promise<Object>} 新增的酒款
  */
-export const createFoodItem = (foodData) => {
-  return apiClient.post('/wine-items', foodData);
+export const createWineItem = (wineData) => {
+  return apiClient.post('/wine-items', wineData);
 };
 
 /**
  * 更新酒款
  * @param {number} itemId - 酒款 ID
- * @param {Object} foodData - 更新的資料
+ * @param {Object} wineData - 更新的資料
  * @returns {Promise<Object>} 更新後的酒款
  */
-export const updateFoodItem = (itemId, foodData) => {
-  return apiClient.put(`/wine-items/${itemId}`, foodData);
+export const updateWineItem = (itemId, wineData) => {
+  return apiClient.put(`/wine-items/${itemId}`, wineData);
 };
 
 /**
@@ -197,7 +195,7 @@ export const updateFoodItem = (itemId, foodData) => {
  * @param {number} itemId - 酒款 ID
  * @returns {Promise<void>}
  */
-export const deleteFoodItem = (itemId) => {
+export const deleteWineItem = (itemId) => {
   return apiClient.delete(`/wine-items/${itemId}`);
 };
 
@@ -206,7 +204,7 @@ export const deleteFoodItem = (itemId) => {
  * @param {number} itemId - 酒款 ID
  * @returns {Promise<Object>} 更新後的酒款
  */
-export const archiveFoodItem = (itemId) => {
+export const archiveWineItem = (itemId) => {
   return apiClient.post(`/wine-items/${itemId}/change-status?new_status=consumed`);
 };
 
@@ -215,7 +213,7 @@ export const archiveFoodItem = (itemId) => {
  * @param {Array<number>} itemIds - 酒款 ID 陣列
  * @returns {Promise<void>}
  */
-export const deleteFoodItems = (itemIds) => {
+export const deleteWineItems = (itemIds) => {
   return apiClient.post('/wine-items/batch-delete', { item_ids: itemIds });
 };
 
@@ -249,193 +247,16 @@ export const updateWineDisposition = (id, disposition) => {
   return apiClient.patch(`/wine-items/${id}/disposition`, null, { params: { disposition } });
 };
 
-// ---------- 酒窖相關 ----------
+// --- 向後相容的舊名 alias（避免未更新的頁面報錯）---
+export const getFoodItems = getWineItems;
+export const getFoodItem = getWineItem;
+export const recognizeFoodImage = recognizeWineImage;
+export const createFoodItem = createWineItem;
+export const updateFoodItem = updateWineItem;
+export const deleteFoodItem = deleteWineItem;
+export const archiveFoodItem = archiveWineItem;
+export const deleteFoodItems = deleteWineItems;
 
-
-/**
- * 獲取使用者的所有酒窖
- * @returns {Promise<Array>} 酒窖清單
- */
-export const getFridges = () => {
-  return apiClient.get('/fridges');
-};
-
-/**
- * 獲取單一酒窖詳情（含分區）
- * @param {number} fridgeId - 酒窖 ID
- * @returns {Promise<Object>} 酒窖詳情
- */
-export const getFridge = (fridgeId) => {
-  return apiClient.get(`/fridges/${fridgeId}`);
-};
-
-/**
- * 新增酒窖
- * @param {Object} fridgeData - 酒窖資料
- * @returns {Promise<Object>} 新增的酒窖
- */
-export const createFridge = (fridgeData) => {
-  return apiClient.post('/fridges', fridgeData);
-};
-
-/**
- * 更新酒窖
- * @param {number} fridgeId - 酒窖 ID
- * @param {Object} fridgeData - 更新的資料
- * @returns {Promise<Object>} 更新後的酒窖
- */
-export const updateFridge = (fridgeId, fridgeData) => {
-  return apiClient.put(`/fridges/${fridgeId}`, fridgeData);
-};
-
-/**
- * 新增酒窖分區
- * @param {number} fridgeId - 酒窖 ID
- * @param {Object} compartmentData - 分區資料
- * @returns {Promise<Object>} 新增的分區
- */
-export const createCompartment = (fridgeId, compartmentData) => {
-  return apiClient.post(`/fridges/${fridgeId}/compartments`, compartmentData);
-};
-
-// ---------- 通知相關 ----------
-
-/**
- * 獲取通知設定
- * @returns {Promise<Object>} 通知設定
- */
-export const getNotificationSettings = () => {
-  return apiClient.get('/notifications/settings');
-};
-
-/**
- * 更新通知設定
- * @param {Object} settings - 通知設定
- * @returns {Promise<Object>} 更新後的設定
- */
-export const updateNotificationSettings = (settings) => {
-  return apiClient.put('/notifications/settings', settings);
-};
-
-/**
- * 測試適飲期提醒通知（手動觸發）
- * @returns {Promise<Object>} 執行結果
- */
-export const testExpiryNotification = () => {
-  return apiClient.post('/notifications/test-expiry-check');
-};
-
-// ---------- 酒食搭配相關 (由 LINE Bot 處理) ----------
-// Recipe 功能已移到 LINE Bot，這裡的 API 僅供後端保留
-
-// ---------- 預算相關 ----------
-
-/**
- * 獲取消費統計
- * @param {string} period - 期間 (month, year)
- * @returns {Promise<Object>} 消費統計
- */
-export const getSpendingStats = (period = 'month') => {
-  return apiClient.get('/budget/stats', { params: { period } });
-};
-
-/**
- * 獲取預算設定
- * @returns {Promise<Object>} 預算設定
- */
-export const getBudgetSettings = () => {
-  return apiClient.get('/budget/settings');
-};
-
-/**
- * 更新預算設定
- * @param {Object} settings - 預算設定
- * @returns {Promise<Object>} 更新後的設定
- */
-export const updateBudgetSettings = (settings) => {
-  return apiClient.put('/budget/settings', settings);
-};
-
-/**
- * 獲取採買建議
- * @returns {Promise<Array>} 建議採買清單
- */
-export const getShoppingSuggestions = () => {
-  return apiClient.get('/budget/shopping-suggestions');
-};
-
-// ---------- 酒窖成員相關 ----------
-
-/**
- * 獲取酒窖成員清單
- * @param {number} fridgeId - 酒窖 ID
- * @returns {Promise<Array>} 成員清單
- */
-export const getFridgeMembers = (fridgeId) => {
-  return apiClient.get(`/fridges/${fridgeId}/members`);
-};
-
-/**
- * 產生酒窖邀請碼
- * @param {number} fridgeId - 酒窖 ID
- * @param {Object} options - 邀請選項 { default_role, expires_days }
- * @returns {Promise<Object>} 邀請碼資料
- */
-export const createFridgeInvite = (fridgeId, options = {}) => {
-  return apiClient.post(`/fridges/${fridgeId}/invites`, options);
-};
-
-/**
- * 透過邀請碼加入酒窖
- * @param {string} inviteCode - 邀請碼
- * @returns {Promise<Object>} 加入結果
- */
-export const joinFridgeByCode = (inviteCode) => {
-  return apiClient.post(`/fridges/join/${inviteCode}`);
-};
-
-/**
- * 更新成員權限
- * @param {number} fridgeId - 酒窖 ID
- * @param {number} memberId - 成員 ID
- * @param {Object} data - { role: 'editor' | 'viewer' }
- * @returns {Promise<Object>} 更新後的成員資料
- */
-export const updateMemberRole = (fridgeId, memberId, data) => {
-  return apiClient.put(`/fridges/${fridgeId}/members/${memberId}`, data);
-};
-
-/**
- * 移除酒窖成員
- * @param {number} fridgeId - 酒窖 ID
- * @param {number} memberId - 成員 ID
- * @returns {Promise<void>}
- */
-export const removeMember = (fridgeId, memberId) => {
-  return apiClient.delete(`/fridges/${fridgeId}/members/${memberId}`);
-};
-
-// ---------- 酒窖匯出匯入 ----------
-
-/**
- * 匯出酒窖資料
- * @param {number} fridgeId - 酒窖 ID
- * @returns {Promise<Object>} 匯出的 JSON 資料
- */
-export const exportFridge = (fridgeId) => {
-  return apiClient.get(`/fridges/${fridgeId}/export`);
-};
-
-/**
- * 匯入酒窖資料
- * @param {number} fridgeId - 酒窖 ID
- * @param {Object} data - 匯入的 JSON 資料
- * @param {boolean} clearExisting - 是否清除現有酒款
- * @returns {Promise<Object>} 匯入結果
- */
-export const importFridge = (fridgeId, data, clearExisting = false) => {
-  return apiClient.post(`/fridges/${fridgeId}/import?clear_existing=${clearExisting}`, data);
-};
 
 // ---------- 邀請函相關 ----------
 

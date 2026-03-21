@@ -14,7 +14,7 @@ import { getFoodItems, getNotificationSettings, updateNotificationSettings } fro
 import { useMode } from '../contexts/ModeContext';
 
 const { Text } = Typography;
-const BUDGET_STORAGE_KEY = 'fridge-elf-monthly-budget';
+const BUDGET_STORAGE_KEY = 'wine-cellar-monthly-budget';
 
 function ExpenseCalendarModal({ visible, onClose }) {
   const { isChill } = useMode();

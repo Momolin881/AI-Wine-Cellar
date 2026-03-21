@@ -72,7 +72,7 @@ async def list_wine_cellars(db: DBSession, user_id: CurrentUserId):
     # 若使用者沒有酒窖，自動建立一個預設酒窖
     if not cellars:
         default_cellar = WineCellar(
-            user_id=user_id,
+            owner_id=user_id,
             name="我的酒窖",
             description="自動建立的預設酒窖",
             capacity=50
@@ -89,7 +89,7 @@ async def list_wine_cellars(db: DBSession, user_id: CurrentUserId):
 @router.post("/wine-cellars", response_model=WineCellarResponse, status_code=status.HTTP_201_CREATED)
 async def create_wine_cellar(data: WineCellarCreate, db: DBSession, user_id: CurrentUserId):
     """新增酒窖"""
-    cellar = WineCellar(user_id=user_id, **data.model_dump())
+    cellar = WineCellar(owner_id=user_id, **data.model_dump())
     db.add(cellar)
     db.commit()
     db.refresh(cellar)
@@ -133,7 +133,7 @@ async def get_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
 
     return {
         "id": cellar.id,
-        "user_id": cellar.user_id,
+        "owner_id": cellar.owner_id,
         "name": cellar.name,
         "description": cellar.description,
         "total_capacity": cellar.capacity,

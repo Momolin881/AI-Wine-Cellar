@@ -682,7 +682,7 @@ def split_wine_item(
     # 驗證擁有權（透過酒窖）
     from src.models.wine_cellar import WineCellar
     cellar = db.query(WineCellar).filter(WineCellar.id == item.cellar_id).first()
-    if not cellar or cellar.user_id != user_id:
+    if not cellar or cellar.owner_id != user_id:
         raise HTTPException(status_code=403, detail="無權限操作此酒款")
     
     # 驗證數量足夠
@@ -770,7 +770,7 @@ def update_disposition(
     # 驗證擁有權
     from src.models.wine_cellar import WineCellar
     cellar = db.query(WineCellar).filter(WineCellar.id == item.cellar_id).first()
-    if not cellar or cellar.user_id != user_id:
+    if not cellar or cellar.owner_id != user_id:
         raise HTTPException(status_code=403, detail="無權限操作此酒款")
     
     item.disposition = disposition
