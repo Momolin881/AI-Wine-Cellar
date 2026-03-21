@@ -12,200 +12,24 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from pydantic import BaseModel
 
 from src.models.wine_item import WineItem
 from src.models.wine_cellar import WineCellar
 from src.routes.dependencies import DBSession, CurrentUserId
 from src.services import wine_vision, storage
-from src.schemas.wine_item import HistoryMatchResponse
+from src.schemas.wine_item import (
+    WineItemCreate,
+    WineItemUpdate,
+    WineItemResponse,
+    AIWineRecognitionResponse,
+    HistoryMatch,
+    HistoryMatchResponse,
+    SplitRequest,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Wine Items"])
-
-
-# ============ Schemas ============
-
-class HistoryMatch(BaseModel):
-    """歷史比對結果"""
-    id: int
-    name: str
-    brand: Optional[str] = None
-    vintage: Optional[int] = None
-    purchase_price: Optional[float] = None
-    purchase_date: Optional[date] = None
-    tasting_notes: Optional[str] = None
-    rating: Optional[int] = None
-    review: Optional[str] = None
-    flavor_tags: Optional[str] = None
-    aroma: Optional[str] = None
-    palate: Optional[str] = None
-    finish: Optional[str] = None
-    acidity: Optional[int] = None
-    tannin: Optional[int] = None
-    body: Optional[int] = None
-    sweetness: Optional[int] = None
-    alcohol_feel: Optional[int] = None
-    image_url: Optional[str] = None
-
-class HistoryMatchResponse(BaseModel):
-    """歷史比對 API 回應"""
-    matched: bool
-    history: list[HistoryMatch] = []
-
-
-class WineItemCreate(BaseModel):
-    """建立酒款的請求資料"""
-    cellar_id: int
-    name: str
-    wine_type: str
-    brand: Optional[str] = None
-    vintage: Optional[int] = None
-    region: Optional[str] = None
-    country: Optional[str] = None
-    abv: Optional[float] = None
-    quantity: int = 1
-    space_units: float = 1.0
-    container_type: str = "瓶"
-    bottle_status: str = "unopened"
-    preservation_type: str = "immediate"  # immediate / aging
-    remaining_amount: str = "full"
-    disposition: str = "personal"  # personal / gift / sale / collection
-    purchase_price: Optional[float] = None
-    retail_price: Optional[float] = None
-    purchase_date: Optional[str] = None
-    optimal_drinking_start: Optional[str] = None
-    optimal_drinking_end: Optional[str] = None
-    storage_location: Optional[str] = None
-    storage_temp: Optional[str] = None
-    image_url: Optional[str] = None
-    cloudinary_public_id: Optional[str] = None
-    notes: Optional[str] = None
-    tasting_notes: Optional[str] = None
-    rating: Optional[int] = None
-    review: Optional[str] = None
-    flavor_tags: Optional[str] = None
-    aroma: Optional[str] = None
-    palate: Optional[str] = None
-    finish: Optional[str] = None
-    acidity: Optional[int] = 3
-    tannin: Optional[int] = 3
-    body: Optional[int] = 3
-    sweetness: Optional[int] = 3
-    alcohol_feel: Optional[int] = 3
-    recognized_by_ai: int = 0
-
-
-class WineItemUpdate(BaseModel):
-    """更新酒款的請求資料"""
-    model_config = {"extra": "ignore"}  # 忽略未知欄位，避免 422 錯誤
-
-    name: Optional[str] = None
-    wine_type: Optional[str] = None
-    brand: Optional[str] = None
-    vintage: Optional[int] = None
-    region: Optional[str] = None
-    country: Optional[str] = None
-    abv: Optional[float] = None
-    quantity: Optional[int] = None
-    space_units: Optional[float] = None
-    container_type: Optional[str] = None
-    bottle_status: Optional[str] = None
-
-    preservation_type: Optional[str] = None
-    remaining_amount: Optional[str] = None
-    disposition: Optional[str] = None
-    purchase_price: Optional[float] = None
-    retail_price: Optional[float] = None
-    purchase_date: Optional[str] = None
-    optimal_drinking_start: Optional[str] = None
-    optimal_drinking_end: Optional[str] = None
-    storage_location: Optional[str] = None
-    storage_temp: Optional[str] = None
-    notes: Optional[str] = None
-    tasting_notes: Optional[str] = None
-    rating: Optional[int] = None
-    review: Optional[str] = None
-    flavor_tags: Optional[str] = None
-    aroma: Optional[str] = None
-    palate: Optional[str] = None
-    finish: Optional[str] = None
-    acidity: Optional[int] = None
-    tannin: Optional[int] = None
-    body: Optional[int] = None
-    sweetness: Optional[int] = None
-    alcohol_feel: Optional[int] = None
-
-
-class WineItemResponse(BaseModel):
-    """酒款回應"""
-    id: int
-    cellar_id: int
-    name: str
-    wine_type: str
-    brand: Optional[str]
-    vintage: Optional[int]
-    region: Optional[str]
-    country: Optional[str]
-    abv: Optional[float]
-    quantity: int
-    space_units: float
-    container_type: str
-    bottle_status: str
-
-    preservation_type: str
-    remaining_amount: str
-    disposition: str = "personal"
-    split_from_id: Optional[int] = None
-    purchase_price: Optional[float]
-    retail_price: Optional[float]
-    purchase_date: Optional[str]
-    optimal_drinking_start: Optional[str]
-    optimal_drinking_end: Optional[str]
-    storage_location: Optional[str]
-    storage_temp: Optional[str]
-    image_url: Optional[str]
-    cloudinary_public_id: Optional[str]
-    notes: Optional[str]
-    tasting_notes: Optional[str]
-    rating: Optional[int] = None
-    review: Optional[str] = None
-    flavor_tags: Optional[str] = None
-    aroma: Optional[str] = None
-    palate: Optional[str] = None
-    finish: Optional[str] = None
-    acidity: Optional[int] = None
-    tannin: Optional[int] = None
-    body: Optional[int] = None
-    sweetness: Optional[int] = None
-    alcohol_feel: Optional[int] = None
-    recognized_by_ai: int
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    # 計算屬性
-    is_optimal_now: bool
-    total_value: float
-
-    class Config:
-        from_attributes = True
-
-
-class AIWineRecognitionResponse(BaseModel):
-    """AI 酒標辨識回應"""
-    name: str
-    wine_type: str
-    brand: Optional[str] = None
-    vintage: Optional[int] = None
-    region: Optional[str] = None
-    country: Optional[str] = None
-    abv: Optional[float] = None
-    container_type: str = "瓶"
-    suggested_storage_temp: Optional[str] = None
-    description: Optional[str] = None
-    image_url: str
-    cloudinary_public_id: str
 
 
 # ============ Helper Functions ============
@@ -266,13 +90,6 @@ def _calculate_open_bottle_expiry(wine_type: str, preservation_type: str, open_d
     return open_date + timedelta(days=expiry_days)
 
 
-def _safe_get(item, attr, default=None):
-    """安全取得屬性值，處理資料庫欄位不存在的情況"""
-    try:
-        return getattr(item, attr, default)
-    except Exception:
-        return default
-
 
 def _safe_int(value):
     """安全轉換為整數，處理浮點數轉換"""
@@ -285,83 +102,55 @@ def _safe_int(value):
 
 
 def _build_wine_item_response(item: WineItem) -> WineItemResponse:
-    """將 WineItem ORM 物件轉換為 WineItemResponse
-    
-    注意：model 欄位名和 response 欄位名有差異（歷史原因），
-    這裡做映射和安全存取。
-    """
-    # 映射：model 用 producer，response 用 brand
-    brand = _safe_get(item, 'brand', None) or _safe_get(item, 'producer', None)
-    # 映射：model 用 alcohol_content，response 用 abv
-    abv = _safe_get(item, 'abv', None) or _safe_get(item, 'alcohol_content', None)
-    # 映射：model 用 price，response 用 purchase_price
-    purchase_price = _safe_get(item, 'purchase_price', None) or _safe_get(item, 'price', None)
-    
-    # 安全取得日期
-    purchase_date_val = _safe_get(item, 'purchase_date', None)
-    optimal_start_val = _safe_get(item, 'optimal_drinking_start', None)
-    optimal_end_val = _safe_get(item, 'optimal_drinking_end', None)
-    
-    # 計算 is_optimal_now
-    try:
-        is_optimal = getattr(item, 'is_optimal_now', False)
-    except Exception:
-        is_optimal = False
-    
-    # 計算 total_value
-    try:
-        total_val = getattr(item, 'total_value', 0.0)
-    except Exception:
-        total_val = float(purchase_price or 0) * (item.quantity or 1)
-    
+    """將 WineItem ORM 物件轉換為 WineItemResponse"""
     return WineItemResponse(
         id=item.id,
         cellar_id=item.cellar_id,
         name=item.name,
-        wine_type=_safe_get(item, 'wine_type', '未分類') or '未分類',
-        brand=brand,
+        wine_type=item.wine_type or '未分類',
+        brand=item.brand,
         vintage=item.vintage,
         region=item.region,
-        country=_safe_get(item, 'country', None),
-        abv=abv,
+        country=item.country,
+        abv=item.abv,
         quantity=item.quantity or 1,
-        space_units=_safe_get(item, 'space_units', 1.0) or 1.0,
-        container_type=_safe_get(item, 'container_type', '瓶') or '瓶',
-        bottle_status=_safe_get(item, 'bottle_status', 'unopened') or 'unopened',
-
-        preservation_type=_safe_get(item, 'preservation_type', 'immediate') or 'immediate',
-        remaining_amount=_safe_get(item, 'remaining_amount', 'full') or 'full',
-        disposition=_safe_get(item, 'disposition', 'personal') or 'personal',
-        split_from_id=_safe_get(item, 'split_from_id', None),
-        purchase_price=purchase_price,
-        retail_price=_safe_get(item, 'retail_price', None),
-        purchase_date=str(purchase_date_val) if purchase_date_val else None,
-        optimal_drinking_start=str(optimal_start_val) if optimal_start_val else None,
-        optimal_drinking_end=str(optimal_end_val) if optimal_end_val else None,
-        storage_location=_safe_get(item, 'storage_location', None),
-        storage_temp=_safe_get(item, 'storage_temp', None),
-        image_url=_safe_get(item, 'image_url', None),
-        cloudinary_public_id=_safe_get(item, 'cloudinary_public_id', None),
-        notes=_safe_get(item, 'notes', None),
-        tasting_notes=_safe_get(item, 'tasting_notes', None),
-        rating=_safe_int(_safe_get(item, 'rating', None)),
-        review=_safe_get(item, 'review', None),
-        flavor_tags=_safe_get(item, 'flavor_tags', None),
-        aroma=_safe_get(item, 'aroma', None),
-        palate=_safe_get(item, 'palate', None),
-        finish=_safe_get(item, 'finish', None),
-        acidity=_safe_int(_safe_get(item, 'acidity', None)),
-        tannin=_safe_int(_safe_get(item, 'tannin', None)),
-        body=_safe_int(_safe_get(item, 'body', None)),
-        sweetness=_safe_int(_safe_get(item, 'sweetness', None)),
-        alcohol_feel=_safe_int(_safe_get(item, 'alcohol_feel', None)),
-        recognized_by_ai=_safe_get(item, 'recognized_by_ai', 0) or 0,
-        status='active',
+        space_units=item.space_units or 1.0,
+        container_type=item.container_type or '瓶',
+        bottle_status=item.bottle_status or 'unopened',
+        preservation_type=item.preservation_type or 'immediate',
+        remaining_amount=item.remaining_amount or 'full',
+        disposition=item.disposition or 'personal',
+        split_from_id=item.split_from_id,
+        purchase_price=item.purchase_price,
+        retail_price=item.retail_price,
+        purchase_date=str(item.purchase_date) if item.purchase_date else None,
+        optimal_drinking_start=str(item.optimal_drinking_start) if item.optimal_drinking_start else None,
+        optimal_drinking_end=str(item.optimal_drinking_end) if item.optimal_drinking_end else None,
+        storage_location=item.storage_location,
+        storage_temp=item.storage_temp,
+        image_url=item.image_url,
+        cloudinary_public_id=item.cloudinary_public_id,
+        notes=item.notes,
+        tasting_notes=item.tasting_notes,
+        rating=_safe_int(item.rating),
+        review=item.review,
+        flavor_tags=item.flavor_tags,
+        aroma=item.aroma,
+        palate=item.palate,
+        finish=item.finish,
+        acidity=_safe_int(item.acidity),
+        tannin=_safe_int(item.tannin),
+        body=_safe_int(item.body),
+        sweetness=_safe_int(item.sweetness),
+        alcohol_feel=_safe_int(item.alcohol_feel),
+        recognized_by_ai=item.recognized_by_ai or 0,
+        status=item.status or 'active',
         created_at=item.created_at or datetime.utcnow(),
         updated_at=item.updated_at or datetime.utcnow(),
-        is_optimal_now=is_optimal,
-        total_value=total_val,
+        is_optimal_now=item.is_optimal_now,
+        total_value=item.total_value,
     )
+
 
 
 # ============ Routes ============
@@ -385,7 +174,7 @@ async def list_wine_items(
     query = (
         db.query(WineItem)
         .join(WineCellar, WineItem.cellar_id == WineCellar.id)
-        .filter(WineCellar.user_id == user_id)
+        .filter(WineCellar.owner_id == user_id)
     )
 
     # 篩選狀態 (暫時忽略，因為資料庫沒有status欄位)
@@ -437,7 +226,7 @@ def match_wine_history(
     from src.models.wine_cellar import WineCellar
 
     # 取得使用者的所有酒窖 IDs
-    cellar_ids = [c.id for c in db.query(WineCellar).filter(WineCellar.user_id == user_id).all()]
+    cellar_ids = [c.id for c in db.query(WineCellar).filter(WineCellar.owner_id == user_id).all()]
 
     if not cellar_ids:
         return HistoryMatchResponse(matched=False, history=[])
@@ -486,7 +275,7 @@ async def get_wine_item(id: int, db: DBSession, user_id: CurrentUserId):
     wine_item = (
         db.query(WineItem)
         .join(WineCellar, WineItem.cellar_id == WineCellar.id)
-        .filter(WineItem.id == id, WineCellar.user_id == user_id)
+        .filter(WineItem.id == id, WineCellar.owner_id == user_id)
         .first()
     )
 
@@ -504,7 +293,7 @@ async def create_wine_item(data: WineItemCreate, db: DBSession, user_id: Current
     try:
         # 驗證酒窖所有權
         cellar = db.query(WineCellar).filter(
-            WineCellar.id == data.cellar_id, WineCellar.user_id == user_id
+            WineCellar.id == data.cellar_id, WineCellar.owner_id == user_id
         ).first()
 
         if not cellar:
@@ -585,7 +374,7 @@ async def update_wine_item(
     wine_item = (
         db.query(WineItem)
         .join(WineCellar, WineItem.cellar_id == WineCellar.id)
-        .filter(WineItem.id == id, WineCellar.user_id == user_id)
+        .filter(WineItem.id == id, WineCellar.owner_id == user_id)
         .first()
     )
 
@@ -651,7 +440,7 @@ async def delete_wine_item(id: int, db: DBSession, user_id: CurrentUserId):
     wine_item = (
         db.query(WineItem)
         .join(WineCellar, WineItem.cellar_id == WineCellar.id)
-        .filter(WineItem.id == id, WineCellar.user_id == user_id)
+        .filter(WineItem.id == id, WineCellar.owner_id == user_id)
         .first()
     )
 
@@ -681,7 +470,7 @@ async def open_wine_bottle(id: int, db: DBSession, user_id: CurrentUserId):
     wine_item = (
         db.query(WineItem)
         .join(WineCellar, WineItem.cellar_id == WineCellar.id)
-        .filter(WineItem.id == id, WineCellar.user_id == user_id)
+        .filter(WineItem.id == id, WineCellar.owner_id == user_id)
         .first()
     )
 
@@ -737,7 +526,7 @@ async def update_remaining_amount(
     wine_item = (
         db.query(WineItem)
         .join(WineCellar, WineItem.cellar_id == WineCellar.id)
-        .filter(WineItem.id == id, WineCellar.user_id == user_id)
+        .filter(WineItem.id == id, WineCellar.owner_id == user_id)
         .first()
     )
 
@@ -778,7 +567,7 @@ async def change_wine_status(
     wine_item = (
         db.query(WineItem)
         .join(WineCellar, WineItem.cellar_id == WineCellar.id)
-        .filter(WineItem.id == id, WineCellar.user_id == user_id)
+        .filter(WineItem.id == id, WineCellar.owner_id == user_id)
         .first()
     )
 
@@ -815,7 +604,7 @@ async def recognize_wine_label(
     """
     # 驗證酒窖所有權
     cellar = db.query(WineCellar).filter(
-        WineCellar.id == cellar_id, WineCellar.user_id == user_id
+        WineCellar.id == cellar_id, WineCellar.owner_id == user_id
     ).first()
 
     if not cellar:
@@ -866,16 +655,7 @@ async def recognize_wine_label(
             detail=f"AI 辨識失敗: {str(e)}",
         ) from e
 
-
-# ============ Split & History Match Schemas ============
-
-class SplitRequest(BaseModel):
-    """拆分酒款請求"""
-    split_count: int
-
-
-
-# ============ Split & History Match Routes ============
+# ============ Split & Disposition Routes ============
 
 @router.post("/wine-items/{id}/split")
 def split_wine_item(

@@ -67,7 +67,7 @@ class WineCellarDetailResponse(WineCellarResponse):
 @router.get("/wine-cellars", response_model=list[WineCellarResponse])
 async def list_wine_cellars(db: DBSession, user_id: CurrentUserId):
     """取得使用者的所有酒窖（若無則自動建立預設酒窖）"""
-    cellars = db.query(WineCellar).filter(WineCellar.user_id == user_id).all()
+    cellars = db.query(WineCellar).filter(WineCellar.owner_id == user_id).all()
 
     # 若使用者沒有酒窖，自動建立一個預設酒窖
     if not cellars:
@@ -102,7 +102,7 @@ async def create_wine_cellar(data: WineCellarCreate, db: DBSession, user_id: Cur
 async def get_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
     """取得單一酒窖（含統計資訊）"""
     cellar = db.query(WineCellar).filter(
-        WineCellar.id == id, WineCellar.user_id == user_id
+        WineCellar.id == id, WineCellar.owner_id == user_id
     ).first()
 
     if not cellar:
@@ -153,7 +153,7 @@ async def get_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
 async def update_wine_cellar(id: int, data: WineCellarUpdate, db: DBSession, user_id: CurrentUserId):
     """更新酒窖"""
     cellar = db.query(WineCellar).filter(
-        WineCellar.id == id, WineCellar.user_id == user_id
+        WineCellar.id == id, WineCellar.owner_id == user_id
     ).first()
 
     if not cellar:
@@ -176,7 +176,7 @@ async def update_wine_cellar(id: int, data: WineCellarUpdate, db: DBSession, use
 async def delete_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
     """刪除酒窖（會一併刪除所有酒款）"""
     cellar = db.query(WineCellar).filter(
-        WineCellar.id == id, WineCellar.user_id == user_id
+        WineCellar.id == id, WineCellar.owner_id == user_id
     ).first()
 
     if not cellar:
@@ -194,7 +194,7 @@ async def delete_wine_cellar(id: int, db: DBSession, user_id: CurrentUserId):
 async def get_wine_cellar_stats(id: int, db: DBSession, user_id: CurrentUserId):
     """取得酒窖統計摘要"""
     cellar = db.query(WineCellar).filter(
-        WineCellar.id == id, WineCellar.user_id == user_id
+        WineCellar.id == id, WineCellar.owner_id == user_id
     ).first()
 
     if not cellar:

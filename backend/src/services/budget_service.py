@@ -78,13 +78,13 @@ class BudgetService:
             WineCellar.owner_id == user_id,
             WineItem.purchase_date >= start_date,
             WineItem.purchase_date <= today,
-            WineItem.price.isnot(None)
+            WineItem.purchase_price.isnot(None)
         )
 
         wine_items = query.all()
 
         # 計算總消費
-        total_spending = sum(item.price for item in wine_items if item.price)
+        total_spending = sum(item.purchase_price for item in wine_items if item.purchase_price)
 
         # 計算預算使用百分比
         budget_used_percentage = (total_spending / budget_for_period * 100) if budget_for_period > 0 else 0
@@ -98,7 +98,7 @@ class BudgetService:
             category = item.wine_type or '未分類'
             if category not in category_stats:
                 category_stats[category] = {'amount': 0.0, 'count': 0}
-            category_stats[category]['amount'] += item.price or 0.0
+            category_stats[category]['amount'] += item.purchase_price or 0.0
             category_stats[category]['count'] += 1
 
         category_breakdown = [
@@ -146,11 +146,11 @@ class BudgetService:
                 end_date = date(target_month.year, target_month.month + 1, 1) - relativedelta(days=1)
 
             # 查詢該月的消費
-            monthly_spending = db.query(func.sum(WineItem.price)).join(WineCellar).filter(
+            monthly_spending = db.query(func.sum(WineItem.purchase_price)).join(WineCellar).filter(
                 WineCellar.owner_id == user_id,
                 WineItem.purchase_date >= start_date,
                 WineItem.purchase_date <= end_date,
-                WineItem.price.isnot(None)
+                WineItem.purchase_price.isnot(None)
             ).scalar() or 0.0
 
             trends.append(MonthlyTrend(
