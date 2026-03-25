@@ -66,4 +66,30 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
     __GIT_HASH__: JSON.stringify(getGitHash()),
   },
+
+  // 測試設定
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+    globals: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'clover'],
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        'dist/',
+        '**/*.config.js',
+        '**/*.config.ts'
+      ],
+      thresholds: {
+        global: {
+          branches: 50,
+          functions: 50,
+          lines: 50,
+          statements: 50
+        }
+      }
+    }
+  }
 })

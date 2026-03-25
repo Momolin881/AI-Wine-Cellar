@@ -96,3 +96,12 @@ backend/create_test_*.py
 **/*postgresql*.py
 **/*database*.py
 **/*db_*.py
+
+# 資料庫匯出檔案（可能包含敏感資料）
+**/database_export_*.json
+**/local_database_export_*.json
+**/*export*.json
+
+# 混合環境檔案
+backend/.env.hybrid
+frontend/.env.hybrid
