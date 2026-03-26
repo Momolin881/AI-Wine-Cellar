@@ -39,7 +39,7 @@ class WineCellarUpdate(BaseModel):
 class WineCellarResponse(BaseModel):
     """酒窖回應"""
     id: int
-    user_id: int
+    owner_id: int
     name: str
     description: Optional[str]
     capacity: int
