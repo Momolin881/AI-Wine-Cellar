@@ -252,7 +252,7 @@ app.add_middleware(
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
-    allow_headers=["*"],
+    allow_headers=["authorization", "content-type", "accept", "origin", "user-agent"],
     expose_headers=["*"],
     max_age=600,  # OPTIONS 預檢請求緩存時間（秒）
 )
