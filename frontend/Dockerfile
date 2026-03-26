@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 安裝依賴（使用 ci 更快更可靠）
-RUN npm ci --only=production=false
+RUN npm ci
 
 # 複製原始碼
 COPY . .
