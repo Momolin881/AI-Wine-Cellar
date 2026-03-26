@@ -23,8 +23,8 @@ const apiClient = axios.create({
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   },
-  // 確保跨域請求正確處理
-  withCredentials: true
+  // 移除 withCredentials 以配合 CORS allow_origins: ["*"]
+  withCredentials: false
 });
 
 // 請求攔截器：自動設置 Content-Type（FormData 除外）

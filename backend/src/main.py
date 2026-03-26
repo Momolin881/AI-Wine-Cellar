@@ -236,25 +236,14 @@ async def admin_dashboard():
         "admin_api": "https://ai-wine-cellar-backend.zeabur.app/api/v1/admin"
     })
 
-# 設定 CORS middleware - 允許前端和 LINE 來源
+# 設定 CORS middleware - 強制允許所有來源
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:3000",  # 管理後台本地開發
-        "https://ai-wine-cellar.zeabur.app",
-        "https://ai-wine-cellar-backend.zeabur.app",  # 後端自己的域名
-        "https://liff.line.me",
-        "https://access.line.me",
-        "https://line.me",
-        # 移除通配符 "*" 以支持 credentials
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],  # 直接設定而不依賴 settings
+    allow_credentials=False,  # 設為 False 因為使用 "*"
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"],
-    allow_headers=["authorization", "content-type", "accept", "origin", "user-agent"],
+    allow_headers=["*"],
     expose_headers=["*"],
-    max_age=600,  # OPTIONS 預檢請求緩存時間（秒）
 )
 
 
