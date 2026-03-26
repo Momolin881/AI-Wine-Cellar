@@ -355,4 +355,76 @@ export const getInvitationAttendees = (id) => {
   return apiClient.get(`/invitations/${id}/attendees`);
 };
 
+// ---------- 預算管理相關 ----------
+
+/**
+ * 獲取預算設定
+ * @returns {Promise<Object>} 預算設定
+ */
+export const getBudgetSettings = () => {
+  return apiClient.get('/budget/settings');
+};
+
+/**
+ * 更新預算設定
+ * @param {Object} settings - 預算設定
+ * @returns {Promise<Object>} 更新後的設定
+ */
+export const updateBudgetSettings = (settings) => {
+  return apiClient.put('/budget/settings', settings);
+};
+
+/**
+ * 獲取預算統計
+ * @param {string} period - 統計期間 (month, year)
+ * @returns {Promise<Object>} 預算統計
+ */
+export const getBudgetStats = (period = 'month') => {
+  return apiClient.get('/budget/stats', { params: { period } });
+};
+
+/**
+ * 獲取支出統計
+ * @param {Object} params - 查詢參數
+ * @returns {Promise<Object>} 支出統計
+ */
+export const getSpendingStats = (params = {}) => {
+  return apiClient.get('/budget/spending-stats', { params });
+};
+
+/**
+ * 獲取購物建議
+ * @returns {Promise<Array>} 購物建議清單
+ */
+export const getShoppingSuggestions = () => {
+  return apiClient.get('/budget/shopping-suggestions');
+};
+
+// ---------- 通知設定相關 ----------
+
+/**
+ * 獲取通知設定
+ * @returns {Promise<Object>} 通知設定
+ */
+export const getNotificationSettings = () => {
+  return apiClient.get('/notifications/settings');
+};
+
+/**
+ * 更新通知設定
+ * @param {Object} settings - 通知設定
+ * @returns {Promise<Object>} 更新後的設定
+ */
+export const updateNotificationSettings = (settings) => {
+  return apiClient.put('/notifications/settings', settings);
+};
+
+/**
+ * 測試到期通知
+ * @returns {Promise<Object>} 測試結果
+ */
+export const testExpiryNotification = () => {
+  return apiClient.post('/notifications/test-expiry');
+};
+
 export default apiClient;
