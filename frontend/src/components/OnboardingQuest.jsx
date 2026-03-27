@@ -148,7 +148,7 @@ const OnboardingQuest = ({ wineItems = [] }) => {
 
     // 任務完成狀態
     const taskStatus = useMemo(() => ({
-        scan: wineItems.some((item) => item.recognized_by_ai === 1),
+        scan: wineItems.length > 0,  // 修改：有酒款就算完成拍照入庫
         invite: hasInvitation,
         open: wineItems.some((item) => item.bottle_status === 'opened'),
     }), [wineItems, hasInvitation]);
