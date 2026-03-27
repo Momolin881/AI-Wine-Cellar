@@ -46,7 +46,7 @@ function CellarSettings() {
         const checkQuest = async () => {
             try {
                 const items = await getFoodItems({ status: 'active' });
-                const hasScan = Array.isArray(items) && items.some(i => i.recognized_by_ai === 1);
+                const hasScan = Array.isArray(items) && items.length > 0;  // 修改：與 OnboardingQuest 一致
                 const hasOpen = Array.isArray(items) && items.some(i => i.bottle_status === 'opened');
 
                 let hasInvite = false;
